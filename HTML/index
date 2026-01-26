@@ -5,8 +5,10 @@
   <title> Head/Title Text </title>
 </head>
 <body>
-  <h1> h1(title) text </h1>
+  <h1> h1(title) change text </h1>
+  <h2> h2 text </h2>
   <p> p(text) text </p>
+  <p> p(text) plus text </p>
 </body>
 
 
@@ -19,6 +21,9 @@
   <title>          : 브라우저 탭, 검색 결과에 쓰이는 문서 제목
 <body>             : int main() { ... } 의 '...'
 <h1> / <p>         : std::cout << "내용"
+  <h1>             : 문서의 큰제목
+  <h2>             : h1의 하위 제목
+  <p>              : 본문
 -->
 
 </html>
