@@ -9,21 +9,32 @@
   <h2> h2 text </h2>
   <p> p(text) text </p>
   <p> p(text) plus text </p>
+  <ul>
+    <li>first li</li>
+    <li>second li</li>
+  </ul>
+  <ol>
+    <li>first li</li>
+    <li>second li</li>
+  </ol>
 </body>
 
 
 <!--
-<!DOCTYPE html>    : HTML5 문서로 해석하라고 브라우저에 알림(HTML5 문서 선언)
-<html> ... </html> : int main() { ... } 의 '{}'
-<html lang="ko">,  : 본 문서의 주 언어를 한국어로 사용
-<head>             : using, include 등(환경/설정)
-  <meta charset="UTF-8"> : 유니코드(UTF-8)로 문자 해석한다고 명시
-  <title>          : 브라우저 탭, 검색 결과에 쓰이는 문서 제목
-<body>             : int main() { ... } 의 '...'
-<h1> / <p>         : std::cout << "내용"
-  <h1>             : 문서의 큰제목
-  <h2>             : h1의 하위 제목
-  <p>              : 본문
+<!DOCTYPE html>    : HTML5 문서로 해석하라고 브라우저에 알림(HTML5 문서 선언).
+<html> ... </html> : int main() { ... } 의 '{}'.
+<html lang="ko">,  : 본 문서의 주 언어를 한국어로 사용.
+<head>             : using, include 등(환경/설정).
+  <meta charset="UTF-8"> : 유니코드(UTF-8)로 문자 해석한다고 명시.
+  <title>          : 브라우저 탭, 검색 결과에 쓰이는 문서 제목.
+<body>             : int main() { ... } 의 '...'.
+<h1> ... <p>       : std::cout << "내용". 단, 출력 명령보단 구조 선언에 가까운 것.
+  <h1>             : 문서의 큰제목.
+  <h2>             : h1의 하위 제목.
+  <p>              : 본문.
+  <ul>             : 순서 없는 목록의 컨테이너. 여기서부터 목록임을 명시. (나열, 모음)
+  <ol>             : 순서 있는 목록의 컨테이너. 여기서부터 목록임을 명시. (절차, 단계, 순번)
+  <li>             : 목록의 한 줄. 리스트 아이템. 혼자 못 쓰고 ul/ol 안에 들어가는 것.
 -->
 
 </html>
