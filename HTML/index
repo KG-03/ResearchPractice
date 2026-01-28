@@ -17,6 +17,19 @@
     <li>first li</li>
     <li>second li</li>
   </ol>
+
+  <h2>Link</h2>  
+  <a href="https://github.com">GitHub</a>
+
+  <h2>Image</h2>
+  <img src="https://dummyimage.com/640x4:3" alt="임시 이미지">
+
+  <h2>Div Test</h2>
+  <div>
+    <h2>div h2 text</h2>
+    <p>div p text</p>
+    <p>div p text2</p>
+  </div>
 </body>
 
 
@@ -35,6 +48,14 @@
   <ul>             : 순서 없는 목록의 컨테이너. 여기서부터 목록임을 명시. (나열, 모음)
   <ol>             : 순서 있는 목록의 컨테이너. 여기서부터 목록임을 명시. (절차, 단계, 순번)
   <li>             : 목록의 한 줄. 리스트 아이템. 혼자 못 쓰고 ul/ol 안에 들어가는 것.
+<a>                : 하이퍼링크.
+  href             : 이동할 주소를 명시. <a href="..."> ... </a> 형식으로 이용.
+  <a> ... </a>     : ...가 하이퍼링크의 이름과 비슷한 역할을 수행.
+<img>              : 이미지. 내용이라기보다는 하나의 객체. cout << img;와 같은 형식.
+  src              : 이미지의 위치 명시.
+  alt              : 이미지가 안 보일 때 드러나는 텍스트(설명)
+<div>              : 묶음. 브라우저에게 한 덩어리로 명시하는 것. struct(구조체)와 유사.
+                     추후 CSS 및 JS 단계에서 'div만 적용되는 효과'를 구현 가능.
 -->
 
 </html>
