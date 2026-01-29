@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang = "ko">
+    <head>
+        <meta charset="UTF-8">
+        <title>Div Use</title>
+    </head>
+
+    <body>
+        <!-- 소개 -->
+        <div id = "intro">
+            <h1>Start HTML</h1>
+            <p>Hello World</p>
+        </div>
+
+        <!-- 목록 -->
+        <div id="lists">
+            <h2>Lists</h2>
+            <ul aria-label="Purpose of this page">
+                <li>This is a structure practice</li>
+                <li>And this is a programming practice</li>
+            </ul>
+            <figure>
+                <figcaption>Tools used for practice</figcaption>
+                <ul>
+                    <li>VS Code</li>
+                    <li>GitHub</li>
+                </ul>
+            </figure>
+            <ul>
+                <li>First ul li</li>
+                <li>Second ul li</li>
+            </ul>
+            <ol>
+                <li>First ol li</li>
+                <li>Second ol li</li>
+            </ol>
+        </div>
+        
+        <!-- 링크 -->
+        <div id="links">
+            <h2>Hyperlinks</h2>
+            <a href="https://github.com">GitHub</a>
+        </div>
+        
+        <!-- 이미지 -->
+        <div id="image">
+            <h2>Image</h2>
+            <img src="https://dummyimage.com/640x4:3" alt = "Placeholder Image">
+        </div>
+
+    </body>
+
+    <!--
+    <ul aria-label = "..."> : 화면에 출력되지 않는 스크린 리더용.
+                              ul대신 ol을 사용 가능(요소에 붙는 속성이기 때문).
+    <figure>                : 목록의 캡션 개념. 이미지와 설명할 때 자주 사용.
+    div id = "..." VS aria label : 설명이 보이지 않는다는 건 동일.
+                                   div id == 개발자(JS/CSS) 식별용
+                                   aria-label == 보조기기(스크린 리더) 설명용
+    -->
+</html>
