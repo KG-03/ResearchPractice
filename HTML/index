@@ -19,14 +19,15 @@
   </ol>
 
   <h2>Link</h2>  
-  <a href="https://github.com">GitHub</a>
+  <p><a href="https://github.com">GitHub</a></p>
+  <p><a href="https://github.com/KG-03/ResearchPractice/blob/main/HTML/html%20structure%20practice" target="_blank" rel="noopener noreferrer">html structure practice</a></p>
 
   <h2>Image</h2>
-  <img src="https://dummyimage.com/640x4:3" alt="임시 이미지">
+  <p><img src="https://dummyimage.com/640x4:3" alt="임시 이미지"></p>
 
   <h2>Div Test</h2>
   <div>
-    <h2>div h2 text</h2>
+    <h3>div h3 text</h3>
     <p>div p text</p>
     <p>div p text2</p>
   </div>
@@ -51,6 +52,15 @@
 <a>                : 하이퍼링크.
   href             : 이동할 주소를 명시. <a href="..."> ... </a> 형식으로 이용.
   <a> ... </a>     : ...가 하이퍼링크의 이름과 비슷한 역할을 수행.
+  'enter'          : 엔터를 넣고 싶을 때 쓸 수 있는 방법들.
+                     1. ... </a><br>
+                     2. <p><a href ... > ... </p>
+                     3. <div><a href ... > ... </div>
+                     4. <a href="..." style="display:block;"> ... </a>
+                     5. ul 혹은 ol로 감싸기 (<ul> <li> <a...> </li> </ul>)
+  <a href="..." target="_blank" rel="noopener noreferrer"> : 새 탭으로 열기
+                                                             target ... == 새 탭에서 열라고 명시.
+                                                             rel == 보안/성능 옵션. 새 탭 열릴 때 원래 페이지를 건드리지 못하게 차단.
 <img>              : 이미지. 내용이라기보다는 하나의 객체. cout << img;와 같은 형식.
   src              : 이미지의 위치 명시.
   alt              : 이미지가 안 보일 때 드러나는 텍스트(설명)
