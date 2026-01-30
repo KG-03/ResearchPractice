@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <title> Head/Title Text </title>
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-  <h1> h1(title) change text </h1>
+  <h1 id="intro"> h1(title) change text </h1>
   <h2> h2 text </h2>
   <p> p(text) text </p>
   <p> p(text) plus text </p>
@@ -17,15 +19,19 @@
     <li>first li</li>
     <li>second li</li>
   </ol>
+  
+  <div class="section">
+    <h2 class="section-title">link</h2>
+    <p><a href="https://github.com">GitHub</a></p>
+    <p><a href="https://github.com/KG-03/ResearchPractice/blob/main/HTML/html%20structure%20practice" target="_blank" rel="noopener noreferrer">html structure practice</a></p>
+  </div>
 
-  <h2>Link</h2>  
-  <p><a href="https://github.com">GitHub</a></p>
-  <p><a href="https://github.com/KG-03/ResearchPractice/blob/main/HTML/html%20structure%20practice" target="_blank" rel="noopener noreferrer">html structure practice</a></p>
+  <div class="section">
+    <h2 class="section-title">image</h2>
+    <p><img src="https://dummyimage.com/640x4:3" alt="임시 이미지"></p>
+  </div>
 
-  <h2>Image</h2>
-  <p><img src="https://dummyimage.com/640x4:3" alt="임시 이미지"></p>
-
-  <h2>Div Test</h2>
+  <h2>div test</h2>
   <div>
     <h3>div h3 text</h3>
     <p>div p text</p>
@@ -66,6 +72,13 @@
   alt              : 이미지가 안 보일 때 드러나는 텍스트(설명)
 <div>              : 묶음. 브라우저에게 한 덩어리로 명시하는 것. struct(구조체)와 유사.
                      추후 CSS 및 JS 단계에서 'div만 적용되는 효과'를 구현 가능.
+-->
+
+<!--
+<link rel="stylesheet" href="style.css">  : 해당 HTML에 style.css를 적용
+class   : id와 같이 개발자(JS/CSS) 식별용. 묶음 개념.
+          id == 페이지에서 딱 하나. 특정 영역 강조.
+          class == 여러 개 있을 수 있음. 반복 구조에서 자주 이용.
 -->
 
 </html>
