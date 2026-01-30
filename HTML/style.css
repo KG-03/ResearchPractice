@@ -1,0 +1,34 @@
+/*전체 페이지*/
+body {
+    font-family: Arial, sans-serif;
+}
+
+/* html에서 id로 만든 라벨에 적용할 것. 딱 하나
+id="intro"로 명시된 부분에 적용되는 것.*/
+#intro {
+    background-color: #f2f2f2;
+    padding: 10px;
+}
+
+/* html에서 class로 만든 라벨에 적용할 것. 여러 개.
+class="section"로 명시된 부분에 적용되는 것.*/
+.section {
+    border: 1px solid #ccc;
+    margin-top: 20px;
+    padding: 10px;
+}
+
+/* class 요소가 section인 요소 안에 들어있는 img만 골라서 적용시키는 것.
+자식 관계의 img들에게 모두 적용 가능.
++) img들은 기본적으로 inline 성질이 있어서 미세한 여백이 보일 수 있는데,
+    해당 문제는 display:block으로 보완*/
+.section img {
+    max-width: 100%;
+    display: block;
+}
+
+/* class="section-title"로 명시된 부분에 적용되는 것.*/
+.section-title {
+    color: #2a5bd7;
+    margin-bottom: 10px;
+}
