@@ -31,4 +31,37 @@ class="section"로 명시된 부분에 적용되는 것.*/
 .section-title {
     color: #2a5bd7;
     margin-bottom: 10px;
+    font-weight: 600;
 }
+
+/* html에서 span으로 사용하는 부분. span="highlight"
+문장 일부 강조.*/
+.highlight {
+    color: #d63384;
+    font-weight: bold;
+}
+
+/* span으로 사용하면서 highlight된 것에 커서를 올렸을 때
+h2 같은 곳에 깔렸다가 클릭 가능한가 오해할 수 있기 때문에 span에 한정. */
+span.highlight:hover {
+    background-color: #ffe066;
+    cursor: pointer;
+}
+
+/* html에서 span으로 사용하는 부분. span="important"
+중요 표시.*/
+.important {
+    background-color: #fff3cd;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+.section-title.highlight {
+    text-decoration: underline;
+}
+
+/*HTML 태그 이름 자체(body, h1, p 등)에는 기호 불필요
+id로 만든 라벨에는 #표기 이용(h1 id="intro" 등)
+    페이지에 하나만 존재. 해당 이름표가 붙은 특정 하나만.
+class로 만든 라벨에는 .표기 이용(div class="section" 등)
+    성격표. 여러 개 가능. 같은 성격의 것들 전부.*/
