@@ -1,0 +1,25 @@
+#page-header {
+    background-color: #f5f5f5;
+}
+
+.day {
+    padding: 16px;
+    border: 1px solid #ccc;
+}
+
+.day-title {
+    font-weight: bold;
+}
+
+.day-desc {
+    color: #555;
+}
+
+.highlight {
+    background-color: #fffbe6;
+}
+
+/*
+border  : 경계선 표시.
+          border: (선의 두께. 1px 등) (선의 모양. solid 등) (선의 색상. #ccc 등.) 
+*/
