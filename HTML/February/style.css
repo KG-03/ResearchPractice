@@ -19,6 +19,19 @@
     background-color: #fffbe6;
 }
 
+.day .day-title {
+    color: red;
+}
+
+/*일부러 확인용으로 만든 선택자.*/
+.day.day-title {
+    color: blue;
+}
+
+.day.highlight {
+    border-color: red;
+}
+
 /*
 border  : 경계선 표시.
           border: (선의 두께. 1px 등) (선의 모양. solid 등) (선의 색상. #ccc 등.) 
