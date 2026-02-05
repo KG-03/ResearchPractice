@@ -9,11 +9,14 @@
 }
 
 .day-title {
-    font-weight: bold;
+    font-weight: 700;
+    font-size: 20px;
 }
 
 .day-desc {
     color: #555;
+    font-size: 14px;
+    line-height: 1.6;
 }
 
 .highlight {
@@ -29,16 +32,24 @@
 }
 
 /*
-일부러 확인용으로 만든 것.
+3일차: 일부러 확인용으로 만든 선택자.
+.day.day-title {
+    color: blue;
+}
+*/
+
+/*
+4일차: 일부러 확인용으로 만든 것.
 h2, p {
     margin: 0;
 }
 */
 
 /*
-일부러 확인용으로 만든 선택자.
-.day.day-title {
-    color: blue;
+5일차: 일부러 망친 것
+.day-desc {
+    font-size: 14px;
+    line-height: 1;
 }
 */
 
@@ -61,4 +72,16 @@ margin  : 바깥 여백. 사이 공간. 섹션과 섹션 사이가 벌어지는 
             두 박스 사이의 거리를 두 번 주지 않고, 큰 쪽 하나만 적용한다.
 * 기본적으로 h2, p에는 여백이 있다는 것을 기억할 것.
 
+font-weight : 100~900, 혹은 normal, bold 등으로 구분해서 사용.
+              bold 등을 쓸 때는 빠른 테스트나 개인 메모로 쓸 때 자주 이용.
+              숫자 등을 쓸 때는 디자인 기준을 만들거나 여러 텍스트 단계가 있을 때 자주 이용.
+
+font-size / font-weight : font-size는 정보의 단계(위계), font-weight는 같은 단계에서의 강조.
+                          따라서 제목은 단계가 다르고, 강조는 같은 단계에서 눈에 띄게 하는 것.
+                          크기가 가장 직관적인 위계 신호로 이용된다.
+
+line-height : 다음 줄의 시작점을 찾기 용이하기 위해 지정.
+              시선이 자연스럽게 이동하기 위함.
+              이것을 비율로 쓰는 이유는 font-size가 바뀌어도 줄 간격을 유지하기 위해서.
+                px로 지정할 수도 있지만, 비율로 쓰면 현재 font-size에 종속된다.
 */
