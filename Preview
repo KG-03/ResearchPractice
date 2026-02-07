@@ -44,3 +44,34 @@
   7일차: 1주차 복습.
         설명 가능한 것과 불가능한 것 정리.
 
+  8일차: display
+         block / inline / inline-block
+         span vs dib
+         할일: display 바꿔서 배치 변화 체감
+
+  9일차: width / height
+         % vs px
+         왜 height는 잘 안 먹는지
+         할일: 박스 크기 직접 조절
+
+  10일차: 정렬
+          text-aline
+          margin: auto
+          할일: 가운데 정렬 3가지 방식 이해
+
+  11일차: 배경
+          background-color
+          background-image
+          할일: "섹션 느낌" 만들기
+
+  12일차: hover
+          :hover
+          버튼 흉내
+          할일: 클릭하고 싶어 보이는 요소 만들기
+
+  13일차: CSS 정리 습관
+          주석, 정렬, 의미 있는 class 이름
+          할일: style.css 리팩토링
+
+  14일차: 2주차 복습
+          하나의 페이지를 처음부터 끝까지 다시 만들기
