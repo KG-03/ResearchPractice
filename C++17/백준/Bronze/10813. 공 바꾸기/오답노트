@@ -1,0 +1,79 @@
+이번 것도 영 틀린 곳을 모르겠다.
+다른 곳이라곤 하나도 없어 보이는데... 대체 어디가 틀렸다는 걸까.
+
+#include <iostream>
+using namespace std;
+
+int main() {
+    int N = 0;
+    int M = 0;
+
+    int i = 0;
+    int j = 0;
+    int save = 0;
+    
+    cin >> N >> M;
+    
+    int basket[N];
+    
+    for(int a = 0; a <= N; a++) {
+        basket[a] = a+1;
+    }
+
+    for(int a = 0; a < M; a++) {
+        cin >> i >> j;
+
+        save = basket[i-1];
+        basket[i-1] = basket[j-1];
+        basket[j-1] = save;
+    }
+
+    for(int a = 0; a < N; a++) {
+        cout << basket[a] << " ";
+    }
+    
+    return 0;
+}
+
+이것과
+#include <iostream>
+using namespace std;
+
+int main() {
+    int n, m, a, b;
+    int temp = 0;
+    
+    cin >> n >> m;
+    
+    int arr[n];
+    
+    for(int i = 0; i < n; i++)
+        arr[i] = i + 1;
+    
+    for(int i = 0; i < m; i++){
+        cin >> a >> b;
+        
+        temp = arr[a - 1];
+        arr[a - 1] = arr[b - 1];
+        arr[b - 1] = temp;
+        
+    }
+    
+    for(int i = 0 ; i < n; i++){
+        cout << arr[i] << " ";
+    }
+    
+    return 0;
+}
+
+이 차이를 알아내야만 한다...
+0으로 초기화한 게 문제라는 건가?
+
+그게 아니었다!
+   for(int a = 0; a < N; a++) {
+        basket[a] = a+1;
+    }
+이 부분에서 a <= N;을 해버려서 문제가 생기던 것이었다!
+아무래도 N까지 가면 초과되어버리니 오류로 나올만하다.
+코드를 아예 복사 붙여넣기로 썼더니 이런 문제가 생긴 것 같다.
+앞으로 조심하도록 하자.
