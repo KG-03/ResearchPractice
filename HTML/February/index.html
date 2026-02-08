@@ -12,51 +12,66 @@
         </header>
 
         <main>
-            <section class="day">
-                <h2 class="day-title">Day 1</h2>
-                <p class="day-desc">HTML로 큰 토대 만들기.</p>
-             </section>
+            <div class ="day-list">
+                <section class="day">
+                    <h2 class="day-title">Day 1</h2>
+                    <p class="day-desc">HTML로 큰 토대 만들기.</p>
+                </section>
 
-             <section class="day">
-                <h2 class="day-title">Day 2</h2>
-                <p class="day-desc">id와 class 써보기.</p>
-                <p class="day-desc">※CSS를 만든 뒤에는 반드시 html과 css를 link할 것.</p>
-             </section>
+                <section class="day">
+                    <h2 class="day-title">Day 2</h2>
+                    <p class="day-desc">id와 class 써보기.</p>
+                    <p class="day-desc">※CSS를 만든 뒤에는 반드시 html과 css를 link할 것.</p>
+                </section>
 
-             <section class="day">
-                <h2 class="day-title">Day 3</h2>
-                <p class="day-desc">CSS 선택자 집중.</p>
-                <ul>
-                    <li class="day-desc">CSS에서 .day .day-title {...}을 만들고 적용시키려 한다면 HTML에서 class="day" 하위에 class="day-title"을 만들면 된다.</li>
-                    <li class="day-desc">CSS에서 .day.day-title {...}을 만들고 적용시키려 한다면 HTML에서 class="day day-title"을 만들면 된다.</li>
-                </ul>
-             </section>
+                <section class="day">
+                    <h2 class="day-title">Day 3</h2>
+                    <p class="day-desc">CSS 선택자 집중.</p>
+                    <ul>
+                        <li class="day-desc">CSS에서 .day .day-title {...}을 만들고 적용시키려 한다면 HTML에서 class="day" 하위에 class="day-title"을 만들면 된다.</li>
+                        <li class="day-desc">CSS에서 .day.day-title {...}을 만들고 적용시키려 한다면 HTML에서 class="day day-title"을 만들면 된다.</li>
+                    </ul>
+                </section>
 
-             <section class="day">
-                <h2 class="day-title">Day 4</h2>
-                <p class="day-desc">박스 모델.</p>
-                <ul>
-                    <li class="day-desc">border: 요소의 끝. 경계선 표시. padding과 margin의 기준점.</li>
-                    <li class="day-desc">padding: 내부 여백. 내 공간.</li>
-                    <li class="day-desc">margin: 바깥 여백. 사이 공간.</li>
-                </ul>
-             </section>
+                <section class="day">
+                    <h2 class="day-title">Day 4</h2>
+                    <p class="day-desc">박스 모델.</p>
+                    <ul>
+                        <li class="day-desc">border: 요소의 끝. 경계선 표시. padding과 margin의 기준점.</li>
+                        <li class="day-desc">padding: 내부 여백. 내 공간.</li>
+                        <li class="day-desc">margin: 바깥 여백. 사이 공간.</li>
+                    </ul>
+                </section>
 
-             <section class="day">
-                <h2 class="day-title">Day 5</h2>
-                <p class="day-desc">텍스트 스타일.</p>
-                <ul>
-                    <li class="day-desc">font-size: 글자 크기. 텍스트의 위계 표시 가능.</li>
-                    <li class="day-desc">font-weight: 글자 굵기. 같은 위계에서의 강조 가능.</li>
-                    <li class="day-desc">line-height: 자간. 읽기 편하게 하는 옵션 형식.</li>
-                </ul>
-             </section>
+                <section class="day">
+                    <h2 class="day-title">Day 5</h2>
+                    <p class="day-desc">텍스트 스타일.</p>
+                    <ul>
+                        <li class="day-desc">font-size: 글자 크기. 텍스트의 위계 표시 가능.</li>
+                        <li class="day-desc">font-weight: 글자 굵기. 같은 위계에서의 강조 가능.</li>
+                        <li class="day-desc">line-height: 자간. 읽기 편하게 하는 옵션 형식.</li>
+                    </ul>
+                </section>
 
-             <section class="day highlight">
-                <h2 class="day-title">Day 6</h2>
-                <p class="day-desc">이미지 다루기. 부모 박스를 넘지 않도록 처리.</p>
-                <img class="day-image" src="https://dummyimage.com/1920x1080/000/fff" alt = "Placeholder Image">
-             </section>
+                <section class="day">
+                    <h2 class="day-title">Day 6</h2>
+                    <p class="day-desc">이미지 다루기. 부모 박스를 넘지 않도록 처리.</p>
+                    <img class="day-image" src="https://dummyimage.com/1920x1080/000/fff" alt = "Placeholder Image">
+                </section>
+
+                <section class="day">
+                    <h2 class="day-title">Day 7</h2>
+                    <p class="day-desc">1주차 복습.</p>
+                </section>
+            </div>
+
+            <div class ="day-list">
+                <section class="day highlight">
+                    <h2 class="day-title">Day 8</h2>
+                    <p class="day-desc">display / inline / inline-block</p>
+                    <p class="day-desc"><a href="https://github.com/KG-03/ResearchPractice/blob/main/HTML/February/day8-test.css" target="_blank" rel="noopener noreferrer">테스트</a></p>
+                </section>
+             </div>
         </main>
 
         <footer>
@@ -86,7 +101,8 @@
                         <section>만으로도 화면 구성, 주제 분리, 계층 구조 표현이 가능하지만, 독립된 콘텐츠인지 목록의 항목인지 페이지의 구성인지 알 수 없기 때문에 이용.
                         <section>을 폴더로 보고 <article>을 파일로 봐도 괜찮음.
         
-        <div>       : 레이아웃 잡기, 애니메이션, JS 이벤트 범위, 스타일링 묶음 등에 사용.
+        <div>       : 레이아웃 잡기, 애니메이션, JS 이벤트 범위, 스타일링 묶음 등에 사용. 문단을 끊는다.
+        <span>      : 문장 안에 섞인다.
 
         <img>       : 레이아웃 요소(페이지의 배치를 담당하는 요소)로 이용 가능.
             레이아웃 요소   : 무엇을 어디에 놓을지, 얼마나 떨어져 있을지, 어떻게 정렬될지 결정하는 역할.
