@@ -1,0 +1,39 @@
+/*display 실험*/
+
+.day8-test-text {
+    background: #ffd;
+    width: 200px;
+    height: 100px;
+    margin: 20px;
+
+    /*block*/
+    display: block;
+
+    /*inline
+    display: inline;*/
+
+    /*inline-block
+    display: inline-block;*/
+}
+
+.day8-test-box {
+    width: 100px;
+    height: 100px;
+    background: #ddd;
+    display: inline-block;
+}
+
+.day8-test-wrapper {
+    display: flex;
+    gap: 16px;
+}
+
+.day8-test-wrapper-box {
+    background: #ddd;
+    padding: 16px;
+}
+
+.day8-test-span {
+    display: inline-block;
+    width: 50px;
+}
