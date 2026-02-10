@@ -1,0 +1,68 @@
+당최 모르겠다.
+
+#include <iostream>
+using namespace std;
+
+int main() {
+    int n;
+    int m;
+
+    cin >> n >> m;
+    
+    int basket[n];
+
+    for (int a = 0; a < n; a++) {
+        basket[a] = a + 1;
+    }
+
+    int i;
+    int j;
+
+    for(int a = 0; a < m; a++) {
+        cin >> i >> j;
+
+        if(j-i > 0) {
+            int array[j] = {};
+            int check = 0;
+            
+            for(int b = i; b <= j; b++) {
+                array[check] = basket[b-1];
+                check++;
+            }
+
+            check = j-i;
+        
+            for(int b = i; b <= j; b++) {
+                basket[b-1] = array[check];
+                check--;
+            }
+        }
+    }
+
+    for(int a = 0; a < n; a++) {
+        cout << basket[a] << " ";
+    }
+    
+    return 0;
+}
+
+이거의 문제가 있다면 너무 길다는 건데, 그거 말고 틀린 부분이 있는지 모르겠다.
+일단, 제출 코드의 의도는 알겠다.
+- 참조 링크: https://carrot-farmer.tistory.com/20
+
+짝수든 홀수든 기준점으로부터 좌우반전이니까 이렇게 코드가 나오는 것도 이해를 한다.
+근데 내가 처음 낸 코드에서 어디가 잘못된 걸까...
+숫자가 잘못 꼬일 수도 있다는 문제가 있나?
+컴파일 시작하면서 바로 오류라고 말한 거 보면 조건이 또 묘하게 안맞는 걸지도 모른다.
+
+  
+다른 컴파일러를 써보니까 array[j]가 안 먹는 걸 확인했다.
+- 참조 링크: https://cpp.sh/
+
+아마 백준에서도 이게 문제였지 않았을까 싶다.
+그런 거 생각하면 일리가 있긴 하다. 근데 이게 안 먹을 거면 basket[n]도 안 먹어야 하는 거 아닐까?
+
+라고 생각해서 좀 제대로 읽어보고 수정해보니까 해결됐다.
+아마 array[j] = {}; 로 바로 초기화시도를 했던 게 문제가 됐던 것 같다.
+가변 길이 배열이 바로 초기화하려면 아무래도 오류가 날 법 하긴 하다.
+잘 기억해뒀다가 다시 실수하지 않도록 하자.
