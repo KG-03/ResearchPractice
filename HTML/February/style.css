@@ -1,3 +1,7 @@
+h1 {
+    text-align: center;
+}
+
 #page-header {
     background-color: #f5f5f5;
 }
@@ -42,6 +46,21 @@
     gap: 16px;
 }
 
+.day10-box {
+    background: #ddd;
+    margin-bottom: 8px;
+    width: 100px;
+    height: 100px;
+
+    /*박스 위치를 이동*/
+    margin: 0 auto;
+
+    /*박스 안의 내용을 정렬*/
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 /*
 3일차: 일부러 확인용으로 만든 선택자.
 .day.day-title {
@@ -65,6 +84,7 @@ h2, p {
 */
 
 /*
+4일차
 border  : 경계선 표시. 요소의 끝.
           border: (선의 두께. 1px 등) (선의 모양. solid 등) (선의 색상. #ccc 등.)
           border만 눈에 보이는 것(선)이라서 padding, margin(둘 다 공간 개념)의 기준점이 된다.
@@ -85,6 +105,7 @@ margin  : 바깥 여백. 사이 공간. 섹션과 섹션 사이가 벌어지는 
 */
 
 /*
+5일차
 font-weight : 100~900, 혹은 normal, bold 등으로 구분해서 사용.
               bold 등을 쓸 때는 빠른 테스트나 개인 메모로 쓸 때 자주 이용.
               숫자 등을 쓸 때는 디자인 기준을 만들거나 여러 텍스트 단계가 있을 때 자주 이용.
@@ -100,6 +121,7 @@ line-height : 다음 줄의 시작점을 찾기 용이하기 위해 지정.
 */
 
 /*
+6일차
 img     : 이미지 파일 자체에 기본적으로 고유한 가로/세로(px) 존재.
           css를 안 주면 자기 원본 크기로 렌더링.
           따라서 max-width 등을 써서 전체 크기를 제한.
@@ -121,6 +143,7 @@ img     : 이미지 파일 자체에 기본적으로 고유한 가로/세로(px)
 */
 
 /*
+8일차
 display : flex로 하면 하위 요소들이 가로로 정렬된다.
           span(inline 요소, width, height가 무시되는 요소)에 inline-block을 적용할 때 이용되기도 한다.
           부모-자식 관계의 요소에서는 보통 부모에게 display를 적용시켜서 배치의 책임을 지게 만든다.
@@ -128,4 +151,24 @@ display : flex로 하면 하위 요소들이 가로로 정렬된다.
     inline          : width가 없어지고 위아래 margin이 무시된다. 줄바꿈도 없어진다.
     inline-block    : width, height가 적용된다. 사이에 여백이 있다. 줄바꿈도 없어진다.
 gap     : 하위 요소들 사이의 거리 전용 도구. margin과 비슷한 역할.
+*/
+
+/*
+10일차
+text-align  : 텍스트, inline 요소를 정렬할 때 이용.
+              부모 요소의 가로폭을 기준으로 정렬.
+              텍스트를 감싸는 박스(요소 자체)는 움직이지 않는다.
+              제목 가운데, 문단 가운데, 버튼 안 글자 정렬 시 사용.
+
+margin: 0 auto  : 적용하려면 width가 있어야 하고, block 요소(display:block)여야 한다.
+                  블록 요소 자체를 정렬. 부모 요소의 가로 폭을 기준으로 정렬.
+                  좌우 여백을 브라우저가 같은 값으로 자동 계산한다.
+                  카드, 섹션 박스, 레이아웃의 중심 콘텐츠 정렬 시 사용. 해당 박스를 화면 중앙에 두고 싶을 때.
+
+display: flex;
+justify-content: center;
+align-items: center;        : 자식 요소를 정렬. flex 컨테이너의 내부 공간을 기준으로 정렬.
+                              박스 안 아이콘 + 텍스트 중앙, 버튼 안 콘텐츠 정렬, 카드 내부 레이아웃 정렬 시 사용.
+                              justify-content : 주축(가로)을 정렬.
+                              align-items     : 교차축(세로)을 정렬.
 */
