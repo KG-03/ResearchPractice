@@ -1,13 +1,12 @@
 #include <iostream>
-#include <string>
 using namespace std;
 
 int main() {
-    string S;
+    char S[1001];
     int i;
 
     cin >> S;
     cin >> i;
 
-    cout << S.substr(i-1,1) << endl;
+    cout << S[i-1] << endl;
 }
