@@ -1,0 +1,23 @@
+char 배열로 문제를 해결해보려고 했는데, 아무래도 char S[1000]에다가 cin으로 문자를 넣는다는 게 좀 어려웠던 거 같다.
+수식 자체는 괜찮았던 것 같은데, 어딘가가 또 문제가 있는 모양이다.
+
+#include <iostream>
+using namespace std;
+
+int main() {
+    char S[1000];
+    int i;
+
+    cin >> S;
+    cin >> i;
+
+    cout << S[i-1] << endl;
+}
+
+그래서 인터넷을 확인해봤는데,
+참조: https://goalsdhkdwk.tistory.com/entry/BOJ%EB%B0%B1%EC%A4%80-27866%EB%B2%88-%EB%AC%B8%EC%9E%90%EC%99%80-%EB%AC%B8%EC%9E%90%EC%97%B4-cc-%ED%92%80%EC%9D%B4
+
+배열에 1001을 적어야 한다.
+최대 단어 길이가 1000이니까, 맨 뒤의 공백을 생각해서 1001으로 적어야 했던 것이었다.
+어차피 1000자까지 쓸 일 없으니 괜찮을 거라고 안일하게 생각해버려서 틀렸다.
+앞으로 주의하도록 하자.
