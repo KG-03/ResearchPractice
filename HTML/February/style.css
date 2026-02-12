@@ -8,6 +8,7 @@ h1 {
 
 .day {
     border: 1px solid #ccc;
+    background-color: #f9f9f9;
     padding: 16px;
     margin: 0;
 }
@@ -59,6 +60,43 @@ h1 {
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+.day12-button {
+    display: inline-block;
+    padding: 12px 20px;
+    background-color: #ddd;
+
+    cursor: pointer;
+}
+
+.day12-button:hover {
+    background-color: #bbb;
+}
+
+.day12-border-button {
+    display: inline-block;
+    padding: 10px 16px;
+    border: 2px solid #333;
+
+    cursor: pointer;
+}
+
+.day12-border-button:hover {
+    border-color: red;
+}
+
+.day12-card {
+    width: 200px;
+    padding: 16px;
+    background-color: #f5f5f5;
+    border: 1px solid #ccc;
+
+    cursor: pointer;
+}
+
+.day12-card:hover {
+    background-color: #eaeaea;
 }
 
 /*
@@ -171,4 +209,17 @@ align-items: center;        : 자식 요소를 정렬. flex 컨테이너의 내�
                               박스 안 아이콘 + 텍스트 중앙, 버튼 안 콘텐츠 정렬, 카드 내부 레이아웃 정렬 시 사용.
                               justify-content : 주축(가로)을 정렬.
                               align-items     : 교차축(세로)을 정렬.
+*/
+
+/*
+12일차
+hover   : 버튼. 무언가를 움직이는 게 아닌, 상태를 구분시킨다.
+          inline-block 요소를 주는 이유는 텍스트처럼 두되, 박스처럼 다루기 위해서.
+          버튼 한 줄이 전체를 차지해도 된다면, inline-block은 필요하지 않다.
+            inline이면 padding은 되지만 margin은 안 되고, width/height 제어가 불안정해진다.
+            block이면 한 줄을 전부 차지하면서 줄바꿈도 일어난다.
+          border만 바꾸는 경우: 테두리만 바꾸는 경우.
+                               단정하고 깔끔한 스타일.
+          카드 전체가 반응하는 경우: 카드 전체가 반응하는 경우.
+                                   클릭 영역이 넓어 보인다.
 */
