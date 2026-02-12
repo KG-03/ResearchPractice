@@ -1,0 +1,10 @@
+방법이 생각나지 않아서 다른 곳에서 참조했다.
+https://carrot-farmer.tistory.com/22
+https://goalsdhkdwk.tistory.com/entry/BOJ%EB%B0%B1%EC%A4%80-11720%EB%B2%88-%EC%88%AB%EC%9E%90%EC%9D%98-%ED%95%A9-cc-%ED%92%80%EC%9D%B4
+
+요지는, string으로 값을 받은 뒤, 아스키 변환을 통해서 문제를 해결하는 것이었다.
+string 자체를 배열처럼 접근할 수 있다는 것도 사실 처음알았는데(string s="hello"; cout << s[0] << endl; 하면 'h'가 나오는 형식)
+  아스키로 변환해서 문제를 해결한다는 발상도 처음 알았다.
+
+아스키로 변환하는 이유는 값이 문자열로 담겼기 때문이라고 한다.
+물론 다른 방법으로도 string을 int로 바꿀 수는 있겠지만, 많은 곳에서 아스키를 활용하는 것을 확인하고 한번쯤 짚고 넘어가는 게 좋을 것 같았다.
