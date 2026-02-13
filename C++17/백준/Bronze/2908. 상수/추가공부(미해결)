@@ -1,0 +1,51 @@
+원래는 다음과 같은 방법으로 풀어보려고 했다.
+
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+int main() {
+    string A;
+    string B;
+
+    cin >> A >> B;
+
+    string trans;
+
+    for(int i = A.length(); i >= 0; i--) {
+        trans += A[i];
+    }
+
+    A = trans;
+    trans.clear();
+
+    for(int i = B.length(); i >= 0; i--) {
+        trans += B[i];
+    }
+
+    B = trans;
+    trans.clear();
+
+    int numA = stoi(A);
+    int numB = stoi(B);
+
+    
+    return 0;
+}
+
+
+하지만 도무지 stoi() 가 작동하지 않아서 노선을 변경했다.
+둘째치고 여기서 stoi()를 사용하는지 확인하려고 다른 사람의 코드를 참조했는데, 그렇게 사용하질 않았다.
+참조: https://domybestinlife.tistory.com/98
+
+방식은 '아스키코드'때와 같다. 문자 0~9는 48~57 사이의 값을 가지기 때문에(아스키코드 상에서) 48씩 빼주면서 숫자를 불러온 것이다.
+문제 자체는 어렵지 않았다.
+
+  
+다만 stoi()가 작동하지 않는 건 상당히 당황스럽다. 
+버전 문제라고도 말하고 이런저런 말이 있긴 한데, 뭔가 다른 이유가 있는 것 같다.
+  C++11 미만 컴파일러나, 변환 범위를 초과했다, string 헤더가 포함되지 않았다, 그런 말들이 있긴 한데, 사실 해당되진 않는 것 같다.
+  
+이러고 있으니까 옛날에 stoi()가 작동하지 않아서 고생한 적이 있는데, 갑자기 작동해서 당황했던 기억이 들었다.
+그냥 stoi()라는 기능이 있다는 것만 잘 기억하고 넘어가는 게 나을지도 모르겠다.
