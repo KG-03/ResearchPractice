@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8">
+        <title>Week 2 Summary</title>
+        <link rel="stylesheet" href="week2_style.css">
+    </head>
+
+    <body>
+        <header id="page-header">
+            <h1>2주차 정리 내용</h1>
+        </header>
+
+        <main>
+            <section class="subsections">
+                <h2 class="title">1. 배치방식</h2>
+                <h3>display / inline / inline-block</h3>
+                <div class="flexsection">
+                    <div class="card">
+                        <h4>display</h4>
+                        <p>width 적용 가능. 줄바꿈 적용.</p>
+                    </div>
+                    <div class="card">
+                        <h4>inline</h4>
+                        <p>width, margin 무시, 줄바꿈 무시.</p>
+                    </div>
+                    <div class="card">
+                        <h4>inline-block</h4>
+                        <p>width, margin 적용 가능, 줄바꿈 무시.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="subsections">
+                <h2 class="title">2. 크기 조절</h2>
+                <h3>width / height / % px</h3>
+                <div class="flexsection">
+                    <div class="card">
+                        <h4>width</h4>
+                        <p>가로 값 조정.</p>
+                    </div>
+                    <div class="card">
+                        <h4>height</h4>
+                        <p>세로 값 조정.</p>
+                    </div>
+                    <div class="card">
+                        <h4>%</h4>
+                        <p>부모 요소 기준에서 배율.</p>
+                        <p>부모에 명시적으로 값이 없으면 적용 불가.</p>
+                    </div>
+                    <div class="card">
+                        <h4>px</h4>
+                        <p>상수. 현재 값을 변경.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="subsections">
+                <h2 class="title">3. 정렬</h2>
+                <h3>text-align / margin: auto</h3>
+                <ul>
+                    <li>text-align: 텍스트를 정렬.</li>
+                    <li>margin: auto: 블록 요소 자체를 정렬.</li>
+                    <li>justify-content / align-items: 블록 요소의 자식들을 정렬.
+                        <ul>
+                            <li>justify-content: 가로 정렬.</li>
+                            <li>align-items: 세로 정렬.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </section>
+
+            <section class="subsections background-image">
+                <h2 class="title">4. 배경(background)</h2>
+                <h3>background-color / background-image / background-size ...</h3>
+                <ul>
+                    <li>background-color / background-image: border 없이도 구분 시키기 가능.</li>
+                    <li>background-position: background의 기준점 설정.</li>
+                    <li>background-size: 이미지 크기 결정.
+                        <ul>
+                            <li>auto</li>
+                            <li>cover</li>
+                            <li>contain</li>
+                            <li>px, % auto</li>
+                        </ul>
+                    </li>
+                </ul>
+            </section>
+
+            <section class="subsections">
+                <h2 class="title">5. 버튼(hover)</h2>
+                <h3>hover</h3>
+                <button class="button btn-normal">기본 버튼</button>
+                <button class="button btn-border">border 버튼</button>
+                <button class="button btn-card">
+                    <h3>card 버튼</h3>
+                    <p>카드 형태 버튼.</p>
+                    <p>하위에 텍스트가 더 들어갈 수 있다.</p>
+                </button>
+            </section>
+        </main>
+
+        <footer>
+            <p>© 2026</p>
+        </footer>
+    </body>
+</html>

@@ -1,0 +1,95 @@
+h1 {
+    text-align: center;
+}
+
+footer {
+    font-size: 12px;
+    color: #505050;
+}
+
+#page-header {
+    padding: 5px;
+    background-color: #4b4b4b;
+    color:white;
+}
+
+.title {
+    font-size: 24px;
+    font-weight: 700;
+
+    color: #2141cf
+}
+
+.subsections {
+    padding: 10px;
+    margin: 10px;
+
+    border: 2px dotted #4b4b4b;
+    background-color: #dbdbdb;
+}
+
+.flexsection {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5%;
+}
+
+.card {
+    padding: 20px;
+    text-align: center;
+
+    border: 2px solid #2141cf;
+    background-color: #f1f1f1;
+}
+
+.background-image {
+    background-image: url("pattern.jpg");
+    background-size: cover;
+    background-position: center;
+}
+
+.button {
+    display: block;
+    cursor: pointer;
+    padding: 5px 10px;
+    margin: 10px;
+}
+
+.btn-normal {
+    width: 100px;
+    background-color:#cdd0dd;
+}
+
+.btn-normal:hover {
+    background-color:#a2aac5;
+}
+
+.btn-border {
+    width: 100px;
+    border: 3px solid #333;
+}
+
+.btn-border:hover {
+    border-color: #2141cf;
+}
+
+.btn-card {
+    width: 250px;
+    padding: 16px;
+
+    border: 2px solid #333;
+    background-color: #cdd0dd;
+}
+
+.btn-card:hover {
+    border-color: #2141cf;
+    background-color:#a2aac5;
+}
+
+/*
+flex-wrap: wrap;
+창 자체를 줄이면 각자의 크기를 유지하지 못하고 구겨짐.
+이걸 쓰면 각자의 크기를 유지하면서 줄어듦. 그러면서 정렬이 가로에서 세로로 바뀌는 모습 확인 가능. 
+*/
