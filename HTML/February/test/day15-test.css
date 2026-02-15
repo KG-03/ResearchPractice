@@ -1,0 +1,20 @@
+.day15-container {
+    display: flex;
+    border: 2px solid black;
+}
+
+.day15-box {
+    display: flex;
+    flex-direction: column;
+
+    width: 100px;
+    height: 100px;
+    
+    background-color: lightgray;
+    border: 1px solid black;
+}
+
+/*
+flex-direction: 기본값이 row(가로). column(세로)으로 주면 세로로 정렬된다.
+                정렬 방향을 정하는 용도로 사용된다.
+*/
