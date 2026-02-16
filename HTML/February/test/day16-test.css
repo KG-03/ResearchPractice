@@ -1,0 +1,32 @@
+.day16-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    height: 300px;
+
+    border: 2px solid black;
+}
+
+.day16-box {
+    display: flex;
+    flex-direction: column;
+
+    width: 200px;
+    
+    background-color: lightgray;
+    border: 1px solid black;
+}
+
+/*
+justify-content : 가로(주축/main axis) 방향 정렬.
+                  flex-start    : 왼쪽
+                  center        : 가로 중앙
+                  flex-end      : 오른쪽
+                  space-between : 양 끝 고정 + 사이 간격 자동
+align-items     : 세로(교차축/cross axis) 방향 정렬.
+                  stretch       : 부모 크기만큼 자식 크기를 늘리기(기본값)
+                  flex-start    : 왼쪽
+                  center        : 가로 중앙
+                  flex-end      : 오른쪽
+
+*/
