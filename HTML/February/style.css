@@ -9,7 +9,10 @@ h1 {
 /* day 8 내용이지만 부모-자식 관계상 위로 배치 */
 .day-list {
     display: flex;
+    flex-direction: column;
+
     gap: 16px;
+    padding: 20px;
 }
 
 .day {
@@ -116,6 +119,23 @@ h1 {
 
 .day12-card:hover {
     background-color: #eaeaea;
+}
+
+/*카드 섹션*/
+.day17-card-section {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.day17-card {
+    width: 200px;
+    padding: 20px;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+
+    text-align: center;
 }
 
 /*
@@ -257,4 +277,9 @@ hover   : 버튼. 무언가를 움직이는 게 아닌, 상태를 구분시킨�
 타이포그래피 (font, color, text-align) ->
 기타 (transition, animation)
 이런 순서로도 절
+*/
+
+/*
+17일차
+flex-wrap: wrap : 창 크기를 줄이면 자식 요소가 잘리거나 변화하는 대신, 아래로 내려가서 재정렬.
 */
