@@ -138,6 +138,36 @@ h1 {
     text-align: center;
 }
 
+/*18일차, 반응형*/
+.day18-card-section {
+    display: flex;
+ 
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.day18-card {
+    width: 100px;
+    padding: 20px;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+
+    text-align: center;
+}
+
+
+@media (max-width: 600px){
+    .day18-card-section {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .day18-card {
+        width: 90%;
+    }
+}
+
 /*
 3일차: 일부러 확인용으로 만든 선택자.
 .day.day-title {
@@ -282,4 +312,9 @@ hover   : 버튼. 무언가를 움직이는 게 아닌, 상태를 구분시킨�
 /*
 17일차
 flex-wrap: wrap : 창 크기를 줄이면 자식 요소가 잘리거나 변화하는 대신, 아래로 내려가서 재정렬.
+*/
+
+/*
+18일차
+@media (max-width: 600px)   : 너비가 600px 이내일 때 적용된다는 의미.
 */
