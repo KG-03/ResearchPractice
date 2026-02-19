@@ -1,0 +1,49 @@
+for문이 중첩되어서 시간 초과가 됐다.
+
+#include <iostream>
+using namespace std;
+
+int main() {
+    string S;
+    cin >> S;
+
+    for(int i = 0; i < S.length(); i++) {
+        S[i] = toupper(S[i]);
+    }
+
+    char s_most;
+    int c_most = 0;
+
+    for(int i = 0; i < S.length(); i++) {
+        int count = 0;
+        
+        for(int j = 0; j < S.length(); j++) {
+            if(S[i] == S[j]) count++;
+        }
+
+        if(c_most == count && s_most != S[i]) {
+            s_most = '?';
+        }
+
+        if(c_most < count) {
+            c_most = count;
+            s_most = S[i];
+        }
+    }
+    
+    cout << s_most << endl;
+    
+    return 0;
+}
+
+이 구조로 하면 제대로 출력은 되지만, for문이 두 번 사용되어서 시간이 초과되어 버린다.
+그래서 결국 다른 답지를 봐서 해결하게 됐다.
+참조: https://blog.naver.com/tkdldjs35/221315853167
+
+본 방식은 아스키 코드를 쓰는 방식이다. 대문자만 사용하기 때문에 65를 빼고 더하는 방식을 이용했다.
+
+
+덧붙여서 toupper() 라는 함수를 이용하고 있는데, 해당 함수는 소문자를 대문자로 변환시켜주는 함수다.
+참조: https://hoho325.tistory.com/314
+
+  
