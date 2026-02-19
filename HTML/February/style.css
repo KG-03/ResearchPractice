@@ -1,3 +1,7 @@
+body {
+    background-color: #f4f6f8;
+}
+
 h1 {
     text-align: center;
 }
@@ -168,6 +172,27 @@ h1 {
     }
 }
 
+.day19-card {
+    background-color: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: 0.3s;
+}
+
+.day19-card:hover {
+    transform: translateY(-5px);
+}
+
+.day19-card h3 {
+    margin-bottom: 10px;
+}
+
+.day19-card p {
+    color: #555;
+    line-height: 1.6;
+}
+
 /*
 3일차: 일부러 확인용으로 만든 선택자.
 .day.day-title {
@@ -317,4 +342,23 @@ flex-wrap: wrap : 창 크기를 줄이면 자식 요소가 잘리거나 변화�
 /*
 18일차
 @media (max-width: 600px)   : 너비가 600px 이내일 때 적용된다는 의미.
+*/
+
+/*
+19일차
+border-radius   : 박스 요소의 테두리를 둥글게 만들 때 사용.
+box-shadow      : 박스 뒤에 그림자를 만들 때 사용.
+                  box-shadow: (x축이동) (y축이동) (흐림정도 퍼짐) (색상);
+                  box-shadow: 0 4px 10px rgba(0,0,0,0.1);이라고 하면,
+                    좌우 이동 없고 아래로 4px 이동, 10px정도 흐리기(클수록 퍼진다), 검정색에 10% 투명도를 가지라고 명시하는 것.
+transform       : 요소를 변형시키는 속성.
+                  transform: translateY(-5px);이라고 하면,
+                    Y축으로 -5px 이동(위로 5px 이동)한다는 의미.
+                  그 외에도 scale(1.1), rotate(10deg) 등도 있다. (각각 10% 커지기, 10도 회전하기)
+transition      : 변화가 부드럽게 일어나도록 만드는 속성.
+                  해당 함수가 없으면 갑자기 확 변화해버린다.
+                  transition: 0.3s;이라고 하면,
+                    0.3초 동안 부드럽게 이동한다는 의미.
+                  transition: transform 0.3s ease;라고 쓰는 게 더 정확하다.
+                    transform 변화에 대해 0.3초동안 부드러운 속도 곡선(ease)로 움직이라는 의미.
 */
