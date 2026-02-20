@@ -1,0 +1,41 @@
+h1 {
+    text-align: center;
+}
+
+.profile-card {
+    padding: 20px;
+    max-width: 600px;
+    width: 100%;
+
+    margin: 0 auto 8px;
+
+    text-align: center;
+
+    background: #ccc;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+@media (max-width: 600px){
+    .profile-card {
+        width: 90%;
+    }
+}
+
+.profile-image {
+    display: block;
+    max-width: 100%;
+    margin-bottom: 5px;
+}
+
+.profile-btn {
+    margin-top: 20px;
+    display: inline-block;
+    cursor: pointer;
+
+    padding: 12px 20px;
+    background-color: #ddd;
+}
+
+.profile-btn:hover {
+    background-color: #bbb;
+}
