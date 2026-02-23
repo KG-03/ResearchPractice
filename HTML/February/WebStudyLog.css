@@ -1,0 +1,73 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+}
+
+header {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+main {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.week-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+}
+
+.week-card {
+    flex: 0 0 calc(50% - 10px);
+
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    background: white;
+
+    transition: 0.3s;
+}
+
+@media (max-width: 900px) {
+    .week-card {
+        flex: 0 0 calc(50% - 20px);
+    }
+}
+
+@media (max-width: 600px) {
+    .week-card {
+        flex: 0 0 100%;
+    }
+}
+
+.week-card:hover {
+    transform: translateY(-5px);
+}
+
+/*
+23일차
+flex: 0 0 calc(...)     : 본 형태는 축약형.
+                          flex-grow flex-shrink flex-basis  로 풀어쓸 수 있다.
+                          즉, flex: grow shrink basis;인 것.
+                          flex-grow: 0      이 의미는 남는 공간이 있어도 늘어나지 않는다.
+                          flex-shrink: 0    이 의미는 공간이 부족해도 줄어들지 않는다.
+                          flex-basis: ...   이 의미는 기본 너비. 여기에 calc(...)에 들어갔다.
+                              calc(...)     33.333% - 20px을 주면 부모 컨테이너의 3등분을 하고 20px을 빼는 것.
+                                            한 줄에 3개를 배치하는데, 컨테이너에 gap:20px;을 줘놔서 20을 뺐다.
+                                            3개의 카드가 한 줄에 있으면 카드 사이에 gap이 2번 들어가기 때문에, 실제로 공간이 좀 더 필요해지기 때문.
+box-sizing  : 실제 너비는 지정된 너비 안에 padding이 포함되는 형식. (기본값이 content-box)
+              실제 너비 = basis + padding + border.
+                  이 때문에 카드 하나가 50%가 넘는 상황이 발생했고, 카드 2개가 들어가도록 계산했음에도 1개가 들어가는 현상이 발생했다.
+                  (50% - 10px) + 좌우 padding 40px이 되어버리면 두 개가 들어갈 자리가 없다.
+              하지만 본 함수의 인자로 border-box를 주면 flex-basis 안에 padding이 포함되도록 변경할 수 있다.
+                  실제 너비 = 지정된 너비 안에 padding 포함
+*/
