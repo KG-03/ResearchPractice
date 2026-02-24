@@ -10,31 +10,60 @@
         <header>
             <h1>웹 개발 공부 기록</h1>
             <p>2026.02.01 ~ 2026.02.28</p>
+
+            <nav>
+                <ul>
+                    <li><a href="#intro">Home</a></li>
+                    <li><a href="#weeks">Weeks</a></li>
+                    <li><a href="#reflection">Reflection</a></li>
+                </ul>
+            </nav>
         </header>
 
         <main>
-            <section class="intro">
+            <section id="intro" class="intro">
                 <h2>소개</h2>
                 <p>HTML과 CSS 중심으로 프론트엔드 기초 배우기</p>
             </section>
 
-            <section class="weeks">
+            <section id="weeks" class="weeks">
                 <h2>주차별 정리</h2>
 
                 <div class="week-container">
                     <article class="week-card">
                         <h3>1주차</h3>
                         <p>HTML 기본 구조 이해</p>
+                        <ul>
+                            <li>class, id 사용 기준 정리</li>
+                            <li>CSS 선택자 집중</li>
+                            <li>박스 모델</li>
+                            <li>텍스트 스타일</li>
+                            <li>이미지 다루기</li>
+                        </ul>
                     </article>
 
                     <article class="week-card">
                         <h3>2주차</h3>
                         <p>CSS 기초 스타일링</p>
+                        <ul>
+                            <li>display</li>
+                            <li>width/height</li>
+                            <li>정렬(text-align, margin: auto)</li>
+                            <li>배경(background-color, background-image)</li>
+                            <li>hover</li>
+                            <li>CSS 정리</li>
+                        </ul>
                     </article>
 
                     <article class="week-card">
                         <h3>3주차</h3>
                         <p>flex와 반응형 레이아웃</p>
+                        <ul>
+                            <li>flex</li>
+                            <li>여러 섹션 배치(카드 느낌)</li>
+                            <li>반응형(% 단위 활용)</li>
+                            <li>페이지 통일감 줘보기</li>
+                        </ul>
                     </article>
 
                     <article class="week-card">
@@ -44,7 +73,7 @@
                 </div>
             </section>
 
-            <section class="reflection">
+            <section id="reflection" class="reflection">
                 <h2>느낀 점</h2>
                 <ul>
                     <li>꽤 자주 문서를 만들었다고 생각했는데, 아직도 HTML 문서를 만들 때 써야하는 DOCTYPE ~ head까지를 외우기 어렵다.</li>
@@ -57,5 +86,8 @@
         <footer>
             <p>© 2026 Web Study Log</p>
         </footer>
+        <!--
+        <nav>   : navigation(내비게이션). 페이지 이동을 위한 메뉴.
+        -->
     </body>
 </html>
