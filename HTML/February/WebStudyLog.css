@@ -27,9 +27,13 @@ header {
 }
 
 main {
-    max-width: 1000px;
+    max-width: 900px;
     margin: 0 auto;
     padding: 20px;
+}
+
+main > section {
+    margin-bottom: 120px;
 }
 
 nav ul {
@@ -44,6 +48,7 @@ nav a {
     text-decoration: none;
     color: #333;
     font-weight: bold;
+    transition: color 0.2s ease;
 }
 
 nav a:hover {
@@ -57,11 +62,17 @@ nav a:hover {
 }
 
 h1 {
-    font-size: 32px;
+    font-size: 36px;
+    margin-bottom: 10px;
 }
 
 h2 {
-    font-size: 24px;
+    font-size: 28px;
+    margin-bottom: 20px;
+}
+
+h3 {
+    font-size: 20px;
 }
 
 .week-container {
@@ -79,7 +90,24 @@ h2 {
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     background: white;
 
-    transition: 0.3s;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.week-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+}
+
+.week-card h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.week-card small {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #777;
 }
 
 @media (max-width: 900px) {
@@ -92,11 +120,6 @@ h2 {
     .week-card {
         flex: 0 0 100%;
     }
-}
-
-.week-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
 }
 
 /*
@@ -134,4 +157,11 @@ sticky  : position: sticky;     특정 위치에서 고정
           nav로 앵커 이동을 할 때, sticky가 요소를 가리는 현상이 생기기 때문.
               해당 요소의 시작 위치를 지정 px 아래에서 멈추라는 의미.
               px은 본인 header의 높이만큼 맞춰주면 된다.
+*/
+
+/*
+25일차
+transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transform과 box-shadow가 변할 때, 0.3초 동안 부드럽게 변화하라는 뜻.
+    transition: (속성) (시간) (속도곡선);
 */
