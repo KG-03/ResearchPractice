@@ -2,6 +2,10 @@
     box-sizing: border-box;
 }
 
+:root {
+    --accent: #0077ff;
+}
+
 html {
     scroll-behavior: smooth;
 }
@@ -24,6 +28,7 @@ header {
     top: 0;
     background: white;
     z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
 main {
@@ -34,6 +39,14 @@ main {
 
 main > section {
     margin-bottom: 120px;
+}
+
+footer {
+    text-align: center;
+    padding: 20px;
+    background: white;
+    color: #777;
+    font-size: 14px;
 }
 
 nav ul {
@@ -52,7 +65,7 @@ nav a {
 }
 
 nav a:hover {
-    color: #0077ff;
+    color: var(--accent);
 }
 
 #intro,
@@ -69,6 +82,7 @@ h1 {
 h2 {
     font-size: 28px;
     margin-bottom: 20px;
+    color: var(--accent);
 }
 
 h3 {
@@ -101,6 +115,17 @@ h3 {
 .week-card h3 {
     margin-top: 0;
     margin-bottom: 10px;
+}
+
+.week-card ul {
+    padding-left: 0;
+    margin-top: 10px;
+    list-style: none;
+}
+
+.week-card li::before {
+    content: "> ";
+    color: var(--accent);
 }
 
 .week-card small {
@@ -164,4 +189,16 @@ sticky  : position: sticky;     특정 위치에서 고정
 transition: transform 0.3s ease, box-shadow 0.3s ease;
     transform과 box-shadow가 변할 때, 0.3초 동안 부드럽게 변화하라는 뜻.
     transition: (속성) (시간) (속도곡선);
+*/
+
+/*
+26일차
+:root   : 문서 전체의 최상위 요소를 선택하는 선택자. 이 문서 전체에 적용되는 설정을 적겠다는 의미.
+          html 문서상에서는 사실상 <html>을 의미한다.
+--accent    : CSS 변수(커스텀 속성)
+              --이름: 값; 해당 형태로 사용한다.
+
+즉, :root { --accent: #0077ff; }로 한다면, accent라는 이름의 색 변수를 만든다는 뜻.
+    이렇게 만든 변수는 var() 함수로 이용 가능. var(--accent) 와 같은 형식.
+    차후 색상을 변경하고 싶을 때, :root 안에 있는 --accent의 색상만 변경하면 된다.
 */
