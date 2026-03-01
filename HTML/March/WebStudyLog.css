@@ -1,0 +1,229 @@
+/* ===== Global ===== */
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    --accent: #0077ff;
+    --header-height: 260px;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+
+body {
+    margin: 0;
+
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+
+    background: #f5f5f5;
+}
+
+/* ===== Typography ===== */
+h1 {
+    margin-bottom: 10px;
+    font-size: 36px;
+}
+
+h2 {
+    margin-bottom: 20px;
+    padding-left: 10px;
+    border-left: 4px solid var(--accent);
+    
+    font-size: 28px;
+
+    color: var(--accent);
+}
+
+h3 {
+    font-size: 20px;
+}
+
+/* ===== Layout ===== */
+header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+
+    padding: 40px 20px;
+
+    text-align: center;
+
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+main > section {
+    margin-bottom: 120px;
+}
+
+footer {
+    text-align: center;
+    padding: 20px;
+
+    color: #777;
+    font-size: 14px;
+
+    background: white;
+}
+
+/* ===== Navigation ===== */
+nav ul {
+    display: flex;
+    justify-content: center;
+
+    padding: 0;
+    gap: 30px;
+
+    list-style: none;
+}
+
+nav a {
+    text-decoration: none;
+    font-weight: bold;
+    color: #333;
+    
+    transition: color 0.2s ease;
+}
+
+nav a:hover {
+    color: var(--accent);
+}
+
+/* ===== Section Offset ===== */
+#intro,
+#weeks,
+#reflection {
+    scroll-margin-top: calc(var(--header-height) + 20px);
+}
+
+/* ===== Week Card ===== */
+.week-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    gap: 20px;
+}
+
+.week-card {
+    flex: 0 0 calc(50% - 10px);
+
+    padding: 20px;
+
+    border-radius: 12px;
+
+    background: white;
+
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.week-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+}
+
+.week-card h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.week-card small {
+    display: block;
+    margin-bottom: 10px;
+
+    font-size: 14px;
+    color: #777;
+}
+
+.week-card ul {
+    margin-top: 10px;
+    padding-left: 0;
+
+    list-style: none;
+}
+
+.week-card li::before {
+    content: "> ";
+    color: var(--accent);
+}
+
+/* ===== Responsive =====*/
+@media (max-width: 900px) {
+    .week-card {
+        flex: 0 0 calc(50% - 20px);
+    }
+}
+
+@media (max-width: 600px) {
+    .week-card {
+        flex: 0 0 100%;
+    }
+}
+
+/*
+23일차
+flex: 0 0 calc(...)     : 본 형태는 축약형.
+                          flex-grow flex-shrink flex-basis  로 풀어쓸 수 있다.
+                          즉, flex: grow shrink basis;인 것.
+                          flex-grow: 0      이 의미는 남는 공간이 있어도 늘어나지 않는다.
+                          flex-shrink: 0    이 의미는 공간이 부족해도 줄어들지 않는다.
+                          flex-basis: ...   이 의미는 기본 너비. 여기에 calc(...)에 들어갔다.
+                              calc(...)     33.333% - 20px을 주면 부모 컨테이너의 3등분을 하고 20px을 빼는 것.
+                                            한 줄에 3개를 배치하는데, 컨테이너에 gap:20px;을 줘놔서 20을 뺐다.
+                                            3개의 카드가 한 줄에 있으면 카드 사이에 gap이 2번 들어가기 때문에, 실제로 공간이 좀 더 필요해지기 때문.
+box-sizing  : 실제 너비는 지정된 너비 안에 padding이 포함되는 형식. (기본값이 content-box)
+              실제 너비 = basis + padding + border.
+                  이 때문에 카드 하나가 50%가 넘는 상황이 발생했고, 카드 2개가 들어가도록 계산했음에도 1개가 들어가는 현상이 발생했다.
+                  (50% - 10px) + 좌우 padding 40px이 되어버리면 두 개가 들어갈 자리가 없다.
+              하지만 본 함수의 인자로 border-box를 주면 flex-basis 안에 padding이 포함되도록 변경할 수 있다.
+                  실제 너비 = 지정된 너비 안에 padding 포함
+*/
+
+/*
+24일차
+list-style  : none으로 설정되면 점이 제거된다. (ul-li에 등장하는 점)
+padding     : 0으로 지정하면 기본 들여쓰기가 제거된다.
+text-decoreation    : none으로 지정되면 밑줄이 사라진다.
+
+sticky  : position: sticky;     특정 위치에서 고정
+          top: 0;               화면 맨 위에 붙도록 지정
+          background: white;    아래의 텍스트가 비치지 않도록 색상 추가
+          z-index: 1000;        다른 요소보다 위에 배치되도록 지정
+          해당 설정을 해두면 해당 요소가 원래 위치에 있다가 스크롤이 닿으면 고정된다.
+
+          다만 해당 설정을 하고 나서 {scroll-margin-top: ...px}을 하는 것을 추천.
+          nav로 앵커 이동을 할 때, sticky가 요소를 가리는 현상이 생기기 때문.
+              해당 요소의 시작 위치를 지정 px 아래에서 멈추라는 의미.
+              px은 본인 header의 높이만큼 맞춰주면 된다.
+*/
+
+/*
+25일차
+transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transform과 box-shadow가 변할 때, 0.3초 동안 부드럽게 변화하라는 뜻.
+    transition: (속성) (시간) (속도곡선);
+*/
+
+/*
+26일차
+:root   : 문서 전체의 최상위 요소를 선택하는 선택자. 이 문서 전체에 적용되는 설정을 적겠다는 의미.
+          html 문서상에서는 사실상 <html>을 의미한다.
+--accent    : CSS 변수(커스텀 속성)
+              --이름: 값; 해당 형태로 사용한다.
+
+즉, :root { --accent: #0077ff; }로 한다면, accent라는 이름의 색 변수를 만든다는 뜻.
+    이렇게 만든 변수는 var() 함수로 이용 가능. var(--accent) 와 같은 형식.
+    차후 색상을 변경하고 싶을 때, :root 안에 있는 --accent의 색상만 변경하면 된다.
+*/
