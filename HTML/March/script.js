@@ -27,6 +27,47 @@ const age2 = 27;
 const numbers = [1,2,3];
 numbers.push(4);
 
+
+//number 테스트
+let a = 10;
+let b = 3;
+
+console.log(a + b);
+console.log(a - b);
+console.log(a * b);
+console.log(a / b);
+
+//string 테스트
+let drink = "cocacola";
+console.log(drink);
+console.log(drink + " drink");
+console.log("10" + 5);
+
+//boolean 테스트
+let isStudent = true;
+console.log(isStudent);
+console.log(10 > 5);
+console.log(3 > 7);
+
+//typeof 테스트
+console.log(typeof 10);
+console.log(typeof "Hello");
+console.log(typeof true);
+
+//number와 string 추가 테스트
+let x =  "5";
+let y = 2;
+
+console.log(x + y);
+console.log(x * y);
+
+//string에서 number로 바꾸는 방법
+let input = "10";
+let numberInput = Number(input);
+
+console.log(numberInput + 5)
+
+
 /* 1일차
  * let      : 변수 선언.
  * const    : 상수 선언.
@@ -42,4 +83,15 @@ numbers.push(4);
  * 
  * js의 배열은 동적 배열. 길이가 자동으로 늘어나며 크기가 미리 지정되지 않는다.
  * 따라서 const 배열에 값을 추가로 넣을 수는 있지만, 들어간 값을 다른 값으로 수정할 수는 없다.
+ */
+
+/* number   : 숫자. 사칙연산 모두 적용 가능.
+ * string   : 문자. "문자"+5와 같은 연산을 하게 되면, "문자5"라는 결과를 받는다.
+ * boolean  : 참/거짓. 참이면 true, 거짓이면 false.
+ * typeof로 자료형이 무엇인지 확인 가능.
+ * 
+ * string과 number의 연산에서 문자열이라도 숫자로 바꿀 수 있으면 자동으로 바꿔서 계산.
+ * + 연산의 특이점이라고 할 수 있다. 숫자끼리는 덧셈하고 문자열이 끼면 문자열 이어붙이기로 판단한다.
+ * 단, string에 숫자가 들어있을 때만 이러한 계산이 일어날 수 있다.
+ * String(...)과 Number(...)로 형변환이 가능하니 참고.
  */
