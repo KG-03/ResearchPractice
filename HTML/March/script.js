@@ -13,16 +13,16 @@ console.log(number);
 
 
 //아래로 const 테스트
-const name = "John Doe";
-console.log(name);
+const name_1 = "John Doe";
+console.log(name_1);
 //name = "Jane Doe";
 
-let age = 27;
-age = 28;
-console.log(age);
+let age_1 = 27;
+age_1 = 28;
+console.log(age_1);
 
-const age2 = 27;
-//age2 = 28;
+const age_2 = 27;
+//age_2 = 28;
 
 const numbers = [1,2,3];
 numbers.push(4);
@@ -65,8 +65,22 @@ console.log(x * y);
 let input = "10";
 let numberInput = Number(input);
 
-console.log(numberInput + 5)
+console.log(numberInput + 5);
 
+
+//템플릿 리터럴
+let name_2 = "Hong gli dong";
+let age_3 = 25;
+
+console.log(`이름은 ${name_2}이고 나이는 ${age_3}입니다.`);
+
+let n_1 = 10;
+let n_2 = 3;
+
+console.log(`더하기: ${a + b}`);
+console.log(`빼기: ${a - b}`);
+console.log(`곱하기: ${a * b}`);
+console.log(`나누기: ${a / b}`);
 
 /* 1일차
  * let      : 변수 선언.
@@ -85,7 +99,8 @@ console.log(numberInput + 5)
  * 따라서 const 배열에 값을 추가로 넣을 수는 있지만, 들어간 값을 다른 값으로 수정할 수는 없다.
  */
 
-/* number   : 숫자. 사칙연산 모두 적용 가능.
+/* 3일차
+ * number   : 숫자. 사칙연산 모두 적용 가능.
  * string   : 문자. "문자"+5와 같은 연산을 하게 되면, "문자5"라는 결과를 받는다.
  * boolean  : 참/거짓. 참이면 true, 거짓이면 false.
  * typeof로 자료형이 무엇인지 확인 가능.
@@ -94,4 +109,12 @@ console.log(numberInput + 5)
  * + 연산의 특이점이라고 할 수 있다. 숫자끼리는 덧셈하고 문자열이 끼면 문자열 이어붙이기로 판단한다.
  * 단, string에 숫자가 들어있을 때만 이러한 계산이 일어날 수 있다.
  * String(...)과 Number(...)로 형변환이 가능하니 참고.
+ */
+
+/* 4일차
+ * 템플릿 리터럴
+ * ``   : 백틱
+ * ${변수}, 혹은 ${계산식} 가능.
+ * 문자열 안에서 변수와 계산을 자연스럽게 넣는 방법을 확인. 단순 출력이 아니라, 계산 결과를 바로 넣을 수 있는 방식.
+ * console.log(`안녕하세요 ${name}입니다.`);    와 같은 방식.
  */
