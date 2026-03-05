@@ -1,0 +1,94 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int n = 0;
+    cin >> n;
+
+    int location = 1;
+
+    int before = 1;
+    int after = 1;
+    while(1) {
+        before = after;
+        after += 6 * location;
+        
+        if (before > n) {
+            break;
+        }
+        
+        location++; 
+    }
+
+    cout << location << endl;
+    
+    return 0;
+}
+
+여기서 첫 문제는 '1을 넣었을 때 2가 나온다'라는 문제였다.
+그걸 해결하기 위해 '1일 때 break'하도록 지정한 게 2번째 제출이었다.
+
+#include <iostream>
+using namespace std;
+
+int main() {
+    int n = 0;
+    cin >> n;
+
+    int location = 1;
+
+    //honeycomb
+    int before = 1;
+    int after = 1;
+    while(1) {
+        if (n == 1) break;
+        
+        before = after;
+        after += 6 * location;
+        
+        if (before > n) break;
+        
+        location++; 
+    }
+
+    cout << location << endl;
+    
+    return 0;
+}
+
+하지만 여기서도 틀렸다.
+근본적으로 break 조건이 틀렸던 거였다.
+해당 if문에서 값 7를 넣으면 2이 아니라 3이 나오는 현상을 발견했다.
+
+벌집의 이미지 구조상, 1에서부터 2~7까지는 칸 수가 2로 동일해야 한다.
+하지만 if문에서 '7 초과면 break'라는 설정을 넣어버린 탓에, 값이 7일 때 멈추지 않고 한 번 더 while문이 돌아간 것이다.
+
+그래서 마지막으로 if문을 수정했다. 쓸데없는 '1일 때 break'하도록 하는 설정도 없앴다.
+#include <iostream>
+using namespace std;
+
+int main() {
+    int n = 0;
+    cin >> n;
+
+    int location = 1;
+
+    //honeycomb
+    int before = 0;
+    int after = 1;
+    while(1) {
+        before = after;
+        after += 6 * location;
+        
+        if (before >= n) break;
+        
+        location++;
+    }
+
+    cout << location << endl;
+    
+    return 0;
+}
+
+그랬더니 정상 작동했다.
+조건을 제대로 확인하고 풀지 않아서 생긴 오답으로 보인다.
