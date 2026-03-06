@@ -29,13 +29,13 @@ numbers.push(4);
 
 
 //number 테스트
-let a = 10;
-let b = 3;
+let a_1 = 10;
+let b_1 = 3;
 
-console.log(a + b);
-console.log(a - b);
-console.log(a * b);
-console.log(a / b);
+console.log(a_1 + b_1);
+console.log(a_1 - b_1);
+console.log(a_1 * b_1);
+console.log(a_1 / b_1);
 
 //string 테스트
 let drink = "cocacola";
@@ -55,11 +55,11 @@ console.log(typeof "Hello");
 console.log(typeof true);
 
 //number와 string 추가 테스트
-let x =  "5";
-let y = 2;
+let x_1 =  "5";
+let y_1 = 2;
 
-console.log(x + y);
-console.log(x * y);
+console.log(x_1 + y_1);
+console.log(x_1 * y_1);
 
 //string에서 number로 바꾸는 방법
 let input = "10";
@@ -77,10 +77,10 @@ console.log(`이름은 ${name_2}이고 나이는 ${age_3}입니다.`);
 let n_1 = 10;
 let n_2 = 3;
 
-console.log(`더하기: ${a + b}`);
-console.log(`빼기: ${a - b}`);
-console.log(`곱하기: ${a * b}`);
-console.log(`나누기: ${a / b}`);
+console.log(`더하기: ${n_1 + n_2}`);
+console.log(`빼기: ${n_1 - n_2}`);
+console.log(`곱하기: ${n_1 * n_2}`);
+console.log(`나누기: ${n_1 / n_2}`);
 
 
 //나머지 연산자
@@ -97,6 +97,65 @@ console.log(10 > 5);
 console.log(10 < 5);
 console.log(10 == "10");
 console.log(10 === "10");
+
+
+//1주차 복습
+let a_2 = 10;
+let b_2 = 3;
+console.log(a_2 + b_2);
+console.log(a_2 - b_2);
+console.log(a_2 * b_2);
+console.log(a_2 / b_2);
+console.log(a_2 % b_2);
+
+let name_3 = "Tom";
+let age_4 = 20;
+
+console.log("이름: " + name_3);
+console.log("나이: " + age_4);
+console.log(`이름: ${name_3}`);
+console.log(`나이: ${age_4}`);
+
+let x_2 = 5;
+x_2++;
+x_2++;
+x_2--;
+console.log(x_2);
+
+let a_3 = 10;
+let b_3 = "10";
+
+console.log(a_3 == b_3);
+console.log(a_3 === b_3);
+console.log(a_3 > 5);
+console.log(a_3 < 5);
+
+let price = 12000;
+let count = 3;
+let total = price * count;
+
+console.log(total);
+console.log(`총 가격은 ${total}원 입니다.`);
+
+console.log("2"*"3");
+
+console.log(10 + 5);
+console.log("10" + 5);
+console.log(10 + "5");
+console.log("10" + "5");
+
+let x_3 = 5;
+console.log(x_3++);
+console.log(x_3);
+
+console.log(5 == "5");
+console.log(5 === "5");
+console.log(5 != "5");
+console.log(5 !== "5");
+
+console.log("2" * "3");
+
+console.log("2" + 3 * 4);
 
 
 /* 1일차
@@ -142,4 +201,17 @@ console.log(10 === "10");
  *        따라서 10과 "10"이 동일하고, true와 1이 같으며, false와 0이 같다.
  * ===  : 엄격한 비교. 값도 같고 타입도 같아야 true. 형변환이 일어나지 않는다.
  *        따라서 10과 "10"이 동일하지 않고, 10과 10을 비교해야 한다.
+ */
+
+/* 6일차
+ * JS에도 연산 우선순위가 존재.
+ * 위쪽으로 올 수록 우선시 된다.
+ * ()
+ * ++, --
+ * *, /, %
+ * +, -
+ * <, >, <=, >=
+ * ==, ===
+ * &&
+ * ||
  */
