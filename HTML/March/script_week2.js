@@ -1,27 +1,106 @@
 "use strict";
 
 //if문
-let age_1 = 20;
-if (age_1 >= 18) {
-    console.log("age_1은 성인입니다.");
+let age = 20;
+if (age >= 18) {
+    console.log("age은 성인입니다.");
 }
 
-let age_2 = 15;
-if(age_2 >= 18) {
-    console.log("age_2는 성인입니다.");
+age = 15;
+if(age >= 18) {
+    console.log("age는 성인입니다.");
 }
 
 //아래의 number_1을 3, 7, 5로 변경해가며 확인.
-let number_1 = 5;
-if(number_1 > 5) {
-    console.log("number_1은 5보다 큽니다.");
+let number = 5;
+if(number > 5) {
+    console.log("number은 5보다 큽니다.");
 }
 
-let x_1 = 10;
-if(x_1 === "10") {
-    console.log("x_1은 \"10\"과 같습니다.");
+let x = 10;
+if(x === "10") {
+    console.log("x은 \"10\"과 같습니다.");
+}
+
+//if - else
+age = 20;
+if (age >= 18) {
+    console.log("성인");
+} else {
+    console.log("미성년자");
+}
+
+age = 15;
+if (age >= 18) {
+    console.log("성인");
+} else {
+    console.log("미성년자");
+}
+
+number = 8;
+if(number % 2 === 0) {
+    console.log("짝수");
+} else {
+    console.log("홀수");
+}
+
+let score = 40;
+if(score >= 60) {
+    console.log("합격");
+} else {
+    console.log("불합격");
+}
+
+//if - else if - else
+score = 85;
+if(score >= 90) {
+    console.log("A");
+} else if(score >= 80) {
+    console.log("B");
+} else {
+    console.log("C");
+}
+
+number = 0;
+if(number > 0) {
+    console.log("양수");
+} else if(number < 0) {
+    console.log("음수");
+} else {
+    console.log("0");
+}
+
+//문제가 되는 코드
+score = 95;
+if(score >= 60) {
+    console.log("합격");
+} else if(score >= 90) {
+    console.log("우수");
+}
+
+score = 72;
+if(score >= 90){
+    console.log("A");
+} else if(score >= 80) {
+    console.log("B");
+} else if(score >= 70) {
+    console.log("C");
+} else {
+    console.log("F");
 }
 
 /* 8일차
  * if (조건문) {실행문} : if문 구조
+ *                       조건문이 참일 때 실행문 실행.
+ */
+
+/* 9일차
+ * if(조건문) {실행문1}
+ * else {실행문2}       : if + else
+ *                        조건문이 참일 때 실행문1이 실행, 아닐 때 실행문2 실행.
+ * if(조건문1) {실행문1}
+ * else if(조건문2) {실행문2}
+ * else {실행문3}       : if + else if + else
+ *                        위쪽의 조건문이 참이 되면 바로 실행문이 실행.
+ *                        따라서 조건문을 지정할 때는 서순이 중요하다.
  */
