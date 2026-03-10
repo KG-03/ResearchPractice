@@ -89,6 +89,38 @@ if(score >= 90){
     console.log("F");
 }
 
+//and
+age = 25;
+if (age >= 18 && age <= 30) {
+    console.log("청년 범위");
+}
+
+//or
+let day = "토";
+if(day === "토" || day === "일") {
+    console.log("주말");
+}
+
+//not
+let isLoggedIn = false;
+if(!isLoggedIn) {
+    console.log("로그인 필요");
+}
+//isLoggedIn이 false, !false === true
+
+age = 20;
+let hasTicket = true;
+if(age >= 18 && hasTicket) {
+    console.log("입장 가능");
+}
+
+x = 5;
+if (x > 10 || x < 3) {
+    console.log("조건 만족");
+} else {
+    console.log("조건 불만족");
+}
+
 /* 8일차
  * if (조건문) {실행문} : if문 구조
  *                       조건문이 참일 때 실행문 실행.
@@ -103,4 +135,10 @@ if(score >= 90){
  * else {실행문3}       : if + else if + else
  *                        위쪽의 조건문이 참이 되면 바로 실행문이 실행.
  *                        따라서 조건문을 지정할 때는 서순이 중요하다.
+ */
+
+/* 10일차
+ * &&   : and
+ * ||   : or
+ * !    : not
  */
