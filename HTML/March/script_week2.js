@@ -121,6 +121,23 @@ if (x > 10 || x < 3) {
     console.log("조건 불만족");
 }
 
+//for문
+for (let i = 1; i <=10; i++) {
+    console.log(i);
+}
+
+for (let i = 0; i < 5; i++) {
+    console.log(i);
+}
+
+for(let i = 1; i <= 3; i++) {
+    console.log("Hello");
+}
+
+for(let i = 5; i >= 1; i--) {
+    console.log(i);
+}
+
 /* 8일차
  * if (조건문) {실행문} : if문 구조
  *                       조건문이 참일 때 실행문 실행.
@@ -141,4 +158,8 @@ if (x > 10 || x < 3) {
  * &&   : and
  * ||   : or
  * !    : not
+ */
+
+/* 11일차
+ * for(초기값; 조건문; 증감;) {실행문;}
  */
