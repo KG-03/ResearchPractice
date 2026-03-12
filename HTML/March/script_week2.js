@@ -138,6 +138,43 @@ for(let i = 5; i >= 1; i--) {
     console.log(i);
 }
 
+//if문 + for문
+for(let i = 1; i <= 10; i++) {
+    if(i % 2 === 0) {
+        console.log(i);
+    }
+}
+
+for(let i = 1; i <= 20; i++) {
+    if(i % 3 === 0) {
+        console.log(i);
+    }
+}
+
+for(let i = 1; i <= 10; i++) {
+    if(i % 2 === 0) {
+        console.log(i + " 짝수");
+    } else {
+        console.log(i + " 홀수");
+    }
+}
+
+for(let i = 1; i <= 10; i++) {
+    if(i % 3 === 0) {
+        console.log("3의 배수");
+    } else {
+        console.log(i);
+    }
+}
+
+for(let i = 1; i <= 5; i++) {
+    if(i === 3) {
+        console.log("세");
+    } else {
+        console.log(i);
+    }
+}
+
 /* 8일차
  * if (조건문) {실행문} : if문 구조
  *                       조건문이 참일 때 실행문 실행.
@@ -162,4 +199,8 @@ for(let i = 5; i >= 1; i--) {
 
 /* 11일차
  * for(초기값; 조건문; 증감;) {실행문;}
+ */
+
+/* 12일차
+ * if문과 for문 같이 쓰기
  */
