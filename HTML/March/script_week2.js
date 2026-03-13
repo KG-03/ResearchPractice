@@ -175,6 +175,30 @@ for(let i = 1; i <= 5; i++) {
     }
 }
 
+//짝수 출력
+for(let i = 1; i <= 20; i++) {
+    if(i % 2 === 0) {
+        console.log(i);
+    }
+}
+
+//짝수 출력은 좀 더 정리하면 이런 형태도 가능.
+for(let i = 2; i <= 20; i += 2) {
+    console.log(i);
+}
+
+//구구단 일부
+for(let i = 1; i <= 9; i++) {
+    console.log(`2 x ${i} = ${2 * i}`);
+}
+
+//1~100까지의 합
+let sum = 0;
+for(let i = 1; i <= 100; i++) {
+    sum = sum + i;
+}
+console.log(sum);
+
 /* 8일차
  * if (조건문) {실행문} : if문 구조
  *                       조건문이 참일 때 실행문 실행.
