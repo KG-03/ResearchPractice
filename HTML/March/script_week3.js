@@ -29,6 +29,35 @@ for(let i = 0; i < arr.length; i++) {
     console.log(arr[i] * 2);
 }
 
+//배열에 값 추가 및 제거 방법
+arr.length = 0;
+
+arr.push(1);
+console.log(arr);
+
+arr.pop();
+console.log(arr);
+
+arr.unshift(0);
+console.log(arr);
+
+arr.shift();
+console.log(arr);
+
+arr = [1, 2, 3];
+let x = arr.shift();
+console.log(x);
+x = arr.pop();
+console.log(x);
+
+arr.length = 0;
+arr = [1, 2, 3];
+x = arr.unshift(0);
+console.log(x);
+x = arr.push(4);
+console.log(x);
+
+
 /* 15일차
  * 배열의 인덱스는 0부터 시작.
  * JavaScript는 에러를 내지 않는다.
@@ -43,4 +72,11 @@ for(let i = 0; i < arr.length; i++) {
  *                    JavaScript 배열이 length 기준으로 잘리기 때문에 가능.
  *                    arr.length = 2; 같은 형식으로도 사용 가능.
  *                      이렇게 되면 arr[0], arr[1] 제외하고 초기화.
+ */
+
+/* 17일차
+ * push      : 뒤에 값 추가. 새로운 length 반환.
+ * pop       : 뒤쪽 값 삭제 및 반환(빼내기)
+ * unshift   : 앞에 값 추가. 새로운 length 반환.
+ * shift     : 앞쪽 값 삭제 및 반환(빼내기)
  */
