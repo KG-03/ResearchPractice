@@ -57,6 +57,39 @@ console.log(x);
 x = arr.push(4);
 console.log(x);
 
+//함수
+function add(a, b) {
+    return a + b;
+}
+let result = add(3, 5);
+console.log(result);
+
+function printNumber(n) {
+    console.log(n);
+}
+printNumber(10);
+
+function pringLength(arr) {
+    console.log(arr.length);
+}
+pringLength([1,2,3]);
+
+function multiply(a,b) {
+    return a * b;
+}
+console.log(multiply(3,4));
+
+function sayHello(name) {
+    return "Hello " + name;
+}
+console.log(sayHello("john"));
+
+function test() {
+    console.log("A");
+    return 10;
+    console.log("B");
+}
+test();
 
 /* 15일차
  * 배열의 인덱스는 0부터 시작.
@@ -79,4 +112,10 @@ console.log(x);
  * pop       : 뒤쪽 값 삭제 및 반환(빼내기)
  * unshift   : 앞에 값 추가. 새로운 length 반환.
  * shift     : 앞쪽 값 삭제 및 반환(빼내기)
+ */
+
+/* 18일차
+ * function : 함수. function 함수명(매개변수) { 실행코드 + return 결과 }
+ *            구조는 다른 프로그래밍 언어와 동일.
+ *            return 이후의 코드들은 실행되지 않는 것에 유의.
  */
