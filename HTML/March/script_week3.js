@@ -91,6 +91,77 @@ function test() {
 }
 test();
 
+//함수 + 배열 + 반복문
+function printArray(arr) {
+    for (let i = 0; i < arr.length; i++) {
+        console.log(arr[i]);
+    }
+}
+printArray([1, 2, 3]);
+
+function getSum(arr) {
+    let sum = 0;
+
+    for(let i = 0; i < arr.length; i++) {
+        sum = sum + arr[i];
+    }
+
+    return sum;
+}
+console.log(getSum([1,2,3,4]));
+
+function getEvenSum(arr) {
+    let sum = 0;
+
+    for (let i = 0; i < arr.length; i++) {
+        if (arr[i] % 2 === 0) {
+            sum = sum + arr[i];
+        }
+    }
+
+    return sum;
+}
+console.log(getEvenSum([1,2,3,4,5,6]));
+
+function countBig(arr) {
+    let count = 0;
+
+    for(let i = 0; i < arr.length; i++) {
+        if(arr[i] > 10) {
+            count++;
+        }
+    }
+
+    return count;
+}
+console.log(countBig([5,12,8,20]));
+
+function printOdd(n) {
+    for(let i = 1; i <= n; i += 2) {
+        console.log(i);
+    }
+}
+printOdd(10);
+
+function sumEven(n) {
+    let sum = 0;
+    for(let i = 0; i <= n; i++) {
+        if(i % 2 === 0) {
+            sum = sum + i;
+        }
+    }
+    return sum;
+}
+console.log(sumEven(10));
+
+function countDown(n) {
+    for (let i = n; i > 0; i--) {
+        console.log(i);
+    }
+}
+countDown(5);
+
+
 /* 15일차
  * 배열의 인덱스는 0부터 시작.
  * JavaScript는 에러를 내지 않는다.
@@ -118,4 +189,9 @@ test();
  * function : 함수. function 함수명(매개변수) { 실행코드 + return 결과 }
  *            구조는 다른 프로그래밍 언어와 동일.
  *            return 이후의 코드들은 실행되지 않는 것에 유의.
+ */
+
+/* 19일차
+ * function + array
+ * 
  */
