@@ -24,37 +24,37 @@ for(let i = 0; i < fruits.length; i++) {
     console.log(fruits[i]);
 }
 
-let arr = [2, 4, 6, 8];
-for(let i = 0; i < arr.length; i++) {
-    console.log(arr[i] * 2);
+let array = [2, 4, 6, 8];
+for(let i = 0; i < array.length; i++) {
+    console.log(array[i] * 2);
 }
 
 //배열에 값 추가 및 제거 방법
-arr.length = 0;
+array.length = 0;
 
-arr.push(1);
-console.log(arr);
+array.push(1);
+console.log(array);
 
-arr.pop();
-console.log(arr);
+array.pop();
+console.log(array);
 
-arr.unshift(0);
-console.log(arr);
+array.unshift(0);
+console.log(array);
 
-arr.shift();
-console.log(arr);
+array.shift();
+console.log(array);
 
-arr = [1, 2, 3];
-let x = arr.shift();
+array = [1, 2, 3];
+let x = array.shift();
 console.log(x);
-x = arr.pop();
+x = array.pop();
 console.log(x);
 
-arr.length = 0;
-arr = [1, 2, 3];
-x = arr.unshift(0);
+array.length = 0;
+array = [1, 2, 3];
+x = array.unshift(0);
 console.log(x);
-x = arr.push(4);
+x = array.push(4);
 console.log(x);
 
 //함수
@@ -91,7 +91,7 @@ function test() {
 }
 test();
 
-//함수 + 배열 + 반복문
+//함수 + 반복문 (+약간의 배열)
 function printArray(arr) {
     for (let i = 0; i < arr.length; i++) {
         console.log(arr[i]);
@@ -161,6 +161,73 @@ function countDown(n) {
 }
 countDown(5);
 
+//함수 + 배열
+function sumArray(arr) {
+    let total = 0;
+    for(let i = 0; i < arr.length; i++) {
+        total += arr[i];
+    }
+    return total;
+}
+console.log(sumArray([1,2,3,4]));
+
+function getEvenNumbers(arr) {
+    let num = [];
+    for (let i = 0; i < arr.length; i++) {
+        if(arr[i] % 2 === 0) {
+            num.push(arr[i]);
+        }
+    }
+
+    return num;
+}
+console.log(getEvenNumbers([1,2,3,4,5,6]));
+
+function findMax(arr) {
+    let max = arr[0];
+    for(let i = 1; i < arr.length; i++) {
+        if(arr[i] > max) {
+            max = arr[i];
+        }
+    }
+
+    return max;
+}
+console.log(findMax([3,7,2,9,5]));
+
+function sumOddArray(arr) {
+    let sum = 0;
+    for(let i = 0; i < arr.length; i++) {
+        if(arr[i] % 2 === 1) {
+            sum += arr[i];
+        }
+    }
+
+    return sum;
+}
+console.log(sumOddArray([1,2,3,4,5,6]));
+
+function countEven(arr) {
+    let count = 0;
+    for(let i = 0; i < arr.length; i++) {
+        if(arr[i] % 2 === 0) {
+            count++;
+        }
+    }
+    return count;
+}
+console.log(countEven([1,2,3,4,5,6,7,8,9]));
+
+function reverseArray(arr){
+    let reverse = [];
+    for(let i = arr.length - 1; i >= 0; i--) {
+        reverse.push(arr[i]);
+    }
+    //i = 0; i < arr.length; i++으로 reverse.unshift(arr[i])를 해도 되지만, 내부적으로 비효율적이라고 함.(앞에 넣을 때마다 배열을 계속 밀어야 해서)
+
+    return reverse;
+}
+console.log(reverseArray([1,2,3,4,5]));
 
 /* 15일차
  * 배열의 인덱스는 0부터 시작.
@@ -192,6 +259,6 @@ countDown(5);
  */
 
 /* 19일차
- * function + array
- * 
+ * function + array : function 함수이름(arr) { for(조건) {배열처리} }
+ *                    배열을 순회하기 좋은 방법은 반복문.
  */
