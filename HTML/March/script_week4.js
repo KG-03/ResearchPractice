@@ -40,6 +40,27 @@ for (let i = 0; i < boxs.length; i++) {
 }
 */
 
+let introP = document.querySelectorAll(".intro p");
+introP[1].textContent = "Hello JS";
+
+let num = 10;
+introP[2].textContent = num;
+
+/* 아래의 내용부터는 html에서 존재하지 않는 값을 호출하기 때문에 각주 처리.
+let msg = document.querySelector("#msg");
+msg.textContent = "반갑습니다!"; 
+
+let nums = document.querySelectorAll(".num");
+for(let i = 0; i <nums.length; i++) {
+    nums[i].textContent = Number(nums[i].textContent) + 1;
+}
+
+let boxs = document.querySelectorAll(".box");
+for (let i = 0; i < boxs.length; i++) {
+    boxs[i].textContent = boxs[i].textContent + "!";
+}
+*/
+
 
 
 /* 22일차
@@ -55,4 +76,11 @@ for (let i = 0; i < boxs.length; i++) {
  * querySelector    : 1개
  * querySelectorAll : 여러 개
  *                    여기서 호출된 값은 여기서 값을 바꿔서 변경할 수 있다.
+ */
+
+/* 24일차
+ * let introP = document.querySelectorAll(".intro p"); : 
+ *                  id, class 안에 있는 p를 불러오기 위해서 쓰는 방법.
+ * 
+ * 불러낸 값 안에 다른 값을 집어넣는 게 가능.
  */
