@@ -93,7 +93,35 @@ p.textContent = p.textContent === "ON" ? "OFF" : "ON";
 문제 풀이였기 때문에 모든 변수명을 btn, p 등으로 일괄처리 했으나, 실전에서는 이러한 형식을 쓰면 안 된다는 것을 인지하고 있음.
 */
 
+let test_boxs = document.querySelectorAll(".test-box");
 
+btn.addEventListener("click", function() {
+    for (let i = 0; i < test_boxs.length; i++) {
+        test_boxs[i].classList.toggle("test-active");
+    }
+});
+
+/* 아래의 내용부터는 html에서 존재하지 않는 값을 호출하기 때문에 각주 처리.
+let btn_1 = document.querySelector("#btn");
+let p_1 = document.querySelector("#text");
+btn_1.addEventListener("click", function() {
+    p_1.classList.add("red");
+});
+
+let btn_2 = document.querySelector("#btn");
+let box_2 = document.querySelector(".box");
+btn_2.addEventListener("click", function() {
+    box_2.classList.toggle("active");
+});
+
+let btn_3 = document.querySelector("#btn");
+let items_3 = document.querySelectorAll(".item");
+btn_3.addEventListener("click", function() {
+    for (let i = 0; i < items_3.length; i++) {
+        items_3[i].classList.add("active");
+    }
+});
+*/
 
 /* 22일차
  * let title = document.querySelector("h1");
@@ -123,4 +151,10 @@ p.textContent = p.textContent === "ON" ? "OFF" : "ON";
  *      위의 방식은 버튼에 이벤트 넣는 방법.
  *      만일, addEventListener("click", console.log(...) ) 이와 같은 형식으로 코드를 작성하면, 즉시 실행되어 문제가 생김.
  *              따라서, 이벤트를 넣을 때는 function()을 이용해야 함.
+ */
+
+/* 26일차
+ * test_box.classList.add("test-active");       "..." 안의 함수를 test_box 변수에 추가.
+ * test_box.classList.remove("test-active");    "..." 안의 함수를 test_box 변수에서 제거.
+ * test_box.classList.toggle("test-active");    "..." 안의 함수가 test_box 변수에 있으면 제거, 없으면 추가.
  */
