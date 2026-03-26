@@ -172,6 +172,13 @@ nav a:hover {
     }
 }
 
+.test-box {
+    color: black;
+}
+.test-active {
+    color: red;
+}
+
 /*
 23일차
 flex: 0 0 calc(...)     : 본 형태는 축약형.
