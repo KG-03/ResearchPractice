@@ -41,10 +41,10 @@ for (let i = 0; i < boxs.length; i++) {
 */
 
 let introP = document.querySelectorAll(".intro p");
-introP[1].textContent = "Hello JS";
+introP[0].textContent = "Hello JS";
 
 let num = 10;
-introP[2].textContent = num;
+introP[1].textContent = num;
 
 /* 아래의 내용부터는 html에서 존재하지 않는 값을 호출하기 때문에 각주 처리.
 let msg = document.querySelector("#msg");
@@ -61,10 +61,12 @@ for (let i = 0; i < boxs.length; i++) {
 }
 */
 
-let btn = document.querySelector(".intro button");
+let btn = document.querySelector(".btn button");
+let btnP = document.querySelectorAll(".btn p");
+
 btn.addEventListener("click", function() {
     console.log("클릭됨!");
-    introP[3].textContent = "바뀜!";
+    btnP[0].textContent = "바뀜!";
 });
 
 /* 아래의 내용부터는 html에서 존재하지 않는 값을 호출하기 때문에 각주 처리.
@@ -123,6 +125,34 @@ btn_3.addEventListener("click", function() {
 });
 */
 
+btn.addEventListener("click", function() {
+    btnP[1].textContent = "변경됨!";
+    btnP[1].classList.toggle("test-active");
+});
+
+btn.addEventListener("click", function() {
+    if(btnP[2].textContent === "OFF") {
+        btnP[2].textContent = "ON";
+        btnP[2].classList.add("on");
+    } else {
+        btnP[2].textContent = "OFF";
+        btnP[2].classList.remove("on");
+    }
+})
+
+let btnNumberP = document.querySelectorAll(".number p");
+btn.addEventListener("click", function() {
+    for(let i = 0; i < btnNumberP.length; i++) {
+        btnNumberP[i].textContent = Number(btnNumberP[i].textContent) + 1;
+
+        if(Number(btnNumberP[i].textContent) % 2 === 0) {
+            btnNumberP[i].classList.add("test-active");
+        } else {
+            btnNumberP[i].classList.remove("test-active");
+        } 
+    }
+});
+
 /* 22일차
  * let title = document.querySelector("h1");
  *             document : 전체 HTML
@@ -157,4 +187,9 @@ btn_3.addEventListener("click", function() {
  * test_box.classList.add("test-active");       "..." 안의 함수를 test_box 변수에 추가.
  * test_box.classList.remove("test-active");    "..." 안의 함수를 test_box 변수에서 제거.
  * test_box.classList.toggle("test-active");    "..." 안의 함수가 test_box 변수에 있으면 제거, 없으면 추가.
+ */
+
+/* 27일차
+ * 버튼을 눌러서 전체를 변경하는 방법 확인.
+ * 두 가지 이상의 동작이 가능한 것도 확인.
  */
