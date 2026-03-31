@@ -3,13 +3,14 @@
 let plusBtn = document.querySelector("#plus");
 let minusBtn = document.querySelector("#minus");
 let resetBtn = document.querySelector("#reset");
-let count = document.querySelector("#num")
+let countText = document.querySelector("#num")
 let num = 0;
 
 plusBtn.addEventListener("click", function() {
     if (num < 100){
         num++;
         update();
+        updateColor();
     }
 })
 
@@ -17,22 +18,26 @@ minusBtn.addEventListener("click", function() {
     if(num > -100) {
         num--;
         update();
+        updateColor();
     }
 })
 
 resetBtn.addEventListener("click", function(){
     num = 0;
     update();
+    updateColor();
 })
 
 function update() {
-    count.textContent = num;
+    countText.textContent = num;
+}
 
+function updateColor(){
     if (num > 0) {
-        count.style.color = "green";
+        countText.style.color = "green";
     } else if (num < 0) {
-        count.style.color = "red";
+        countText.style.color = "red";
     } else {
-        count.style.color = "black";
+        countText.style.color = "black";
     }
 }
