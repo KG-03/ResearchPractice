@@ -1,23 +1,77 @@
 "use strict";
 
-let input = document.querySelector("#input");
-let btn = document.querySelector("#btn");
-let result = document.querySelector("#result");
+let input = document.querySelectorAll(".input");
+let btn = document.querySelectorAll(".btn");
+let result = document.querySelectorAll(".result");
 
-btn.addEventListener("click", function() {
-    if (input.value === "") {
-        result.textContent = "값을 입력하세요.";
+btn[0].addEventListener("click", function() {
+    if (input[0].value === "") {
+        result[0].textContent = "값을 입력하세요.";
     } else {
-        result.textContent = input.value + "님 안녕하세요.";
-        console.log(input.value);
+        result[0].textContent = input[0].value + "님 안녕하세요.";
+        console.log(input[0].value);
 
-        input.value = "";
-        input.focus();
+        input[0].value = "";
+        input[0].focus();
     }
 });
+
+btn[1].addEventListener("click", function(){
+    let name = input[1].value.trim();
+
+    if(name === "") {
+        result[1].textContent = "이름을 입력하세요.";
+    } else if (name === "관리자") {
+        result[1].textContent = "관리자님 환영합니다.";
+    } else if (name === "guest") {
+        result[1].textContent = "손님입니다.";
+    } else {
+        result[1].textContent = name + "님 안녕하세요!";
+    }
+
+    input[1].value = "";
+    input[1].focus();
+})
+
+btn[2].addEventListener("click", function() {
+    let num = Number(input[2].value);
+
+    if(input[2].value.trim() === "") {
+        result[2].textContent = "숫자를 입력하세요.";
+    } else if(num === 0) {
+        result[2].textContent = "0입니다."
+    } else {
+        if(num > 0) {
+            result[2].textContent = "양수, ";
+        } else {
+            result[2].textContent = "음수, ";
+        }
+
+        if(num >= 10) {
+            result[2].textContent = "10 이상, ";
+        }
+
+        evenOddDetermination(num);
+    }
+    
+    input[2].value = "";
+    input[2].focus();
+})
+
+function evenOddDetermination(num) {
+    if (num % 2 === 0) {
+    result[2].textContent += "짝수입니다.";
+    } else {
+        result[2].textContent += "홀수입니다.";
+    }
+} 
 
 /* 1일차
  * input    : textContent로 접근하는 게 아닌, value로 접근되어야 한다.
  *            input.focus() 함수를 사용하면 입력하고 버튼 누른 뒤에도
  *              해당 입력창을 '다시 눌러둔 효과'를 만들 수 있는 것으로 보인다.
+ */
+
+/* 2일차
+ * trim()   : 문자열의 앞뒤(양끝)에 있는 공백을 제거해, 새 문자열을 반환하는 메서드.
  */
