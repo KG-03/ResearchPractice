@@ -31,7 +31,7 @@ btn[1].addEventListener("click", function(){
 
     input[1].value = "";
     input[1].focus();
-})
+});
 
 btn[2].addEventListener("click", function() {
     let num = Number(input[2].value);
@@ -56,7 +56,7 @@ btn[2].addEventListener("click", function() {
     
     input[2].value = "";
     input[2].focus();
-})
+});
 
 function evenOddDetermination(num) {
     if (num % 2 === 0) {
@@ -64,7 +64,20 @@ function evenOddDetermination(num) {
     } else {
         result[2].textContent += "홀수입니다.";
     }
-} 
+}
+
+btn[3].addEventListener("click", function() {
+    let text = input[3].value.trim();
+    let index = result[3].children.length + 1;
+
+    if(text === "") return;
+
+    let li = document.createElement("li");
+    li.textContent = index + ". ✔ " + text;
+    result[3].appendChild(li);
+    
+    input[3].value = "";
+});
 
 /* 1일차
  * input    : textContent로 접근하는 게 아닌, value로 접근되어야 한다.
@@ -74,4 +87,12 @@ function evenOddDetermination(num) {
 
 /* 2일차
  * trim()   : 문자열의 앞뒤(양끝)에 있는 공백을 제거해, 새 문자열을 반환하는 메서드.
+ */
+
+/* 3일차
+ * document.createElement("li");    : 생성
+ * li.textContent = text;           : 내용 넣기
+ * result[3].appendChild(li);       : 화면에 추가
+ * li, result는 변수명임을 기억할 것.
+ * 버튼 함수 내에서 변수명 선언해서 관리하는 것도 좋은 방법.
  */
