@@ -74,10 +74,20 @@ btn[3].addEventListener("click", function() {
 
     let li = document.createElement("li");
     li.textContent = index + ". ✔ " + text;
+
+    let delBtn = document.createElement("button");
+    delBtn.textContent = "삭제";
+
+    delBtn.addEventListener("click", function() {
+        li.remove();
+    })
+
+    li.appendChild(delBtn);
     result[3].appendChild(li);
     
     input[3].value = "";
 });
+
 
 /* 1일차
  * input    : textContent로 접근하는 게 아닌, value로 접근되어야 한다.
@@ -95,4 +105,10 @@ btn[3].addEventListener("click", function() {
  * result[3].appendChild(li);       : 화면에 추가
  * li, result는 변수명임을 기억할 것.
  * 버튼 함수 내에서 변수명 선언해서 관리하는 것도 좋은 방법.
+ */
+
+/* 4일차 휴식, 5일차
+ * remove()         : 제거
+ * appendChild()    : 오로지 node 객체만 자식 요소로 추가 가능.
+ *                    하나의 노드를 특정 부모 노드 안쪽 끝 부분(마지막 자식)에 추가.
  */
