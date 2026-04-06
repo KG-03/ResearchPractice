@@ -88,6 +88,39 @@ btn[3].addEventListener("click", function() {
     input[3].value = "";
 });
 
+btn[4].addEventListener("click", function() {
+    let text = input[4].value.trim();
+    
+    if (text === "") return;
+
+    let li = document.createElement("li");
+    li.textContent = text;
+
+    let delBtn = document.createElement("button");
+    delBtn.textContent = "삭제";
+    delBtn.addEventListener("click", function() {
+        li.remove();
+    });
+
+    let doneBtn = document.createElement("button");
+    doneBtn.textContent = "완료";
+    doneBtn.addEventListener("click", function() {
+        if(!li.querySelector(".done-text")) {            
+            let doneText = document.createElement("p");
+            doneText.textContent = "ㄴ완료되었음!";
+            doneText.classList.add("done-text");
+            doneText.style.display = "block";
+            li.appendChild(doneText);
+        }
+    });
+
+    li.appendChild(delBtn);
+    li.appendChild(doneBtn);
+    result[4].appendChild(li);
+
+    input[4].value = "";
+});
+
 
 /* 1일차
  * input    : textContent로 접근하는 게 아닌, value로 접근되어야 한다.
@@ -111,4 +144,12 @@ btn[3].addEventListener("click", function() {
  * remove()         : 제거
  * appendChild()    : 오로지 node 객체만 자식 요소로 추가 가능.
  *                    하나의 노드를 특정 부모 노드 안쪽 끝 부분(마지막 자식)에 추가.
+ */
+
+/* 6일차
+ * (변수명).style.display = "block"     : 줄 나누는 방법
+ * (변수명).classList.add("(태그명)")   : 태그 다는 방법
+ *      '완료'시, li 등에 "done" 태그를 추가하고
+ *      css로 .done {text-decoration: line-through; color: gray;}
+ *      이렇게 하면 가독성은 좋음. '완료됨' 이라는 문구 하나 넣고 싶어서 쓰진 않음.
  */
