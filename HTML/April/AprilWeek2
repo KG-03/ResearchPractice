@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8">
+        <title>AprilWeek2</title>
+        <!-- <link rel = "stylesheet" href = "AprilWeek2.css"> -->
+    </head>
+
+    <body>
+        <header>
+            <h1>복습코드</h1>
+        </header>
+
+        <main>
+            <h2>입력 창</h2>
+            <input class ="input" type = "text">
+            <button class ="btn">입력</button>
+            <p class= "p"></p>
+            <ul class = "list"></ul>
+        </main>
+
+        <script src = "AprilWeek2.js"></script>
+    </body>
+</html>
