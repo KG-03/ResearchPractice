@@ -4,5 +4,9 @@
 
 .done {
     text-decoration: line-through;
-    color: #777777;
+    color: gray;
+}
+
+ul li {
+    line-height: 2;
 }
