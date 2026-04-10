@@ -1,3 +1,6 @@
+let todos = [];
+let saved = localStorage.getItem("todos");
+
 let input = document.querySelector(".input");
 let btn = document.querySelector(".btn");
 let delall = document.querySelector(".delall");
@@ -10,6 +13,10 @@ btn.addEventListener("click", function() {
 
 delall.addEventListener("click", function() {
     list.innerHTML = "";
+
+    todos = [];
+    localStorage.setItem("todos", JSON.stringify(todos));
+
     updateGuide();
 });
 
@@ -18,6 +25,14 @@ input.addEventListener("keydown", function(e) {
         addList();
     }
 });
+
+if (saved) {
+    todos = JSON.parse(saved);
+    for(let i = 0; i < todos.length; i++) {
+        createItem(todos[i]);
+        updateGuide();
+    }
+}
 
 function addList() {
     let text = input.value.trim();
@@ -29,6 +44,16 @@ function addList() {
         guide.textContent = "";
     }
 
+    createItem(text);
+    updateGuide();
+    todos.push(text);
+    localStorage.setItem("todos", JSON.stringify(todos));
+
+    input.value = "";
+    input.focus();
+};
+
+function createItem(text) {
     let li = document.createElement("li");
     li.textContent = text;
 
@@ -36,6 +61,9 @@ function addList() {
     delbtn.textContent = "삭제";
     delbtn.classList.add("d-btn");
     delbtn.addEventListener("click", function() {
+        todos = todos.filter(item => item !== text);
+        localStorage.setItem("todos", JSON.stringify(todos));
+
         li.remove();
         updateGuide();
     })
@@ -49,11 +77,7 @@ function addList() {
     li.appendChild(delbtn);
     li.appendChild(donebtn);
     list.appendChild(li);
-    
-    updateGuide();
-    input.value = "";
-    input.focus();
-};
+}
 
 function updateGuide() {
     if (list.children.length) {
@@ -70,4 +94,9 @@ function updateGuide() {
 
 /* 9일차
  * 편의성 추가 (기능확장, ux 개선)
+ */
+
+/* 10일차
+ * 값 저장
+ * localStorage : 문자열만 저장된다. 따라서 JSON.stringify(), JSON.parse()가 꼭 필요하다.
  */
