@@ -44,24 +44,29 @@ function addList() {
         guide.textContent = "";
     }
 
-    createItem(text);
+    let todo = {text: text, done: false};
+
+    createItem(todo);
     updateGuide();
-    todos.push(text);
+    todos.push(todo);
     localStorage.setItem("todos", JSON.stringify(todos));
 
     input.value = "";
     input.focus();
 };
 
-function createItem(text) {
+function createItem(todo) {
     let li = document.createElement("li");
-    li.textContent = text;
+    li.textContent = todo.text;
+    if (todo.done) {
+        li.classList.add("done");
+    }
 
     let delbtn = document.createElement("button");
     delbtn.textContent = "삭제";
     delbtn.classList.add("d-btn");
     delbtn.addEventListener("click", function() {
-        todos = todos.filter(item => item !== text);
+        todos = todos.filter(item => item !== todo);
         localStorage.setItem("todos", JSON.stringify(todos));
 
         li.remove();
@@ -71,6 +76,8 @@ function createItem(text) {
     let donebtn = document.createElement("button");
     donebtn.textContent = "완료";
     donebtn.addEventListener("click", function() {
+        todo.done = !todo.done;
+        localStorage.setItem("todos", JSON.stringify(todos));
         li.classList.toggle("done");
     })
 
@@ -99,4 +106,12 @@ function updateGuide() {
 /* 10일차
  * 값 저장
  * localStorage : 문자열만 저장된다. 따라서 JSON.stringify(), JSON.parse()가 꼭 필요하다.
+ */
+
+/* 12일차
+ * '완료'된 것을 저장할 수 있도록 함.
+ * 그러기 위해서 'doto'라는 변수를 생성.
+ * 
+ * todos = todos.filter(item => item !== text); 다시 확인.
+ * todos = ["공부", "운동", "게임"];    text = "운동"; 일 때, '운동'인 부분을 제거하는 것.
  */
