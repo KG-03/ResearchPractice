@@ -7,7 +7,11 @@ let delall = document.querySelector(".delall");
 let list = document.querySelector(".list");
 let guide = document.querySelector(".guide");
 
+let isEditing = false;
+let editingTodo = null;
+
 btn.addEventListener("click", function() {
+    isEditing = false;
     addList();
 });
 
@@ -22,7 +26,22 @@ delall.addEventListener("click", function() {
 
 input.addEventListener("keydown", function(e) {
     if (e.key === "Enter") {
+        isEditing = false;
         addList();
+    }
+
+    if (e.key === "Escape") {
+        if (isEditing) {
+            createItem(editingTodo);
+            todos.push(editingTodo);
+            localStorage.setItem("todos", JSON.stringify(todos));
+
+            isEditing = false;
+            editingTodo = null;
+        }
+
+        input.value = "";
+        updateGuide();
     }
 });
 
@@ -64,13 +83,29 @@ function createItem(todo) {
 
     let delbtn = document.createElement("button");
     delbtn.textContent = "삭제";
-    delbtn.classList.add("d-btn");
+    delbtn.classList.add("child-btn");
     delbtn.addEventListener("click", function() {
         todos = todos.filter(item => item !== todo);
         localStorage.setItem("todos", JSON.stringify(todos));
 
         li.remove();
         updateGuide();
+    })
+
+    let editbtn = document.createElement("button");
+    editbtn.textContent = "수정";
+    editbtn.addEventListener("click", function() {
+        input.value = todo.text;
+
+        isEditing = true;
+        editingTodo = todo;
+        
+        todos = todos.filter(item => item !== todo);
+        localStorage.setItem("todos", JSON.stringify(todos));
+
+        li.remove();
+        updateGuide();
+        input.focus();
     })
 
     let donebtn = document.createElement("button");
@@ -82,15 +117,19 @@ function createItem(todo) {
     })
 
     li.appendChild(delbtn);
+    li.appendChild(editbtn);
     li.appendChild(donebtn);
     list.appendChild(li);
 }
 
 function updateGuide() {
-    if (list.children.length) {
+    if (isEditing === true) {
+        guide.textContent = "수정 중입니다...";
+        return;
+    } else if (list.children.length) {
         guide.textContent = list.children.length + "개의 할 일이 있습니다.";
         return;
-    }
+    } 
 
     guide.textContent = "";
 }
@@ -114,4 +153,10 @@ function updateGuide() {
  * 
  * todos = todos.filter(item => item !== text); 다시 확인.
  * todos = ["공부", "운동", "게임"];    text = "운동"; 일 때, '운동'인 부분을 제거하는 것.
+ */
+
+/* 13일차
+ * 수정 버튼 생성.
+ * esc로 수정 탈출 시키는 방법 추가.
+ *      + esc로 입력 초기화 하는 방법 추가.
  */
