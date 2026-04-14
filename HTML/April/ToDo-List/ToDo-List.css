@@ -1,12 +1,44 @@
+input:focus {
+    outline: none;
+    border: 2px solid #4dabf7;
+}
+
+ul li {
+    line-height: 2;
+}
+
+li {
+    list-style: none;
+    margin: 8px 0;
+    padding: 8px;
+
+    border-radius: 6px;
+    background: #fff;
+}
+
+li:hover {
+    background: #f1f1f1;
+}
+
+button {
+    margin: 5px;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
 .child-btn {
-    margin-left: 20px;
+    background-color: #ff6b6b;
+    color: white;
+}
+
+button:hover {
+    opacity: 0.8;
 }
 
 .done {
     text-decoration: line-through;
     color: gray;
-}
-
-ul li {
-    line-height: 2;
+    opacity: 0.6;
 }
