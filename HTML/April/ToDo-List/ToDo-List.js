@@ -94,6 +94,7 @@ function createItem(todo) {
 
     let editbtn = document.createElement("button");
     editbtn.textContent = "수정";
+    editbtn.classList.add("child-btn");
     editbtn.addEventListener("click", function() {
         input.value = todo.text;
 
@@ -110,6 +111,7 @@ function createItem(todo) {
 
     let donebtn = document.createElement("button");
     donebtn.textContent = "완료";
+    donebtn.classList.add("child-btn");
     donebtn.addEventListener("click", function() {
         todo.done = !todo.done;
         localStorage.setItem("todos", JSON.stringify(todos));
@@ -159,4 +161,8 @@ function updateGuide() {
  * 수정 버튼 생성.
  * esc로 수정 탈출 시키는 방법 추가.
  *      + esc로 입력 초기화 하는 방법 추가.
+ */
+
+/* 14일차
+ * css를 많이 손보게 됨.
  */
