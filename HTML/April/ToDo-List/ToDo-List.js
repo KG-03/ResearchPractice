@@ -122,7 +122,7 @@ function createItem(todo) {
         todoItem.classList.toggle("done");
     })
 
-    todoItem.appendChild(delBtn, editBtn, doneBtn);
+    todoItem.append(delBtn, editBtn, doneBtn);
     list.appendChild(todoItem);
 }
 
