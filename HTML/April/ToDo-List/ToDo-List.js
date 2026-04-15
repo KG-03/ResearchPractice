@@ -2,24 +2,23 @@ let todos = [];
 let saved = localStorage.getItem("todos");
 
 let input = document.querySelector(".input");
-let btn = document.querySelector(".btn");
-let delall = document.querySelector(".delall");
+let addBtn = document.querySelector(".btn");
+let delAllBtn = document.querySelector(".delall");
 let list = document.querySelector(".list");
 let guide = document.querySelector(".guide");
 
 let isEditing = false;
 let editingTodo = null;
 
-btn.addEventListener("click", function() {
-    isEditing = false;
+addBtn.addEventListener("click", function() {
     addList();
 });
 
-delall.addEventListener("click", function() {
+delAllBtn.addEventListener("click", function() {
     list.innerHTML = "";
 
     todos = [];
-    localStorage.setItem("todos", JSON.stringify(todos));
+    saveTodos();
 
     updateGuide();
 });
@@ -34,94 +33,97 @@ input.addEventListener("keydown", function(e) {
         if (isEditing) {
             createItem(editingTodo);
             todos.push(editingTodo);
-            localStorage.setItem("todos", JSON.stringify(todos));
+            saveTodos();
 
             isEditing = false;
             editingTodo = null;
         }
 
-        input.value = "";
         updateGuide();
+        input.value = "";
+        input.focus();
     }
 });
 
 if (saved) {
-    todos = JSON.parse(saved);
+    try {
+        todos = JSON.parse(saved);
+    } catch {
+        todos = [];
+    }
+
     for(let i = 0; i < todos.length; i++) {
         createItem(todos[i]);
-        updateGuide();
     }
+    updateGuide();
 }
 
 function addList() {
-    let text = input.value.trim();
+    let inputText = input.value.trim();
 
-    if(text === "") {
+    if(inputText === "") {
         guide.textContent = "입력해 주십시오.";
         return;
-    } else {
-        guide.textContent = "";
     }
 
-    let todo = {text: text, done: false};
+    let todo = {text: inputText, done: false};
 
     createItem(todo);
-    updateGuide();
     todos.push(todo);
-    localStorage.setItem("todos", JSON.stringify(todos));
+    saveTodos();
+    updateGuide();
 
     input.value = "";
     input.focus();
+    isEditing = false;
 };
 
 function createItem(todo) {
-    let li = document.createElement("li");
-    li.textContent = todo.text;
+    let todoItem = document.createElement("li");
+    todoItem.textContent = todo.text;
     if (todo.done) {
-        li.classList.add("done");
+        todoItem.classList.add("done");
     }
 
-    let delbtn = document.createElement("button");
-    delbtn.textContent = "삭제";
-    delbtn.classList.add("child-btn");
-    delbtn.addEventListener("click", function() {
+    let delBtn = document.createElement("button");
+    delBtn.textContent = "삭제";
+    delBtn.classList.add("child-btn");
+    delBtn.addEventListener("click", function() {
         todos = todos.filter(item => item !== todo);
-        localStorage.setItem("todos", JSON.stringify(todos));
+        saveTodos();
 
-        li.remove();
+        todoItem.remove();
         updateGuide();
     })
 
-    let editbtn = document.createElement("button");
-    editbtn.textContent = "수정";
-    editbtn.classList.add("child-btn");
-    editbtn.addEventListener("click", function() {
+    let editBtn = document.createElement("button");
+    editBtn.textContent = "수정";
+    editBtn.classList.add("child-btn");
+    editBtn.addEventListener("click", function() {
         input.value = todo.text;
 
         isEditing = true;
         editingTodo = todo;
         
         todos = todos.filter(item => item !== todo);
-        localStorage.setItem("todos", JSON.stringify(todos));
+        saveTodos();
 
-        li.remove();
+        todoItem.remove();
         updateGuide();
         input.focus();
     })
 
-    let donebtn = document.createElement("button");
-    donebtn.textContent = "완료";
-    donebtn.classList.add("child-btn");
-    donebtn.addEventListener("click", function() {
+    let doneBtn = document.createElement("button");
+    doneBtn.textContent = "완료";
+    doneBtn.classList.add("child-btn");
+    doneBtn.addEventListener("click", function() {
         todo.done = !todo.done;
-        localStorage.setItem("todos", JSON.stringify(todos));
-        li.classList.toggle("done");
+        saveTodos();
+        todoItem.classList.toggle("done");
     })
 
-    li.appendChild(delbtn);
-    li.appendChild(editbtn);
-    li.appendChild(donebtn);
-    list.appendChild(li);
+    todoItem.appendChild(delBtn, editBtn, doneBtn);
+    list.appendChild(todoItem);
 }
 
 function updateGuide() {
@@ -134,6 +136,10 @@ function updateGuide() {
     } 
 
     guide.textContent = "";
+}
+
+function saveTodos() {
+    localStorage.setItem("todos", JSON.stringify(todos));
 }
 
 /* 8일차
@@ -165,4 +171,10 @@ function updateGuide() {
 
 /* 14일차
  * css를 많이 손보게 됨.
+ */
+
+/* 15일차
+ * 코드 리팩토링
+ * try catch    : try 시도했을 때 catch 만약 실패했다면 이 안의 코드 실행
+ * JSON.parse   : 문자열 > 객체로 번역하는 작업.
  */
