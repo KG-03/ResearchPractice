@@ -10,6 +10,11 @@ let guide = document.querySelector(".guide");
 let isEditing = false;
 let editingTodo = null;
 
+let currentFilter = "filter-all"
+let filterAllBtn = document.querySelector("#filter-all");
+let filterDoneBtn = document.querySelector("#filter-done");
+let filterNotDoneBtn = document.querySelector("#filter-notDone");
+
 addBtn.addEventListener("click", function() {
     addList();
 });
@@ -21,6 +26,21 @@ delAllBtn.addEventListener("click", function() {
     saveTodos();
 
     updateGuide();
+});
+
+filterAllBtn.addEventListener("click", function() {
+    currentFilter = "filter-all";
+    renderList();
+});
+
+filterDoneBtn.addEventListener("click", function() {
+    currentFilter = "filter-done";
+    renderList();
+});
+
+filterNotDoneBtn.addEventListener("click", function() {
+    currentFilter = "filter-notDone";
+    renderList();
 });
 
 input.addEventListener("keydown", function(e) {
@@ -52,9 +72,7 @@ if (saved) {
         todos = [];
     }
 
-    for(let i = 0; i < todos.length; i++) {
-        createItem(todos[i]);
-    }
+    renderList();
     updateGuide();
 }
 
@@ -68,15 +86,15 @@ function addList() {
 
     let todo = {text: inputText, done: false};
 
-    createItem(todo);
     todos.push(todo);
+    renderList();
     saveTodos();
     updateGuide();
 
     input.value = "";
     input.focus();
     isEditing = false;
-};
+}
 
 function createItem(todo) {
     let todoItem = document.createElement("li");
@@ -126,20 +144,53 @@ function createItem(todo) {
     list.appendChild(todoItem);
 }
 
+function saveTodos() {
+    localStorage.setItem("todos", JSON.stringify(todos));
+}
+
+function renderList() {
+    list.innerHTML = "";
+
+    for (let i = 0; i < todos.length; i++) {
+        let todo = todos[i];
+
+        if (currentFilter === "filter-all") {
+            filterAllBtn.classList.add("active");
+            filterDoneBtn.classList.remove("active");
+            filterNotDoneBtn.classList.remove("active");
+            createItem(todo);
+        } else if (currentFilter === "filter-done" && todo.done) {
+            filterAllBtn.classList.remove("active");
+            filterDoneBtn.classList.add("active");
+            filterNotDoneBtn.classList.remove("active");
+            createItem(todo);
+        } else if (currentFilter === "filter-notDone" && !todo.done) {
+            filterAllBtn.classList.remove("active");
+            filterDoneBtn.classList.remove("active");
+            filterNotDoneBtn.classList.add("active");
+            createItem(todo);
+        }
+    }
+
+    updateGuide();
+}
+
 function updateGuide() {
     if (isEditing === true) {
         guide.textContent = "수정 중입니다...";
         return;
+    } else if (currentFilter === "filter-done") {
+        guide.textContent = "현재 완료된 일은 다음과 같습니다.";
+        return;
+    } else if (currentFilter === "filter-notDone") {
+        guide.textContent = "현재 해야 하는 일은 다음과 같습니다.";
+        return;
     } else if (list.children.length) {
         guide.textContent = list.children.length + "개의 할 일이 있습니다.";
         return;
-    } 
+    }
 
     guide.textContent = "";
-}
-
-function saveTodos() {
-    localStorage.setItem("todos", JSON.stringify(todos));
 }
 
 /* 8일차
@@ -177,4 +228,10 @@ function saveTodos() {
  * 코드 리팩토링
  * try catch    : try 시도했을 때 catch 만약 실패했다면 이 안의 코드 실행
  * JSON.parse   : 문자열 > 객체로 번역하는 작업.
+ */
+
+/* 16일차 
+ * 필터
+ * 데이터 기준으로 화면을 다시 그리기 위해 createItme()에서 renderList()를 통한 출력으로 변경.
+ * 
  */
