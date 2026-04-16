@@ -33,6 +33,19 @@ button {
     color: white;
 }
 
+.filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+
+    align-items: center;
+}
+
+.active {
+    background-color: black;
+    color: white;
+}
+
 button:hover {
     opacity: 0.8;
 }
