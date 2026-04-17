@@ -14,6 +14,7 @@ let currentFilter = "filter-all"
 let filterAllBtn = document.querySelector("#filter-all");
 let filterDoneBtn = document.querySelector("#filter-done");
 let filterNotDoneBtn = document.querySelector("#filter-notDone");
+let filterSearchText = "";
 
 addBtn.addEventListener("click", function() {
     addList();
@@ -42,6 +43,11 @@ filterNotDoneBtn.addEventListener("click", function() {
     currentFilter = "filter-notDone";
     renderList();
 });
+
+input.addEventListener("input", function() {
+    filterSearchText = input.value.toLowerCase();
+    renderList();
+})
 
 input.addEventListener("keydown", function(e) {
     if (e.key === "Enter") {
@@ -154,6 +160,8 @@ function renderList() {
     for (let i = 0; i < todos.length; i++) {
         let todo = todos[i];
 
+        if(!todo.text.toLowerCase().includes(filterSearchText)) continue;
+
         if (currentFilter === "filter-all") {
             filterAllBtn.classList.add("active");
             filterDoneBtn.classList.remove("active");
@@ -233,5 +241,12 @@ function updateGuide() {
 /* 16일차 
  * 필터
  * 데이터 기준으로 화면을 다시 그리기 위해 createItme()에서 renderList()를 통한 출력으로 변경.
- * 
+ */
+
+/* 17일차
+ * 텍스트로 필터 기능 생성.
+ * !todo.text.toLowerCase().includes(filterSearchText)
+ *      todo의 텍스트를 모두 소문자로 변환하고, todo의 텍스트에 filterSearchText가 포함되어 있지 않다면 true.
+ *      검색어 없으면 건너뛰라는 의미. (실행에 continue를 적어놨으니까)
+ *      toLowerCase()   : 문자열을 전부 소문자로 바꿔주는 함수.
  */
