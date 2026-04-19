@@ -21,12 +21,19 @@ addBtn.addEventListener("click", function() {
 });
 
 delAllBtn.addEventListener("click", function() {
-    list.innerHTML = "";
+    let items = document.querySelectorAll("li");
+    items.forEach(item => {
+        item.classList.remove("show");
+        item.classList.remove("fade-in");        
+        item.classList.add("fade-out");
+    })
 
-    todos = [];
-    saveTodos();
-
-    updateGuide();
+    setTimeout(function() {
+        list.innerHTML = "";
+        todos = [];
+        saveTodos();
+        updateGuide();
+    }, 200);
 });
 
 filterAllBtn.addEventListener("click", function() {
@@ -47,6 +54,7 @@ filterNotDoneBtn.addEventListener("click", function() {
 input.addEventListener("input", function() {
     filterSearchText = input.value.toLowerCase();
     renderList();
+    filterSearchText = "";
 })
 
 input.addEventListener("keydown", function(e) {
@@ -113,12 +121,17 @@ function createItem(todo) {
     delBtn.textContent = "삭제";
     delBtn.classList.add("child-btn");
     delBtn.addEventListener("click", function() {
-        todos = todos.filter(item => item !== todo);
-        saveTodos();
+        todoItem.classList.remove("show");
+        todoItem.classList.remove("fade-in");
 
-        todoItem.remove();
-        updateGuide();
-    })
+        todoItem.classList.add("fade-out");
+        setTimeout(function() {
+            todos = todos.filter(item => item !== todo);
+            saveTodos();            
+            todoItem.remove();
+            updateGuide();
+        }, 200);
+    });
 
     let editBtn = document.createElement("button");
     editBtn.textContent = "수정";
@@ -135,7 +148,7 @@ function createItem(todo) {
         todoItem.remove();
         updateGuide();
         input.focus();
-    })
+    });
 
     let doneBtn = document.createElement("button");
     doneBtn.textContent = "완료";
@@ -144,10 +157,15 @@ function createItem(todo) {
         todo.done = !todo.done;
         saveTodos();
         todoItem.classList.toggle("done");
-    })
+    });
 
     todoItem.append(delBtn, editBtn, doneBtn);
     list.appendChild(todoItem);
+
+    todoItem.classList.add("fade-in");
+    requestAnimationFrame(() => {
+        todoItem.classList.add("show");
+    });
 }
 
 function saveTodos() {
@@ -157,25 +175,20 @@ function saveTodos() {
 function renderList() {
     list.innerHTML = "";
 
+    filterAllBtn.classList.toggle("active", currentFilter === "filter-all");
+    filterDoneBtn.classList.toggle("active", currentFilter === "filter-done");
+    filterNotDoneBtn.classList.toggle("active", currentFilter === "filter-notDone");
+
     for (let i = 0; i < todos.length; i++) {
         let todo = todos[i];
 
         if(!todo.text.toLowerCase().includes(filterSearchText)) continue;
 
         if (currentFilter === "filter-all") {
-            filterAllBtn.classList.add("active");
-            filterDoneBtn.classList.remove("active");
-            filterNotDoneBtn.classList.remove("active");
             createItem(todo);
         } else if (currentFilter === "filter-done" && todo.done) {
-            filterAllBtn.classList.remove("active");
-            filterDoneBtn.classList.add("active");
-            filterNotDoneBtn.classList.remove("active");
             createItem(todo);
         } else if (currentFilter === "filter-notDone" && !todo.done) {
-            filterAllBtn.classList.remove("active");
-            filterDoneBtn.classList.remove("active");
-            filterNotDoneBtn.classList.add("active");
             createItem(todo);
         }
     }
@@ -184,7 +197,9 @@ function renderList() {
 }
 
 function updateGuide() {
-    if (isEditing === true) {
+    if (!list.children.length && !isEditing) {
+        guide.textContent = "할 일이 없습니다.";
+    } else if (isEditing === true) {
         guide.textContent = "수정 중입니다...";
         return;
     } else if (currentFilter === "filter-done") {
@@ -249,4 +264,16 @@ function updateGuide() {
  *      todo의 텍스트를 모두 소문자로 변환하고, todo의 텍스트에 filterSearchText가 포함되어 있지 않다면 true.
  *      검색어 없으면 건너뛰라는 의미. (실행에 continue를 적어놨으니까)
  *      toLowerCase()   : 문자열을 전부 소문자로 바꿔주는 함수.
+ */
+
+/* 19일차
+ * setTimeout()             : 지정된 시간이 지난 뒤 실행된다.
+ *                            setTimeout(function() {...}, 1000); 이와 같은 코드가 있다면, 1초 뒤 실행된다.
+ *                            밀리 초(ms) 단위로, 한 번만 실행된다.
+ * requestAnimationFrame()  : 화면 기준으로 실행. 다음 화면 그리기 직전에 실행된다.
+ *                            브라우저가 '지금 그릴 타이밍'에 맞춰서 실행하며, 초당 60번 실행 가능하다.
+ *                            ex: 클래스 적용 -> 이를 한 프레임 뒤에 변화.
+ *                                todoItem.classList.add("fade-in");
+ *                                todoItem.classList.add("show");
+ *                                위의 방식으로 코드를 짜면, 애니메이션이 보이지 않는다. 브라우저가 한 번에 처리하기 때문.
  */
