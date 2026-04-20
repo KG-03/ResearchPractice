@@ -55,7 +55,7 @@ input.addEventListener("input", function() {
     filterSearchText = input.value.toLowerCase();
     renderList();
     filterSearchText = "";
-})
+});
 
 input.addEventListener("keydown", function(e) {
     if (e.key === "Enter") {
@@ -98,9 +98,18 @@ function addList() {
         return;
     }
 
-    let todo = {text: inputText, done: false};
+    let todo = {
+        id: Date.now(),
+        text: inputText,
+        done: false
+    };
 
-    todos.push(todo);
+    todos.push({
+        id: Date.now(),
+        text: inputText,
+        done: false
+    });
+
     renderList();
     saveTodos();
     updateGuide();
@@ -126,7 +135,7 @@ function createItem(todo) {
 
         todoItem.classList.add("fade-out");
         setTimeout(function() {
-            todos = todos.filter(item => item !== todo);
+            todos = todos.filter(item => item.id !== todo.id);
             saveTodos();            
             todoItem.remove();
             updateGuide();
@@ -142,7 +151,7 @@ function createItem(todo) {
         isEditing = true;
         editingTodo = todo;
         
-        todos = todos.filter(item => item !== todo);
+        todos = todos.filter(item => item.id !== todo.id);
         saveTodos();
 
         todoItem.remove();
@@ -175,25 +184,26 @@ function saveTodos() {
 function renderList() {
     list.innerHTML = "";
 
-    filterAllBtn.classList.toggle("active", currentFilter === "filter-all");
-    filterDoneBtn.classList.toggle("active", currentFilter === "filter-done");
-    filterNotDoneBtn.classList.toggle("active", currentFilter === "filter-notDone");
+    updateFilterUI();
 
-    for (let i = 0; i < todos.length; i++) {
-        let todo = todos[i];
+    let filtered = todos.filter(todo => {
+        if (!todo.text.toLowerCase().includes(filterSearchText)) return false;
 
-        if(!todo.text.toLowerCase().includes(filterSearchText)) continue;
+        if (currentFilter === "filter-done") return todo.done;
+        if (currentFilter === "filter-notDone") return !todo.done;
 
-        if (currentFilter === "filter-all") {
-            createItem(todo);
-        } else if (currentFilter === "filter-done" && todo.done) {
-            createItem(todo);
-        } else if (currentFilter === "filter-notDone" && !todo.done) {
-            createItem(todo);
-        }
-    }
+        return true;
+    })
+
+    filtered.forEach(todo => createItem(todo));
 
     updateGuide();
+}
+
+function updateFilterUI() {
+    filterAllBtn.classList.toggle("active", currentFilter === "filter-all");
+    filterDoneBtn.classList.toggle("active", currentFilter === "filter-done");
+    filterNotDoneBtn.classList.toggle("active", currentFilter === "filter-notDone");    
 }
 
 function updateGuide() {
@@ -276,4 +286,23 @@ function updateGuide() {
  *                                todoItem.classList.add("fade-in");
  *                                todoItem.classList.add("show");
  *                                위의 방식으로 코드를 짜면, 애니메이션이 보이지 않는다. 브라우저가 한 번에 처리하기 때문.
+ */
+
+/* 20일차
+ * 안정성 + 구조 정리
+ *      let text = input.value.trim();
+ *      let todo = {
+ *          id: Date.now(),
+ *          text: inputText,
+ *          done: false
+ *      };
+ * 
+ *      todos.pust({
+ *          id: Date.now(),
+ *          text,
+ *          done: false
+ *      });
+ * 
+ *      여기서 push할 때, text를 text로 넣을 수 있음. 변수 이름과 속성 이름이 같으면 축약 가능.
+ * 
  */
