@@ -54,7 +54,6 @@ filterNotDoneBtn.addEventListener("click", function() {
 input.addEventListener("input", function() {
     filterSearchText = input.value.toLowerCase();
     renderList();
-    filterSearchText = "";
 });
 
 input.addEventListener("keydown", function(e) {
@@ -73,8 +72,9 @@ input.addEventListener("keydown", function(e) {
             editingTodo = null;
         }
 
-        updateGuide();
         input.value = "";
+        renderList();
+        updateGuide();
         input.focus();
     }
 });
@@ -146,6 +146,10 @@ function createItem(todo) {
     editBtn.textContent = "수정";
     editBtn.classList.add("child-btn");
     editBtn.addEventListener("click", function() {
+        if(isEditing) {
+            guide.textContent = "수정 중입니다. 먼저 완료하거나 취소해주세요.";
+            return;
+        }
         input.value = todo.text;
 
         isEditing = true;
@@ -195,8 +199,10 @@ function renderList() {
         return true;
     })
 
+    filtered.sort((a, b) => b.done - a.done);
     filtered.forEach(todo => createItem(todo));
 
+    filterSearchText = "";
     updateGuide();
 }
 
@@ -208,9 +214,9 @@ function updateFilterUI() {
 
 function updateGuide() {
     if (!list.children.length && !isEditing) {
-        guide.textContent = "할 일이 없습니다.";
+        guide.textContent = "할 일을 추가해보세요!";
     } else if (isEditing === true) {
-        guide.textContent = "수정 중입니다...";
+        guide.textContent = "수정 후 확인 버튼을 누르거나 Enter를 누르세요. (ESC 취소)";
         return;
     } else if (currentFilter === "filter-done") {
         guide.textContent = "현재 완료된 일은 다음과 같습니다.";
@@ -304,5 +310,14 @@ function updateGuide() {
  *      });
  * 
  *      여기서 push할 때, text를 text로 넣을 수 있음. 변수 이름과 속성 이름이 같으면 축약 가능.
- * 
+ */
+
+/* 21일차
+ * 수정 중 UX 완성. 텍스트 몇 가지만 변경.
+ * 수정을 하다가 ESC로 빠져나오면 할일이 보이지 않는 문제 해결.
+ * filtered.sort((a, b) => b.done - a.done);로 정렬.
+ *      b.done - a.done (완료(true) === 1, 미완료(false) === 0), 따라서 양수면 위로 올라간다. (1 - 0 = 양수)
+ *      데이터 자체(todos)를 정렬하는 것도 가능하지만, 이 경우 순서가 계속 바뀌고 원본 데이터가 훼손될 가능성이 있다.
+ * 수정버튼을 누르고 또 다른 수정 버튼을 누르면 이전의 할일이 없어지는 문제 발견.
+ * 수정 중일 때는 수정 버튼에 접근하지 못하도록 설정하여 해걸.
  */
