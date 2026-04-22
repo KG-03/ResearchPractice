@@ -1,5 +1,5 @@
 let todos = [];
-let saved = localStorage.getItem("todos");
+const saved = localStorage.getItem("todos");
 
 let input = document.querySelector(".input");
 let addBtn = document.querySelector(".btn");
@@ -73,8 +73,8 @@ input.addEventListener("keydown", function(e) {
         }
 
         input.value = "";
+        filterSearchText = "";
         renderList();
-        updateGuide();
         input.focus();
     }
 });
@@ -90,6 +90,7 @@ if (saved) {
     updateGuide();
 }
 
+//할 일 추가 함수 (입력 > 데이터 생성 > 렌더링)
 function addList() {
     let inputText = input.value.trim();
 
@@ -104,12 +105,9 @@ function addList() {
         done: false
     };
 
-    todos.push({
-        id: Date.now(),
-        text: inputText,
-        done: false
-    });
+    todos.push(todo);
 
+    filterSearchText = "";
     renderList();
     saveTodos();
     updateGuide();
@@ -119,6 +117,7 @@ function addList() {
     isEditing = false;
 }
 
+//요소 생성 (addList() > renderList() > createItem())
 function createItem(todo) {
     let todoItem = document.createElement("li");
     todoItem.textContent = todo.text;
@@ -181,10 +180,12 @@ function createItem(todo) {
     });
 }
 
+//저장
 function saveTodos() {
     localStorage.setItem("todos", JSON.stringify(todos));
 }
 
+//리스트 전체 렌더링 (필터 + 정렬)
 function renderList() {
     list.innerHTML = "";
 
@@ -202,16 +203,17 @@ function renderList() {
     filtered.sort((a, b) => b.done - a.done);
     filtered.forEach(todo => createItem(todo));
 
-    filterSearchText = "";
     updateGuide();
 }
 
+//필터 버튼
 function updateFilterUI() {
     filterAllBtn.classList.toggle("active", currentFilter === "filter-all");
     filterDoneBtn.classList.toggle("active", currentFilter === "filter-done");
     filterNotDoneBtn.classList.toggle("active", currentFilter === "filter-notDone");    
 }
 
+//상태 표시
 function updateGuide() {
     if (!list.children.length && !isEditing) {
         guide.textContent = "할 일을 추가해보세요!";
@@ -320,4 +322,8 @@ function updateGuide() {
  *      데이터 자체(todos)를 정렬하는 것도 가능하지만, 이 경우 순서가 계속 바뀌고 원본 데이터가 훼손될 가능성이 있다.
  * 수정버튼을 누르고 또 다른 수정 버튼을 누르면 이전의 할일이 없어지는 문제 발견.
  * 수정 중일 때는 수정 버튼에 접근하지 못하도록 설정하여 해걸.
+ */
+
+/* 22일차
+ * 코드 몇 가지 수정
  */
