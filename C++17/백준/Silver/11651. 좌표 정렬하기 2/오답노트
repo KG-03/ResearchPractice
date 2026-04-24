@@ -1,0 +1,7 @@
+시간초과가 일어났다.
+main() 함수에서 다음의 선언을 하는 것을 잊었기 때문이다.
+
+ios_base::sync_with_stdio(false);
+cin.tie(NULL);
+cout.tie(NULL);
+이후 cout << ... << "\n"; 으로 출력하여 문제를 해결했다.
