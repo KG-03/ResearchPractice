@@ -1,9 +1,13 @@
 const input = document.querySelector(".input");
 const btn = document.querySelector(".btn");
 const result = document.querySelector(".result");
+const state = document.querySelector(".state");
+
+let requestId = 0;
 
 const MESSAGES = {
     loading: "불러오는 중...",
+    research: "다시 검색해주십시오.",
     notFound: "도시를 찾을 수 없습니다.",
     error: "오류가 발생했습니다"
 };
@@ -20,12 +24,15 @@ input.addEventListener("keydown", function(e) {
 });
 
 async function getWeather() {
+    if(btn.disabled) return;
+
     const city = input.value.trim();
     if(!city) return;
 
     showMessage("loading");
 
     const start = Date.now();
+    const currentId = ++requestId;
 
     try {
         btn.disabled = true;
@@ -50,7 +57,11 @@ async function getWeather() {
         const weatherData = await weatherRes.json();
 
         if (!weatherData.main || !weatherData.weather) {
-            throw new Error("Invalid data")
+            throw new Error("Invalid data");
+        }
+
+        if (currentId !== requestId) {
+            throw new Error("research");
         }
 
         const elapsed = Date.now() - start;
@@ -60,6 +71,7 @@ async function getWeather() {
         }
 
         renderWeather(weatherData, name);
+        showMessage();
 
         input.value = "";
         input.focus();
@@ -69,6 +81,8 @@ async function getWeather() {
         //이후 확장을 위해 각각 분리하여 관리중.
         if (error.message === "notFound") {
             showMessage("notFound");
+        } else if (error.message === "research") {
+            showMessage("research");
         } else if (error.message === "Geocoding failed") {
             showMessage("error");
         } else if (error.message === "Weather request failed") {
@@ -84,18 +98,65 @@ async function getWeather() {
 }
 
 function renderWeather(data, cityName) {
+    if(!data.main || !data.weather) return;
+
     const temp = data.main.temp;
     const weather = data.weather[0].main;
+    const icon = data.weather[0].icon;
 
-    result.innerHTML = `
-        <h2>${cityName || data.name}</h2>
-        <p>${temp}°C</p>
-        <p>${weather}</p>
+    const iconUrl = `https://openweathermap.org/img/wn/${icon}@2x.png`;
+
+    const oldCard = document.querySelector(".weather-card");
+
+    if(oldCard) {
+        console.log("fade-out")
+        oldCard.classList.remove("show");
+        oldCard.classList.remove("fade-in");
+        oldCard.classList.add("fade-out");
+
+        setTimeout(() => {
+            console.log("swap");
+            result.innerHTML = createCardHTML(cityName, data, iconUrl);
+
+            const newCard = document.querySelector(".weather-card");
+
+            newCard.classList.add("fade-in");
+            requestAnimationFrame(() => {
+                newCard.classList.add("show");
+            });
+        }, 300);
+    } else {
+        result.innerHTML = createCardHTML(cityName, data, iconUrl);
+
+        const newCard = document.querySelector(".weather-card");
+        
+        newCard.classList.add("fade-in");
+        requestAnimationFrame(() => {
+            newCard.classList.add("show");
+        });
+    }
+}
+
+function createCardHTML(cityName, data, iconUrl) {
+    const temp = data.main.temp;
+    const weather = data.weather[0].main;
+    
+    return `
+        <div class=weather-card>
+            <h2>${cityName || data.name}</h2>
+            <img src="${iconUrl}" alt=${weather}>
+            <p class="temp">${temp}°C</p>
+            <p class="weather">${weather}</p>
+        </div>
     `;
 }
 
 function showMessage(type) {
-    result.textContent = MESSAGES[type];
+    if(!type) {
+        state.textContent = "";
+        return;
+    }
+    state.textContent = MESSAGES[type] || "";
 }
 
 /* 4월 23일
@@ -118,4 +179,8 @@ function showMessage(type) {
  *      =>                                                  : (매개변수) => {실행 코드}. function (resolve) {return setTimeout (...);}와 같은 구조.
  *                                                            왼쪽 값을 받아서 오른쪽 코드를 실행하는 함수를 만드는 문법.
  *      JS가 Promise 종료 시점(==resolve 실행 시점) 생성 > setTimeout(...)이 되면 종료 시점 실행.
+ */
+
+/* 26일차
+ * requestAnimationFrame()  : DOM이 그려진 "다음 프레임"에 실행된다.
  */
