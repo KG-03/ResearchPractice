@@ -7,3 +7,58 @@ header {
 
     background: #f0f0f0;
 }
+
+.weather {
+    color: gray;
+}
+
+.weather-card {
+    padding: 20px;
+    margin: 20px auto;
+    width: 250px;
+
+    border-radius: 12px;
+    text-align: center;
+
+    background: white;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+}
+
+.weather-card.fade-out {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.weather-card.fade-in {
+    opacity: 0;
+    transform: translateY(10px);    
+}
+
+.weather-card.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.state {
+    position: absolute;
+    left: 0;
+    width: 100%;
+}
+
+.state:empty {
+    display: none;
+}
+
+.temp {
+    font-size: 28px;
+    font-weight: bold;
+}
+
+/* 26일차
+ * position: absolute;  : 부모 요소 내부에 속박되지 않고 독립된 배치 문맥을 가진다.
+ *                        요소를 기본적으로 브라우저 화면 상에서 어디든지 원하는 위치에 자유롭게 배치시킬 수 있다.
+ */
