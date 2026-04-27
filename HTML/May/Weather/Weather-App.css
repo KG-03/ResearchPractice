@@ -1,3 +1,29 @@
+html, body {
+    height: 100%;
+}
+
+body {
+    min-height: 100vh;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+body.weather-clear {
+    background: linear-gradient(to top, #74ebd5, #9face6);
+}
+
+body.weather-clouds {
+    background: linear-gradient(to top, #d7d2cc, #304352);
+}
+
+body.weather-rain {
+    background: linear-gradient(to top, #4b79a1, #283e51);
+}
+
+body.weather-snow {
+    background: linear-gradient(to top, #e6dada, #274046);
+}
+
 header {
     padding: 10px 10px;
     margin-bottom: 10px;
@@ -20,7 +46,8 @@ header {
     border-radius: 12px;
     text-align: center;
 
-    background: white;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(6px);
     box-shadow: 0 10px 25px rgba(0,0,0,0.2);
 
     opacity: 0;
@@ -62,3 +89,15 @@ header {
  * position: absolute;  : 부모 요소 내부에 속박되지 않고 독립된 배치 문맥을 가진다.
  *                        요소를 기본적으로 브라우저 화면 상에서 어디든지 원하는 위치에 자유롭게 배치시킬 수 있다.
  */
+
+ /* 27일차
+  * background: linear-gradient(to top, #74ebd5, #9face6);  : to top(아래에서 위 방향으로) #... #...(두 가지 색상을 부드럽게 섞으시오)
+  *                                                           직선 방향으로 색이 변하는 그라데이션.
+  * min-height: 100vh;                  : 요소의 최소 높이를 화면 높이(뷰포트)와 같게 만든다.
+  *                                       min-height 자체가 최소 높이를 의미. 내용이 적어도 이 값은 유지된다는 의미.
+  *                                       vh : viewport height(화면 높이)를 의미. 100vh는 현재 화면 높이의 100%를 의미한다.
+  * background-repeat: no-repeat;       : 배경을 한 번만 표시하고, 반복하지 않는다.
+  *                                       기본값은 repeat로, 작은 이미지가 타일처럼 계속 반복된다.
+  * background-size: cover;             : 배경을 요소 전체를 완전히 덮도록 확대, 축소한다.
+  *                                       요소를 빈 공간 없이 꽉 채운다. 비율을 유지하나, 일부가 잘릴 수 있다.
+  */
