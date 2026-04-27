@@ -1,0 +1,59 @@
+참조1: https://shjz.tistory.com/51
+참조2: https://beginnerdeveloper-lit.tistory.com/94
+
+방식은 sort를 쓰는 게 맞긴 했다.
+본인 스스로 짰던 코드는 아래와 같았다.
+
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int n = 0;
+    cin >> n;
+
+    vector<string> s;
+    string temp;
+    
+    for(int i = 0; i < n; i++) {
+        cin >> temp;
+        s.push_back(temp);
+    }
+
+    sort(s.begin(), s.end());
+    
+    for (int i = 0; i < n; i++) {
+        for(int j = i; j < n; j++) {
+            if(s[i].length() > s[j].length()) {
+                temp = s[i];
+                s[i] = s[j];
+                s[j] = temp;
+            }
+
+            if (i != j && s[i] == s[j]) {
+                s.erase(s.begin() + i);
+                s.pop_back();
+            }
+        }
+    }
+
+    for (int i = 0; i < n; i++) {
+        cout << s[i] << endl;
+    }
+    
+    return 0;
+}
+
+이 방식을 사용하면 '출력이 되긴 되나, 공백이 생기는 문제'가 생겼다.
+그래서 참조를 찾았다.
+
+방식은 sort()를 쓰는 방식이 맞았지만, sort 함수의 추가 기능을 활용해야 했다.
+sort(v.begin(), v.end(), compare)에서 compare에 함수를 넣을 수 있는데, compare 자리에 넣어진 함수의 반환 값에 맞게 정렬이 동작하게 된다.
+참조3: https://blog.naver.com/ndb796/221227975229
+
+그리하여 처음으로는 '길이가 같다면 사전 순', '길이가 다르다면 짧은 순'으로 정렬을 실행할 수 있었고,
+만약 중복된 경우는 한 번만 출력할 수 있도록 continue를 활용하였다.
+
+sort 함수의 추가 기능을 알아야 잘 풀어낼 수 있던 문제로 보인다.
