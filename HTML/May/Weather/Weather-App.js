@@ -108,6 +108,8 @@ function renderWeather(data, cityName) {
 
     const oldCard = document.querySelector(".weather-card");
 
+    const weatherMain = data.weather[0].main;
+
     if(oldCard) {
         console.log("fade-out")
         oldCard.classList.remove("show");
@@ -135,6 +137,8 @@ function renderWeather(data, cityName) {
             newCard.classList.add("show");
         });
     }
+    
+    setWeatherBackground(weather);
 }
 
 function createCardHTML(cityName, data, iconUrl) {
@@ -157,6 +161,20 @@ function showMessage(type) {
         return;
     }
     state.textContent = MESSAGES[type] || "";
+}
+
+function setWeatherBackground(weather) {
+    document.body.classList.remove("weather-clear", "weather-clouds", "weather-rain", "weather-snow");
+
+    if (weather === "Clear") {
+        document.body.classList.add("weather-clear");
+    } else if (weather === "Clouds") {
+        document.body.classList.add("weather-clouds");
+    } else if (weather === "Rain") {
+        document.body.classList.add("weather-rain");
+    } else if (weather === "Snow") {
+        document.body.classList.add("weather-snow");
+    }
 }
 
 /* 4월 23일
@@ -183,4 +201,8 @@ function showMessage(type) {
 
 /* 26일차
  * requestAnimationFrame()  : DOM이 그려진 "다음 프레임"에 실행된다.
+ */
+
+/* 27일차
+ * document.body.classList. : <body> 요소에 CSS 클래스를 추가한다는 의미.
  */
