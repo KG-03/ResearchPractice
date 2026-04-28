@@ -29,7 +29,7 @@ async function getWeather() {
     const city = input.value.trim();
     if(!city) return;
 
-    showMessage("loading");
+    showState("loading");
 
     const start = Date.now();
     const currentId = ++requestId;
@@ -61,7 +61,7 @@ async function getWeather() {
         }
 
         if (currentId !== requestId) {
-            throw new Error("research");
+            return;
         }
 
         const elapsed = Date.now() - start;
@@ -70,8 +70,8 @@ async function getWeather() {
             await new Promise(resolve => setTimeout(resolve, delayTime));
         }
 
+        showState();
         renderWeather(weatherData, name);
-        showMessage();
 
         input.value = "";
         input.focus();
@@ -80,17 +80,9 @@ async function getWeather() {
 
         //이후 확장을 위해 각각 분리하여 관리중.
         if (error.message === "notFound") {
-            showMessage("notFound");
-        } else if (error.message === "research") {
-            showMessage("research");
-        } else if (error.message === "Geocoding failed") {
-            showMessage("error");
-        } else if (error.message === "Weather request failed") {
-            showMessage("error");
-        } else if (error.message === "Invalid data") {
-            showMessage("error");
+            showState("notFound");
         } else {
-            showMessage("error");
+            showState("error");
         }
     } finally {
         btn.disabled = false;
@@ -120,6 +112,8 @@ function renderWeather(data, cityName) {
             console.log("swap");
             result.innerHTML = createCardHTML(cityName, data, iconUrl);
 
+            setWeatherBackground(weather);
+
             const newCard = document.querySelector(".weather-card");
 
             newCard.classList.add("fade-in");
@@ -130,6 +124,8 @@ function renderWeather(data, cityName) {
     } else {
         result.innerHTML = createCardHTML(cityName, data, iconUrl);
 
+        setWeatherBackground(weather);
+
         const newCard = document.querySelector(".weather-card");
         
         newCard.classList.add("fade-in");
@@ -137,8 +133,6 @@ function renderWeather(data, cityName) {
             newCard.classList.add("show");
         });
     }
-    
-    setWeatherBackground(weather);
 }
 
 function createCardHTML(cityName, data, iconUrl) {
@@ -146,20 +140,29 @@ function createCardHTML(cityName, data, iconUrl) {
     const weather = data.weather[0].main;
     
     return `
-        <div class=weather-card>
+        <div class="weather-card">
             <h2>${cityName || data.name}</h2>
-            <img src="${iconUrl}" alt=${weather}>
+            <img src="${iconUrl}" alt="${weather}">
             <p class="temp">${temp}°C</p>
             <p class="weather">${weather}</p>
         </div>
     `;
 }
 
-function showMessage(type) {
+function showState(type) {
     if(!type) {
-        state.textContent = "";
+        state.innerHTML = "";
         return;
     }
+
+    if(type === "loading") {
+        state.innerHTML = `
+            <div class="spinner"></div>
+            <span>${MESSAGES.loading}</span>
+        `;
+        return;
+    }
+
     state.textContent = MESSAGES[type] || "";
 }
 
