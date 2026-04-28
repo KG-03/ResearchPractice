@@ -1,0 +1,23 @@
+참조: https://modoocode.com/323
+참조: ChatGPT
+
+GPT에 물어본 건 다음의 두 가지다
+1. struct Member를 선언하고 그 값을 vector에 넣을 때, 어떤 방식으로 값을 넣어야 하는가?
+2. vector<Member>의 출력 방식은 어떤 방식이어야 하는가?
+
+위 두 가지의 질문 이유는 다음과 같았다.
+처음 구상에서는 vector<pair<int, string>>의 구조를 가지고 있었기 때문에, Member라는 형태에 맞춰진 값 입력/출력 방식을 알아야 했다.
+
+
+그리하여 알아낸 방법은
+1. vec.push_back(Member{age, name})이라는 방식이었다. (혹은 vec.emplace_back(Member{age, name}).)
+외에도 struct Member를 만들 때, Member(int a, string s) : age(a), name(n) {} 이라는 방식을 추천해주었지만, (생성자 생성) 우선 위의 방식을 선택했다.
+
+2. cout << vec.age << " " << vec.name << endl;
+이미 Member를 이용해서 age, name으로 값을 입력하도록 되어 있으니, 그걸 호출하는 방식이다.
+
+외에는 stable_sort() 함수를 사용할 줄만 알면 됐다.
+이 함수는 안정 정렬을 위함 함수로, 값이 같은 원소의 전후 관계를 바꾸지 않는 정렬 함수다.
+이 함수에 compare()를 지정하여 age가 크면 뒤로 가도록 설정해두니, 정답을 맞출 수 있었다.
+
+vector와 stable_sort()를 알아야 풀 수 있는 문제였다.
