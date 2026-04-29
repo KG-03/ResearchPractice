@@ -9,7 +9,8 @@ const MESSAGES = {
     loading: "불러오는 중...",
     research: "다시 검색해주십시오.",
     notFound: "도시를 찾을 수 없습니다.",
-    error: "오류가 발생했습니다"
+    error: "오류가 발생했습니다",
+    init: "도시를 입력해 날씨를 확인해보세요!"
 };
 
 btn.addEventListener("click", function() {
@@ -76,13 +77,11 @@ async function getWeather() {
         input.value = "";
         input.focus();
     } catch (error) {
-        console.error(error);
-
-        //이후 확장을 위해 각각 분리하여 관리중.
+        showState();
         if (error.message === "notFound") {
-            showState("notFound");
+            renderMessageCard("notFound");
         } else {
-            showState("error");
+            renderMessageCard("error");
         }
     } finally {
         btn.disabled = false;
@@ -100,16 +99,12 @@ function renderWeather(data, cityName) {
 
     const oldCard = document.querySelector(".weather-card");
 
-    const weatherMain = data.weather[0].main;
-
     if(oldCard) {
-        console.log("fade-out")
         oldCard.classList.remove("show");
         oldCard.classList.remove("fade-in");
         oldCard.classList.add("fade-out");
 
         setTimeout(() => {
-            console.log("swap");
             result.innerHTML = createCardHTML(cityName, data, iconUrl);
 
             setWeatherBackground(weather);
@@ -166,6 +161,34 @@ function showState(type) {
     state.textContent = MESSAGES[type] || "";
 }
 
+function initUI() {
+    renderMessageCard("init");
+}
+
+function renderMessageCard(type) {
+    const message = MESSAGES[type] || "문제가 발생했습니다.";
+    let icon = "⚠️";
+
+    if (type === "init") icon = "☀️";
+    if (type === "notFound") icon = "🔍";
+    if (type === "error") icon ="❌";
+
+    result.innerHTML = `
+        <div class = "weather-card message">
+            <div style = "font-size: 24px">${icon}</div>
+            <p>${message}</p>
+        </div>
+    `;
+
+    const card = document.querySelector(".weather-card");
+
+    //이 card는 weather-card를 가져오기 때문에 fade-out은 renderWeather()에서 처리된다.
+    card.classList.add("fade-in");
+    requestAnimationFrame(() => {
+        card.classList.add("show");
+    });
+}
+
 function setWeatherBackground(weather) {
     document.body.classList.remove("weather-clear", "weather-clouds", "weather-rain", "weather-snow");
 
@@ -179,6 +202,9 @@ function setWeatherBackground(weather) {
         document.body.classList.add("weather-snow");
     }
 }
+
+//모든 함수 선언이 끝나고 선언해두는 것. 메인 화면에 출력되어야 하기 때문에.
+initUI();
 
 /* 4월 23일
  * fetch    : 서버 요청
@@ -208,4 +234,16 @@ function setWeatherBackground(weather) {
 
 /* 27일차
  * document.body.classList. : <body> 요소에 CSS 클래스를 추가한다는 의미.
+ */
+
+/* 28일차
+ * state.innerHTML = `
+ *      <div class="spinner"></div>
+ *      <span>${MESSAGES.loading}</span>
+ * `;
+ *      위의 방법으로 html을 추가할 수 있다.
+ */
+
+/* 29일차
+ * const message = MESSAGES[type] || "문제가 발생했습니다.";    여기서 ||는 type이 null일 때 "문제가 발생했습니다"를 대입한다는 의미.
  */
