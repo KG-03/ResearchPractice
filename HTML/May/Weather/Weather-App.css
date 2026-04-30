@@ -121,6 +121,41 @@ button:disable {
     cursor: not-allowed;
 }
 
+.history button {
+    margin: 4px;
+    padding: 6px 10px;
+
+    border: none;
+    background: #eee;
+    border-radius: 5px;
+
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.history button:hover {
+    background: #ddd;
+}
+
+.history button.active {
+    background: #4dabf7;
+    color: white;
+    font-weight: 500;
+
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.history button span {
+    margin-left: 6px;
+    font-size: 12px;
+    opacity: 0.6;
+}
+
+.history button span:hover {
+    opacity: 1;
+}
+
 .temp {
     font-size: 28px;
     font-weight: bold;
