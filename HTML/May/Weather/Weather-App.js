@@ -5,6 +5,10 @@ const state = document.querySelector(".state");
 
 let requestId = 0;
 
+const history = document.querySelector(".history");
+let searchHistory = JSON.parse(localStorage.getItem("history")) || [];
+let currentCity = "";
+
 const MESSAGES = {
     loading: "불러오는 중...",
     research: "다시 검색해주십시오.",
@@ -71,8 +75,11 @@ async function getWeather() {
             await new Promise(resolve => setTimeout(resolve, delayTime));
         }
 
+        currentCity = name;
+
         showState();
         renderWeather(weatherData, name);
+        addToHistory(name);
 
         input.value = "";
         input.focus();
@@ -161,10 +168,6 @@ function showState(type) {
     state.textContent = MESSAGES[type] || "";
 }
 
-function initUI() {
-    renderMessageCard("init");
-}
-
 function renderMessageCard(type) {
     const message = MESSAGES[type] || "문제가 발생했습니다.";
     let icon = "⚠️";
@@ -203,8 +206,57 @@ function setWeatherBackground(weather) {
     }
 }
 
+function addToHistory(city) {
+    //중복 제거 > 맨 앞에 추가 > 5개 제한
+    searchHistory = searchHistory.filter(item => item !== city);
+    searchHistory.unshift(city);
+    if (searchHistory.length > 5) {
+        searchHistory.pop();
+    }
+
+    localStorage.setItem("history", JSON.stringify(searchHistory));
+    renderHistory();
+}
+
+function renderHistory() {
+    history.innerHTML = "";
+
+    searchHistory.forEach(city => {
+        const historyBtn = document.createElement("button");
+        historyBtn.textContent = city;
+
+        historyBtn.classList.toggle("active", city === currentCity);
+        
+        historyBtn.addEventListener("click", () => {
+            input.value = city;
+            getWeather();
+        });
+
+        const delBtn = document.createElement("span");
+        delBtn.textContent = "❌";
+        delBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            removeFromHistoty(city);
+        });
+
+        historyBtn.appendChild(delBtn);
+        history.appendChild(historyBtn);
+    });
+}
+
+function removeFromHistoty(city) {
+    searchHistory = searchHistory.filter(item => item !== city);
+    localStorage.setItem("history", JSON.stringify(searchHistory));
+    renderHistory();
+}
+
+function initUI() {
+    renderMessageCard("init");
+}
+
 //모든 함수 선언이 끝나고 선언해두는 것. 메인 화면에 출력되어야 하기 때문에.
 initUI();
+renderHistory();
 
 /* 4월 23일
  * fetch    : 서버 요청
@@ -246,4 +298,16 @@ initUI();
 
 /* 29일차
  * const message = MESSAGES[type] || "문제가 발생했습니다.";    여기서 ||는 type이 null일 때 "문제가 발생했습니다"를 대입한다는 의미.
+ */
+
+/* 30일차
+ * forEach  : 배열의 각 요소를 하나씩 꺼내서 특정 작업을 수행하게 해주는 함수.
+ *            배열을 처음부터 끝까지 순회하며 각 요소마다 함수를 실행.
+ *            array.forEach((element, index, array) => {})와 같은 구조.
+ *                  element : 현재 요소
+ *                  index   : 현재 위치
+ *                  array   : 원본 배열
+ *            return이 작동하지 않으며(값 반환 없음), 중간에 break, continue를 쓸 수 없다.
+ *            await와 같은 비동기가 제대로 작동하지 않으니 주의해야 한다.
+ * JSON.stringify() : JSON 문자열로 변환.
  */
