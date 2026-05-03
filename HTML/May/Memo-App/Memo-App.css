@@ -5,3 +5,9 @@
     border-radius: 8px;
     background: white;
 }
+
+.delete-btn {
+    margin-top: 8px;
+    font-size: 12px;
+    cursor: pointer;
+}
