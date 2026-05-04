@@ -46,6 +46,15 @@ function addNote() {
 
 function deleteNote(id) {
     notes = notes.filter(note => note.id !== id);
+
+    if (editingId === id) {
+        isEditing = false;
+        editingId = null;
+
+        titleInput.value = "";
+        contentInput.value = "";
+    }
+    
     renderNotes();
 }
 
