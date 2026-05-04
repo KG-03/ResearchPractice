@@ -1,5 +1,12 @@
 let notes = [];
 
+try {
+    const saved = localStorage.getItem("notes");
+    notes = saved ? JSON.parse(saved) : [];
+} catch {
+    notes = [];
+}
+
 const titleInput = document.querySelector(".title-input");
 const contentInput = document.querySelector(".content-input");
 const addBtn = document.querySelector(".add-btn");
@@ -8,6 +15,18 @@ const noteList = document.querySelector(".note-list");
 //지금 수정 중인지, 수정중인 메모는 어떤 것인지.
 let isEditing = false;
 let editingId = null;
+
+titleInput.addEventListener("keydown", function(e) {
+    if(e.key === "Enter") {
+        addNote();
+    }
+});
+
+contentInput.addEventListener("keydown", function(e) {
+    if(e.key === "Enter" && e.shiftKey) {
+        addNote();
+    }
+})
 
 addBtn.addEventListener("click", addNote);
 
@@ -38,10 +57,13 @@ function addNote() {
         notes.push(note);
     }
 
+    saveNotes();
     renderNotes();
 
     titleInput.value = "";
     contentInput.value = "";
+    addBtn.textContent = isEditing ? "수정 완료" : "추가";
+    titleInput.focus();
 }
 
 function deleteNote(id) {
@@ -55,6 +77,7 @@ function deleteNote(id) {
         contentInput.value = "";
     }
     
+    saveNotes();
     renderNotes();
 }
 
@@ -64,6 +87,11 @@ function editNote(note) {
 
     isEditing = true;
     editingId = note.id;
+    addBtn.textContent = isEditing ? "수정 완료" : "추가";
+}
+
+function saveNotes() {
+    localStorage.setItem("notes", JSON.stringify(notes));
 }
 
 function renderNotes() {
@@ -95,6 +123,8 @@ function renderNotes() {
     });
 }
 
+renderNotes();
+
 /* 1일차
  * 구조 생성
  */
@@ -113,4 +143,13 @@ function renderNotes() {
  *                                        note를 복사하고, title, content 값을 새 값으로 덮어쓴다.
  *                                        note = {id: 1, title: "old", content: "old"} update = {...note, title: "new", content: "new"}하게 되면 id가 1이고 title, content가 new인 update가 만들어진다.
  *                                        따라서 이 코드의 핵심은 '객체를 복사하고 특정 값만 수정'하는 방법이란 뜻이다.
+ */
+
+/* 5일차
+ * JSON.parse       : 문장을 문법적 부분으로 나누고 부분을 식별. 데이터를 파싱하여 J.S 객체로 변환.
+ * JSON.stringify   : JS Object를 JSON 문자열로 반환.
+ * parse가 서버 > 클라이언트 상황의 데이터 전달용 파싱이라면, stringify는 클라이언트 > 서버 상황의 데이터 전달용 파싱.
+ * 
+ * ? :              : 삼항 연산자.
+ *                    조건 ? 값1 : 값2      조건이 참이면 값1, 거짓이면 값2
  */
