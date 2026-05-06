@@ -7,6 +7,11 @@ try {
     notes = [];
 }
 
+notes = notes.map(note => ({
+    ...note,
+    pinned: note.pinned ?? false
+}));
+
 const titleInput = document.querySelector(".title-input");
 const contentInput = document.querySelector(".content-input");
 const addBtn = document.querySelector(".add-btn");
@@ -51,7 +56,8 @@ function addNote() {
         const note = {
             id:Date.now(),
             title,
-            content
+            content,
+            pinned: false
         };
 
         notes.push(note);
@@ -64,6 +70,27 @@ function addNote() {
     contentInput.value = "";
     addBtn.textContent = isEditing ? "수정 완료" : "추가";
     titleInput.focus();
+}
+
+function togglePin(id) {
+    notes = notes.map(note => {
+        if (note.id === id) {
+            return {...note, pinned: !note.pinned};
+        }
+        return note;
+    })
+
+    saveNotes();
+    renderNotes();
+}
+
+function editNote(note) {
+    titleInput.value = note.title;
+    contentInput.value = note.content;
+
+    isEditing = true;
+    editingId = note.id;
+    addBtn.textContent = isEditing ? "수정 완료" : "추가";
 }
 
 function deleteNote(id) {
@@ -81,15 +108,6 @@ function deleteNote(id) {
     renderNotes();
 }
 
-function editNote(note) {
-    titleInput.value = note.title;
-    contentInput.value = note.content;
-
-    isEditing = true;
-    editingId = note.id;
-    addBtn.textContent = isEditing ? "수정 완료" : "추가";
-}
-
 function saveNotes() {
     localStorage.setItem("notes", JSON.stringify(notes));
 }
@@ -102,13 +120,23 @@ function renderNotes() {
         return;
     }
 
-    notes.forEach(note => {
+    const sorted = [...notes].sort((a, b) => {
+        if(b.pinned !== a.pinned) {
+            //핀 기준 정렬
+            return b.pinned - a.pinned;
+        }
+        //최신순 정렬
+        return b.id - a.id;
+    });
+
+    sorted.forEach(note => {
         const card = document.createElement("div");
         card.classList.add("note-card");
 
         card.innerHTML = `
             <h3>${note.title || "(제목 없음)"}</h3>
             <p>${note.content || "(내용 없음)"}</p>
+            <button class="pin-btn">${note.pinned ? "★" : "☆"}</button>
             <button class="edit-btn">수정</button>
             <button class="delete-btn">삭제</button>
         `;
@@ -118,6 +146,9 @@ function renderNotes() {
 
         const editBtn = card.querySelector(".edit-btn");
         editBtn.addEventListener("click", () => editNote(note));
+
+        const pinBtn = card.querySelector(".pin-btn");
+        pinBtn.addEventListener("click", () => togglePin(note.id));
 
         noteList.appendChild(card);
     });
@@ -152,4 +183,15 @@ renderNotes();
  * 
  * ? :              : 삼항 연산자.
  *                    조건 ? 값1 : 값2      조건이 참이면 값1, 거짓이면 값2
+ */
+
+/* 6일차
+ * const sorted = [...notes].sort((a, b) => b.pinned - a.pinned);   : notes 배열을 복사한 뒤, pinned 값 기준으로 내림차순 정렬한 새 배열 생성.
+ *                                                                    [notes]   : 스프레드 문법. 배열을 복사한다.
+ *                                                                    (a, b) => b.pinned - a.pinned : 음수 반환되면 a먼저, 양수 반환되면 b 먼저. 0이면 순서 유지.
+ * 
+ * pinned: note.pinned ?? false     : note.pinned 값이 있으면 그대로 쓰고, 아니면 false를 사용.
+ *                                    ??    : null 병합 연산자.
+ *                                            값1 ?? 값2    다음의 두 값이 있다면, 값1이 null 또는 underfined일 때만 값2를 사용한다.
+ * 
  */
