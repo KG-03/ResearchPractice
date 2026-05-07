@@ -16,10 +16,13 @@ const titleInput = document.querySelector(".title-input");
 const contentInput = document.querySelector(".content-input");
 const addBtn = document.querySelector(".add-btn");
 const noteList = document.querySelector(".note-list");
+const searchInput = document.querySelector(".search-input");
 
 //지금 수정 중인지, 수정중인 메모는 어떤 것인지.
 let isEditing = false;
 let editingId = null;
+
+let searchText = "";
 
 titleInput.addEventListener("keydown", function(e) {
     if(e.key === "Enter") {
@@ -31,6 +34,12 @@ contentInput.addEventListener("keydown", function(e) {
     if(e.key === "Enter" && e.shiftKey) {
         addNote();
     }
+});
+
+searchInput.addEventListener("input", function() {
+    searchText = searchInput.value.trim().toLowerCase();
+
+    renderNotes();
 })
 
 addBtn.addEventListener("click", addNote);
@@ -120,7 +129,20 @@ function renderNotes() {
         return;
     }
 
-    const sorted = [...notes].sort((a, b) => {
+    const filtered = notes.filter(note => {
+        const titleMatch = (note.title || "").toLowerCase().includes(searchText);
+        const contentMatch = note.content.toLowerCase().includes(searchText);
+
+        return titleMatch || contentMatch;
+    })
+
+    if(!filtered.length) {
+        //검색 조건에 맞는 노드가 하나도 들어가지 않았다면.
+        noteList.innerHTML = "<p>검색 결과가 없습니다!</p>";
+        return;
+    }
+
+    const sorted = [...filtered].sort((a, b) => {
         if(b.pinned !== a.pinned) {
             //핀 기준 정렬
             return b.pinned - a.pinned;
@@ -193,5 +215,11 @@ renderNotes();
  * pinned: note.pinned ?? false     : note.pinned 값이 있으면 그대로 쓰고, 아니면 false를 사용.
  *                                    ??    : null 병합 연산자.
  *                                            값1 ?? 값2    다음의 두 값이 있다면, 값1이 null 또는 underfined일 때만 값2를 사용한다.
- * 
+ */
+
+/* 7일차
+ * toLowerCase(...) : 대소문자 구분 제거를 위해 사용. 문자열을 모두 소문자로 변환한다.
+ * include(...)     : (...)에 들어간 내용이 해당 문자열에 포함되어 있는지 검사한다.
+ * const titleMatch = (note.title || "").toLowerCase().includes(searchText);    : (note.title || "") 이것이 중요한 구조.
+ *                                                                                왼쪽에 값이 있으면 그것을 사용, 값이 없다면 오른쪽 값을 사용하는 구조.
  */
