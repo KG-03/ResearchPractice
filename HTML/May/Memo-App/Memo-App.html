@@ -22,10 +22,24 @@
                     <input class="search-input" placeholder="메모 검색">
                 </section>
 
+                <section class="filter-area">
+                    <button data-filter="all">전체</button>
+                    <button data-filter="pinned">고정</button>
+                    <button data-filter="normal">일반</button>
+                </section>
+
                 <div class="note-list"></div>
             </div>
         </main>
 
         <script src="Memo-App.js"></script>
     </body>
+    <!--
+    data-filter : 사용자 정의 데이터를 붙인다. 데이터 저장 목적으로 이용된다.
+                  JS에서 button.dataset.filter로 읽어낼 수 있다.
+                  data-이름="값"의 형태로 저장된다.
+                  만약 data-user-id="15"라는 정의가 있다면, element-dataset-userId를 통해 불러낼 수도 있다.
+                        kebab-case > camelCase 변환이 가능하다는 의미.
+                  class == 스타일 목적, data-* == 데이터 저장 목적
+    -->
 </html>
