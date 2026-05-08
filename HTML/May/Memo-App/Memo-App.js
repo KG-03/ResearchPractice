@@ -17,12 +17,15 @@ const contentInput = document.querySelector(".content-input");
 const addBtn = document.querySelector(".add-btn");
 const noteList = document.querySelector(".note-list");
 const searchInput = document.querySelector(".search-input");
+const filterButtons = document.querySelectorAll("[data-filter]");
 
 //지금 수정 중인지, 수정중인 메모는 어떤 것인지.
 let isEditing = false;
 let editingId = null;
 
 let searchText = "";
+
+let currentFilter = "all";
 
 titleInput.addEventListener("keydown", function(e) {
     if(e.key === "Enter") {
@@ -36,14 +39,23 @@ contentInput.addEventListener("keydown", function(e) {
     }
 });
 
+addBtn.addEventListener("click", addNote);
+
 searchInput.addEventListener("input", function() {
     searchText = searchInput.value.trim().toLowerCase();
 
     renderNotes();
-})
+});
 
-addBtn.addEventListener("click", addNote);
+filterButtons.forEach(button => {
+    button.addEventListener("click", function() {
+        currentFilter = button.dataset.filter;
 
+        renderNotes();
+    })
+});
+
+//함수
 function addNote() {
     const title = titleInput.value.trim();
     const content = contentInput.value.trim();
@@ -100,6 +112,8 @@ function editNote(note) {
     isEditing = true;
     editingId = note.id;
     addBtn.textContent = isEditing ? "수정 완료" : "추가";
+
+    titleInput.focus();
 }
 
 function deleteNote(id) {
@@ -129,18 +143,30 @@ function renderNotes() {
         return;
     }
 
-    const filtered = notes.filter(note => {
+    const searched = notes.filter(note => {
         const titleMatch = (note.title || "").toLowerCase().includes(searchText);
         const contentMatch = note.content.toLowerCase().includes(searchText);
 
         return titleMatch || contentMatch;
     })
 
-    if(!filtered.length) {
+    if(!searched.length) {
         //검색 조건에 맞는 노드가 하나도 들어가지 않았다면.
         noteList.innerHTML = "<p>검색 결과가 없습니다!</p>";
         return;
     }
+
+    const filtered = searched.filter(note => {
+        if (currentFilter === "pinned") {
+            return note.pinned;
+        }
+
+        if (currentFilter === "normal") {
+            return !note.pinned;
+        }
+
+        return true;
+    });
 
     const sorted = [...filtered].sort((a, b) => {
         if(b.pinned !== a.pinned) {
@@ -222,4 +248,11 @@ renderNotes();
  * include(...)     : (...)에 들어간 내용이 해당 문자열에 포함되어 있는지 검사한다.
  * const titleMatch = (note.title || "").toLowerCase().includes(searchText);    : (note.title || "") 이것이 중요한 구조.
  *                                                                                왼쪽에 값이 있으면 그것을 사용, 값이 없다면 오른쪽 값을 사용하는 구조.
+ */
+
+/* 8일차
+ * currentFilter = button.dataset.filter;   : data-filter="pinned"을 js에서 currentFilter = button.dataset.filter; 이런 식으로 부르면, 결과가 pinned가 나온다.
+ *                                            button    : HTML의 버튼 요소 자체.
+ *                                            dataset   : 버튼의 data-* 속성을 모아둔 객체. HTML에서 사용자 정의 데이터를 붙여야 한다.
+ *                                            filter    : dataset 객체 안의 filter '값'에 접근한다.
  */
