@@ -47,12 +47,20 @@ searchInput.addEventListener("input", function() {
     renderNotes();
 });
 
-filterButtons.forEach(button => {
+filterButtons.forEach(button => {   
     button.addEventListener("click", function() {
         currentFilter = button.dataset.filter;
 
+        filterButtons.forEach(button => {
+            button.classList.remove("active");
+
+            if(button.dataset.filter === currentFilter) {
+                button.classList.add("active");
+            }            
+        });
+
         renderNotes();
-    })
+    });
 });
 
 //함수
@@ -184,9 +192,9 @@ function renderNotes() {
         card.innerHTML = `
             <h3>${note.title || "(제목 없음)"}</h3>
             <p>${note.content || "(내용 없음)"}</p>
-            <button class="pin-btn">${note.pinned ? "★" : "☆"}</button>
-            <button class="edit-btn">수정</button>
-            <button class="delete-btn">삭제</button>
+            <button class="child-btn pin-btn">${note.pinned ? "★" : "☆"}</button>
+            <button class="child-btn edit-btn">수정</button>
+            <button class="child-btn delete-btn">삭제</button>
         `;
 
         const delBtn = card.querySelector(".delete-btn");
@@ -202,6 +210,8 @@ function renderNotes() {
     });
 }
 
+//홈페이지 실행 즉시 보여져야 하는 것.
+document.querySelector('[data-filter="all"]').classList.add("active");
 renderNotes();
 
 /* 1일차
@@ -255,4 +265,12 @@ renderNotes();
  *                                            button    : HTML의 버튼 요소 자체.
  *                                            dataset   : 버튼의 data-* 속성을 모아둔 객체. HTML에서 사용자 정의 데이터를 붙여야 한다.
  *                                            filter    : dataset 객체 안의 filter '값'에 접근한다.
+ */
+
+/* 10일차
+ * document.querySelector('[data-filter="all"]').classList.add("active");   : data-filter="all" 속성을 가진 요소를 찾아서 active 클래스를 붙인다.
+ *                                                                            document              : 웹 페이지 전체
+ *                                                                            querySelector(...)   : ... 클래스를 가진 첫 요소 찾기.
+ *                                                                            [data-filter="all"]   : CSS 속성 선택자. data=*의 구조에서 해당 속성을 가진 요소.
+ *                                                                            
  */
