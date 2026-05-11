@@ -18,6 +18,7 @@ const addBtn = document.querySelector(".add-btn");
 const noteList = document.querySelector(".note-list");
 const searchInput = document.querySelector(".search-input");
 const filterButtons = document.querySelectorAll("[data-filter]");
+const themeToggleBtn = document.querySelector(".theme-toggle-btn");
 
 //지금 수정 중인지, 수정중인 메모는 어떤 것인지.
 let isEditing = false;
@@ -26,6 +27,7 @@ let editingId = null;
 let searchText = "";
 
 let currentFilter = "all";
+let currentTheme = localStorage.getItem("theme") || "light";
 
 titleInput.addEventListener("keydown", function(e) {
     if(e.key === "Enter") {
@@ -61,6 +63,15 @@ filterButtons.forEach(button => {
 
         renderNotes();
     });
+});
+
+themeToggleBtn.addEventListener("click", function() {
+    currentTheme = currentTheme === "light" ? "dark" : "light";
+
+    applyTheme(currentTheme);
+    localStorage.setItem("theme", currentTheme);
+
+    updateThemeButton();
 });
 
 //함수
@@ -223,8 +234,20 @@ function renderEmptyMessage(message) {
     `;
 }
 
+function applyTheme(theme) {
+    document.body.classList.remove("light-theme", "dark-theme");
+
+    document.body.classList.add(`${theme}-theme`);
+}
+
+function updateThemeButton() {
+    themeToggleBtn.textContent = currentTheme === "light" ? "🌙 다크모드" : "☀️ 라이트모드";
+}
+
 //홈페이지 실행 즉시 보여져야 하는 것.
 document.querySelector('[data-filter="all"]').classList.add("active");
+applyTheme(currentTheme);
+updateThemeButton();
 renderNotes();
 
 /* 1일차
@@ -291,4 +314,9 @@ renderNotes();
 /* 11일차
  * renderEmptyMessage() 생성, renderNotes()에서 검색 결과 및 메모가 없을 때의 조건문 변경.
  * 확인해야 할 함수나 코드가 없어서 생략.
+ */
+
+/* 12일차
+ * let currentTheme = localStorage.getItem("theme") || "light"; : 새로고침 이후에도 현재의 모드를 유지하기 위해서.
+ *                                                                저장되어 있는 theme 값을 가져오는데, theme에 값이 아무것도 없다면 light를 쓴다.
  */
