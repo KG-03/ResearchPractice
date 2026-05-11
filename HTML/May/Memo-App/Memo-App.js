@@ -34,7 +34,7 @@ titleInput.addEventListener("keydown", function(e) {
 });
 
 contentInput.addEventListener("keydown", function(e) {
-    if(e.key === "Enter" && e.shiftKey) {
+    if(e.key === "Enter" && e.ctrlKey) {
         addNote();
     }
 });
@@ -51,11 +51,11 @@ filterButtons.forEach(button => {
     button.addEventListener("click", function() {
         currentFilter = button.dataset.filter;
 
-        filterButtons.forEach(button => {
-            button.classList.remove("active");
+        filterButtons.forEach(btn => {
+            btn.classList.remove("active");
 
-            if(button.dataset.filter === currentFilter) {
-                button.classList.add("active");
+            if(btn.dataset.filter === currentFilter) {
+                btn.classList.add("active");
             }            
         });
 
@@ -133,6 +133,7 @@ function deleteNote(id) {
 
         titleInput.value = "";
         contentInput.value = "";
+        addBtn.textContent = "추가";
     }
     
     saveNotes();
@@ -147,22 +148,16 @@ function renderNotes() {
     noteList.innerHTML = "";
 
     if(!notes.length) {
-        noteList.innerHTML = "<p>메모가 없습니다.</p>";
+        renderEmptyMessage("메모가 없습니다!");
         return;
     }
 
     const searched = notes.filter(note => {
         const titleMatch = (note.title || "").toLowerCase().includes(searchText);
-        const contentMatch = note.content.toLowerCase().includes(searchText);
+        const contentMatch = (note.content || "").toLowerCase().includes(searchText);
 
         return titleMatch || contentMatch;
     })
-
-    if(!searched.length) {
-        //검색 조건에 맞는 노드가 하나도 들어가지 않았다면.
-        noteList.innerHTML = "<p>검색 결과가 없습니다!</p>";
-        return;
-    }
 
     const filtered = searched.filter(note => {
         if (currentFilter === "pinned") {
@@ -175,6 +170,16 @@ function renderNotes() {
 
         return true;
     });
+
+    if(!filtered.length) {
+        if (currentFilter === "pinned" && searchText === "") {
+            renderEmptyMessage("고정된 메모가 없습니다!");
+        } else {
+            renderEmptyMessage("검색 결과가 없습니다!");
+        }
+
+        return;
+    }
 
     const sorted = [...filtered].sort((a, b) => {
         if(b.pinned !== a.pinned) {
@@ -208,6 +213,14 @@ function renderNotes() {
 
         noteList.appendChild(card);
     });
+}
+
+function renderEmptyMessage(message) {
+    noteList.innerHTML = `
+        <div class="empty-message">
+            <p>${message}</p>
+        </div>
+    `;
 }
 
 //홈페이지 실행 즉시 보여져야 하는 것.
@@ -273,4 +286,9 @@ renderNotes();
  *                                                                            querySelector(...)   : ... 클래스를 가진 첫 요소 찾기.
  *                                                                            [data-filter="all"]   : CSS 속성 선택자. data=*의 구조에서 해당 속성을 가진 요소.
  *                                                                            
+ */
+
+/* 11일차
+ * renderEmptyMessage() 생성, renderNotes()에서 검색 결과 및 메모가 없을 때의 조건문 변경.
+ * 확인해야 할 함수나 코드가 없어서 생략.
  */
