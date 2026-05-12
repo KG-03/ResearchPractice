@@ -9,7 +9,8 @@ try {
 
 notes = notes.map(note => ({
     ...note,
-    pinned: note.pinned ?? false
+    pinned: note.pinned ?? false,
+    category: note.category ?? "general"
 }));
 
 const titleInput = document.querySelector(".title-input");
@@ -19,6 +20,7 @@ const noteList = document.querySelector(".note-list");
 const searchInput = document.querySelector(".search-input");
 const filterButtons = document.querySelectorAll("[data-filter]");
 const themeToggleBtn = document.querySelector(".theme-toggle-btn");
+const categorySelect = document.querySelector(".category-select");
 
 //지금 수정 중인지, 수정중인 메모는 어떤 것인지.
 let isEditing = false;
@@ -85,7 +87,7 @@ function addNote() {
     if (isEditing) {
         notes = notes.map (note => {
             if(note.id === editingId) {
-                return { ...note, title, content};
+                return { ...note, title, content, category: categorySelect.value};
             }
             return note;
         });
@@ -97,7 +99,8 @@ function addNote() {
             id:Date.now(),
             title,
             content,
-            pinned: false
+            pinned: false,
+            category: categorySelect.value
         };
 
         notes.push(note);
@@ -108,6 +111,7 @@ function addNote() {
 
     titleInput.value = "";
     contentInput.value = "";
+    categorySelect.value = "general";
     addBtn.textContent = isEditing ? "수정 완료" : "추가";
     titleInput.focus();
 }
@@ -127,6 +131,7 @@ function togglePin(id) {
 function editNote(note) {
     titleInput.value = note.title;
     contentInput.value = note.content;
+    categorySelect.value = note.category || "general";
 
     isEditing = true;
     editingId = note.id;
@@ -185,6 +190,8 @@ function renderNotes() {
     if(!filtered.length) {
         if (currentFilter === "pinned" && searchText === "") {
             renderEmptyMessage("고정된 메모가 없습니다!");
+        } else if (currentFilter === "normal" && searchText === "") {
+            renderEmptyMessage("일반 메모가 없습니다!");
         } else {
             renderEmptyMessage("검색 결과가 없습니다!");
         }
@@ -207,6 +214,7 @@ function renderNotes() {
 
         card.innerHTML = `
             <h3>${note.title || "(제목 없음)"}</h3>
+            <p class="note-card-category">카테고리: ${getCategoryLabel(note.category)}</p>
             <p>${note.content || "(내용 없음)"}</p>
             <button class="child-btn pin-btn">${note.pinned ? "★" : "☆"}</button>
             <button class="child-btn edit-btn">수정</button>
@@ -242,6 +250,14 @@ function applyTheme(theme) {
 
 function updateThemeButton() {
     themeToggleBtn.textContent = currentTheme === "light" ? "🌙 다크모드" : "☀️ 라이트모드";
+}
+
+function getCategoryLabel(category) {
+    if(category === "study") return "공부";
+    if(category === "work") return "작업";
+    if(category === "idea") return "아이디어";
+
+    return "일반";
 }
 
 //홈페이지 실행 즉시 보여져야 하는 것.
@@ -319,4 +335,8 @@ renderNotes();
 /* 12일차
  * let currentTheme = localStorage.getItem("theme") || "light"; : 새로고침 이후에도 현재의 모드를 유지하기 위해서.
  *                                                                저장되어 있는 theme 값을 가져오는데, theme에 값이 아무것도 없다면 light를 쓴다.
+ */
+
+/* 13일차
+ * categorySelect.value = note.category || "general";   : 이전 localStorage, 혹은 새로 페이지를 열 때는 category 값이 없기 때문.
  */
