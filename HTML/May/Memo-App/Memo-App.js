@@ -18,9 +18,10 @@ const contentInput = document.querySelector(".content-input");
 const addBtn = document.querySelector(".add-btn");
 const noteList = document.querySelector(".note-list");
 const searchInput = document.querySelector(".search-input");
-const filterButtons = document.querySelectorAll("[data-filter]");
+const pinButtons = document.querySelectorAll("[data-pin]");
 const themeToggleBtn = document.querySelector(".theme-toggle-btn");
 const categorySelect = document.querySelector(".category-select");
+const categoryFilter = document.querySelector(".category-filter");
 
 //지금 수정 중인지, 수정중인 메모는 어떤 것인지.
 let isEditing = false;
@@ -28,8 +29,11 @@ let editingId = null;
 
 let searchText = "";
 
-let currentFilter = "all";
+//pin       : 전체, 고정, 일반
+//Category  : 전체, 일반, 공부, 작업, 아이디어
+let currentPin = "all";
 let currentTheme = localStorage.getItem("theme") || "light";
+let currentCategory = "all";
 
 titleInput.addEventListener("keydown", function(e) {
     if(e.key === "Enter") {
@@ -51,14 +55,14 @@ searchInput.addEventListener("input", function() {
     renderNotes();
 });
 
-filterButtons.forEach(button => {   
+pinButtons.forEach(button => {   
     button.addEventListener("click", function() {
-        currentFilter = button.dataset.filter;
+        currentPin = button.dataset.pin;
 
-        filterButtons.forEach(btn => {
+        pinButtons.forEach(btn => {
             btn.classList.remove("active");
 
-            if(btn.dataset.filter === currentFilter) {
+            if(btn.dataset.pin === currentPin) {
                 btn.classList.add("active");
             }            
         });
@@ -74,6 +78,12 @@ themeToggleBtn.addEventListener("click", function() {
     localStorage.setItem("theme", currentTheme);
 
     updateThemeButton();
+});
+
+categoryFilter.addEventListener("change", function() {
+    currentCategory = categoryFilter.value;
+
+    renderNotes();
 });
 
 //함수
@@ -168,29 +178,35 @@ function renderNotes() {
         return;
     }
 
-    const searched = notes.filter(note => {
+    const searchedNotes = notes.filter(note => {
         const titleMatch = (note.title || "").toLowerCase().includes(searchText);
         const contentMatch = (note.content || "").toLowerCase().includes(searchText);
 
         return titleMatch || contentMatch;
-    })
+    });
 
-    const filtered = searched.filter(note => {
-        if (currentFilter === "pinned") {
+    const categoryFilteredNotes = searchedNotes.filter(note => {
+        if (currentCategory === "all") return true;
+
+        return note.category === currentCategory;
+    });
+
+    const pinnedNotes = categoryFilteredNotes.filter(note => {
+        if (currentPin === "pinned") {
             return note.pinned;
         }
 
-        if (currentFilter === "normal") {
+        if (currentPin === "normal") {
             return !note.pinned;
         }
 
         return true;
     });
 
-    if(!filtered.length) {
-        if (currentFilter === "pinned" && searchText === "") {
+    if(!pinnedNotes.length) {
+        if (currentPin === "pinned" && searchText === "") {
             renderEmptyMessage("고정된 메모가 없습니다!");
-        } else if (currentFilter === "normal" && searchText === "") {
+        } else if (currentPin === "normal" && searchText === "") {
             renderEmptyMessage("일반 메모가 없습니다!");
         } else {
             renderEmptyMessage("검색 결과가 없습니다!");
@@ -199,7 +215,7 @@ function renderNotes() {
         return;
     }
 
-    const sorted = [...filtered].sort((a, b) => {
+    const sortedNotes = [...pinnedNotes].sort((a, b) => {
         if(b.pinned !== a.pinned) {
             //핀 기준 정렬
             return b.pinned - a.pinned;
@@ -208,7 +224,7 @@ function renderNotes() {
         return b.id - a.id;
     });
 
-    sorted.forEach(note => {
+    sortedNotes.forEach(note => {
         const card = document.createElement("div");
         card.classList.add("note-card");
 
@@ -261,7 +277,7 @@ function getCategoryLabel(category) {
 }
 
 //홈페이지 실행 즉시 보여져야 하는 것.
-document.querySelector('[data-filter="all"]').classList.add("active");
+document.querySelector('[data-pin="all"]').classList.add("active");
 applyTheme(currentTheme);
 updateThemeButton();
 renderNotes();
@@ -317,6 +333,7 @@ renderNotes();
  *                                            button    : HTML의 버튼 요소 자체.
  *                                            dataset   : 버튼의 data-* 속성을 모아둔 객체. HTML에서 사용자 정의 데이터를 붙여야 한다.
  *                                            filter    : dataset 객체 안의 filter '값'에 접근한다.
+ * 14일차에서 currentFilter를 currentPin으로 교체.
  */
 
 /* 10일차
@@ -324,7 +341,7 @@ renderNotes();
  *                                                                            document              : 웹 페이지 전체
  *                                                                            querySelector(...)   : ... 클래스를 가진 첫 요소 찾기.
  *                                                                            [data-filter="all"]   : CSS 속성 선택자. data=*의 구조에서 해당 속성을 가진 요소.
- *                                                                            
+ * 14일차에서 Filter 이름을 전부 Pin으로 교체.
  */
 
 /* 11일차
@@ -339,4 +356,9 @@ renderNotes();
 
 /* 13일차
  * categorySelect.value = note.category || "general";   : 이전 localStorage, 혹은 새로 페이지를 열 때는 category 값이 없기 때문.
+ */
+
+/* 14일차
+ * addEvnetListener("change", ...)  : select는 보통 click이 아니라 change를 사용한다.
+ *                                    값이 변경되었을 때 반응하는 것이 목적이기 때문.
  */
