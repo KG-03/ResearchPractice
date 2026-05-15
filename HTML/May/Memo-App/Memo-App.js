@@ -86,7 +86,7 @@ categoryFilter.addEventListener("change", function() {
     renderNotes();
 });
 
-//함수
+//note func
 function addNote() {
     const title = titleInput.value.trim();
     const content = contentInput.value.trim();
@@ -126,18 +126,6 @@ function addNote() {
     titleInput.focus();
 }
 
-function togglePin(id) {
-    notes = notes.map(note => {
-        if (note.id === id) {
-            return {...note, pinned: !note.pinned};
-        }
-        return note;
-    })
-
-    saveNotes();
-    renderNotes();
-}
-
 function editNote(note) {
     titleInput.value = note.title;
     contentInput.value = note.content;
@@ -170,6 +158,43 @@ function saveNotes() {
     localStorage.setItem("notes", JSON.stringify(notes));
 }
 
+function createNoteCard(note) {
+    const card = document.createElement("div");
+    card.classList.add("note-card");
+
+    card.innerHTML = `
+        <h3>${note.title || "(제목 없음)"}</h3>
+        <p class="note-card-category">카테고리: ${getCategoryLabel(note.category)}</p>
+        <p>${note.content || "(내용 없음)"}</p>
+        <button class="child-btn pin-btn">${note.pinned ? "★" : "☆"}</button>
+        <button class="child-btn edit-btn">수정</button>
+        <button class="child-btn delete-btn">삭제</button>
+    `;
+
+    const delBtn = card.querySelector(".delete-btn");
+    delBtn.addEventListener("click", () => deleteNote(note.id));
+
+    const editBtn = card.querySelector(".edit-btn");
+    editBtn.addEventListener("click", () => editNote(note));
+
+    const pinBtn = card.querySelector(".pin-btn");
+    pinBtn.addEventListener("click", () => togglePin(note.id));
+
+    return card;
+}
+
+function togglePin(id) {
+    notes = notes.map(note => {
+        if (note.id === id) {
+            return {...note, pinned: !note.pinned};
+        }
+        return note;
+    })
+
+    saveNotes();
+    renderNotes();
+}
+
 function renderNotes() {
     noteList.innerHTML = "";
 
@@ -178,30 +203,11 @@ function renderNotes() {
         return;
     }
 
-    const searchedNotes = notes.filter(note => {
-        const titleMatch = (note.title || "").toLowerCase().includes(searchText);
-        const contentMatch = (note.content || "").toLowerCase().includes(searchText);
+    const searchedNotes = filterBySearch(notes);
 
-        return titleMatch || contentMatch;
-    });
+    const categoryFilteredNotes = filterByCategory(searchedNotes);
 
-    const categoryFilteredNotes = searchedNotes.filter(note => {
-        if (currentCategory === "all") return true;
-
-        return note.category === currentCategory;
-    });
-
-    const pinnedNotes = categoryFilteredNotes.filter(note => {
-        if (currentPin === "pinned") {
-            return note.pinned;
-        }
-
-        if (currentPin === "normal") {
-            return !note.pinned;
-        }
-
-        return true;
-    });
+    const pinnedNotes = filterByPin(categoryFilteredNotes);
 
     if(!pinnedNotes.length) {
         if (currentPin === "pinned" && searchText === "") {
@@ -215,36 +221,10 @@ function renderNotes() {
         return;
     }
 
-    const sortedNotes = [...pinnedNotes].sort((a, b) => {
-        if(b.pinned !== a.pinned) {
-            //핀 기준 정렬
-            return b.pinned - a.pinned;
-        }
-        //최신순 정렬
-        return b.id - a.id;
-    });
+    const sortedNotes = filterSortNotes(pinnedNotes);
 
     sortedNotes.forEach(note => {
-        const card = document.createElement("div");
-        card.classList.add("note-card");
-
-        card.innerHTML = `
-            <h3>${note.title || "(제목 없음)"}</h3>
-            <p class="note-card-category">카테고리: ${getCategoryLabel(note.category)}</p>
-            <p>${note.content || "(내용 없음)"}</p>
-            <button class="child-btn pin-btn">${note.pinned ? "★" : "☆"}</button>
-            <button class="child-btn edit-btn">수정</button>
-            <button class="child-btn delete-btn">삭제</button>
-        `;
-
-        const delBtn = card.querySelector(".delete-btn");
-        delBtn.addEventListener("click", () => deleteNote(note.id));
-
-        const editBtn = card.querySelector(".edit-btn");
-        editBtn.addEventListener("click", () => editNote(note));
-
-        const pinBtn = card.querySelector(".pin-btn");
-        pinBtn.addEventListener("click", () => togglePin(note.id));
+        const card = createNoteCard(note);
 
         noteList.appendChild(card);
     });
@@ -258,6 +238,50 @@ function renderEmptyMessage(message) {
     `;
 }
 
+//filter func
+function filterBySearch(notes) {
+    return notes.filter(note => {
+        const titleMatch = (note.title || "").toLowerCase().includes(searchText);
+        const contentMatch = (note.content || "").toLowerCase().includes(searchText);
+
+        return titleMatch || contentMatch;
+    });
+}
+
+function filterByCategory(notes) {
+    return notes.filter(note => {
+        if (currentCategory === "all") return true;
+
+        return note.category === currentCategory;
+    });
+}
+
+function filterByPin(notes) {
+    return notes.filter(note => {
+        if (currentPin === "pinned") {
+            return note.pinned;
+        }
+
+        if (currentPin === "normal") {
+            return !note.pinned;
+        }
+
+        return true;
+    });
+}
+
+function filterSortNotes(notes) {
+    return [...notes].sort((a, b) => {
+        if(b.pinned !== a.pinned) {
+            //핀 기준 정렬
+            return b.pinned - a.pinned;
+        }
+        //최신순 정렬
+        return b.id - a.id;
+    });
+}
+
+//Light-Dark mode func
 function applyTheme(theme) {
     document.body.classList.remove("light-theme", "dark-theme");
 
@@ -268,6 +292,7 @@ function updateThemeButton() {
     themeToggleBtn.textContent = currentTheme === "light" ? "🌙 다크모드" : "☀️ 라이트모드";
 }
 
+//Category func
 function getCategoryLabel(category) {
     if(category === "study") return "공부";
     if(category === "work") return "작업";
@@ -361,4 +386,8 @@ renderNotes();
 /* 14일차
  * addEvnetListener("change", ...)  : select는 보통 click이 아니라 change를 사용한다.
  *                                    값이 변경되었을 때 반응하는 것이 목적이기 때문.
+ */
+
+/* 15일차
+ * filterBy...(notes) 함수  : renderNotes()에서 분리. return (note)를 해야 정상동작하는 것을 기억할 것.
  */
