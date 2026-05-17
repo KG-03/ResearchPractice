@@ -22,6 +22,7 @@ const pinButtons = document.querySelectorAll("[data-pin]");
 const themeToggleBtn = document.querySelector(".theme-toggle-btn");
 const categorySelect = document.querySelector(".category-select");
 const categoryFilter = document.querySelector(".category-filter");
+const noteStatus = document.querySelector(".note-status");
 
 //지금 수정 중인지, 수정중인 메모는 어떤 것인지.
 let isEditing = false;
@@ -209,6 +210,8 @@ function renderNotes() {
 
     const pinnedNotes = filterByPin(categoryFilteredNotes);
 
+    renderStatus(pinnedNotes);
+
     if(!pinnedNotes.length) {
         if (currentPin === "pinned" && searchText === "") {
             renderEmptyMessage("고정된 메모가 없습니다!");
@@ -235,6 +238,17 @@ function renderEmptyMessage(message) {
         <div class="empty-message">
             <p>${message}</p>
         </div>
+    `;
+}
+
+function renderStatus(filteredNotes) {
+    const pinnedCount = filteredNotes.filter(note => note.pinned).length;
+
+    //가능하다면 '전체, 고정, 일반'의 상태에 따라 값을 달리 출력하는 것도 괜찮아 보인다.
+    noteStatus.textContent = `
+        "${currentCategory}" 
+        📝 메모 ${filteredNotes.length}개
+        / 📌 고정 ${pinnedCount}개
     `;
 }
 
@@ -390,4 +404,10 @@ renderNotes();
 
 /* 15일차
  * filterBy...(notes) 함수  : renderNotes()에서 분리. return (note)를 해야 정상동작하는 것을 기억할 것.
+ */
+
+/* 17일차
+ * 현재 몇 개의 메모가 있는지 알려주는 status란을 만듦.
+ * '필터된 결과'를 기준으로 현재 상태를 알려주는 것이 좋음.
+ * 따라서 '검색 결과 몇 개의 메모'인지, 아니면 '저장한 메모가 몇 개인지'를 명시하는 게 좋아 보임.
  */
