@@ -10,7 +10,8 @@ try {
 notes = notes.map(note => ({
     ...note,
     pinned: note.pinned ?? false,
-    category: note.category ?? "general"
+    category: note.category ?? "general",
+    createAt: note.createAt ?? note.id
 }));
 
 const titleInput = document.querySelector(".title-input");
@@ -107,11 +108,12 @@ function addNote() {
         editingId = null;
     } else {
         const note = {
-            id:Date.now(),
+            id: Date.now(),
             title,
             content,
             pinned: false,
-            category: categorySelect.value
+            category: categorySelect.value,
+            createAt: Date.now()
         };
 
         notes.push(note);
@@ -167,6 +169,7 @@ function createNoteCard(note) {
         <h3>${note.title || "(제목 없음)"}</h3>
         <p class="note-card-category">카테고리: ${getCategoryLabel(note.category)}</p>
         <p>${note.content || "(내용 없음)"}</p>
+        <p class="note-card-date">${formatDate(note.createAt)}</p>
         <button class="child-btn pin-btn">${note.pinned ? "★" : "☆"}</button>
         <button class="child-btn edit-btn">수정</button>
         <button class="child-btn delete-btn">삭제</button>
@@ -290,8 +293,8 @@ function filterSortNotes(notes) {
             //핀 기준 정렬
             return b.pinned - a.pinned;
         }
-        //최신순 정렬
-        return b.id - a.id;
+        //최신순 정렬 (05/18: id에서 createAt으로 변경.)
+        return b.createAt - a.createAt;
     });
 }
 
@@ -313,6 +316,13 @@ function getCategoryLabel(category) {
     if(category === "idea") return "아이디어";
 
     return "일반";
+}
+
+//Date func
+function formatDate(timestamp) {
+    const date = new Date(timestamp);
+
+    return date.toLocaleDateString();
 }
 
 //홈페이지 실행 즉시 보여져야 하는 것.
@@ -410,4 +420,22 @@ renderNotes();
  * 현재 몇 개의 메모가 있는지 알려주는 status란을 만듦.
  * '필터된 결과'를 기준으로 현재 상태를 알려주는 것이 좋음.
  * 따라서 '검색 결과 몇 개의 메모'인지, 아니면 '저장한 메모가 몇 개인지'를 명시하는 게 좋아 보임.
+ */
+
+/* 18일차
+ * 내용에 줄바꿈도 넣어서 메모를 저장할 수 있을지 모르음.
+ * id:Date.now()        : 식별자
+ * createAt: Date.now() : 생성 시각
+ * 
+ * date.toLocaleDateString()    : 전제는 const date = new Date(timestamp);      < timestamp를 Date 객체로 변환한다.
+ *                                JavaScript의 날짜(Date) 객체를 사용자 지역 형식(lacale)에 맞는 날짜 문자열로 변환하는 함수.
+ *                                인자로 지역을 직접 설정 가능. date.toLocaleDateString("ko-KR")    < 다음과 같은 형식.
+ *                                인자로 옵션 설정도 가능. date.toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" });
+ *                                  numeric : 5
+ *                                  2-digit : 05
+ *                                  short   : May
+ *                                  long    : May
+ *                                반환값은 문자열(string)
+ *                                미국 환경이라면 5/18/2026 등으로 보임.
+ *                                비슷한 함수   : date.toDateString()   해당 함수는 고정 영어 형식.
  */
