@@ -28,7 +28,11 @@
                     <button class="add-btn">추가</button>
                 </section>
 
-                <input class="input search-input" placeholder="메모 검색">
+                <select class="sort-select-filter">
+                    <option value="latest">최신순</option>
+                    <option value="oldest">오래된순</option>
+                    <option value="title">제목순</option>
+                </select>
                 <select class="category-filter">
                     <option value="all">전체</option>
                     <option value="general">일반</option>
@@ -36,6 +40,7 @@
                     <option value="work">작업</option>
                     <option value="idea">아이디어</option>
                 </select>
+                <input class="input search-input" placeholder="메모 검색">
 
                 <section class="pin-area">
                     <button data-pin="all">전체</button>
