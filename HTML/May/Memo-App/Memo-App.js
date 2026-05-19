@@ -11,7 +11,7 @@ notes = notes.map(note => ({
     ...note,
     pinned: note.pinned ?? false,
     category: note.category ?? "general",
-    createAt: note.createAt ?? note.id
+    createdAt: note.createdAt ?? note.id
 }));
 
 const titleInput = document.querySelector(".title-input");
@@ -24,6 +24,7 @@ const themeToggleBtn = document.querySelector(".theme-toggle-btn");
 const categorySelect = document.querySelector(".category-select");
 const categoryFilter = document.querySelector(".category-filter");
 const noteStatus = document.querySelector(".note-status");
+const sortSelectFilter = document.querySelector(".sort-select-filter");
 
 //지금 수정 중인지, 수정중인 메모는 어떤 것인지.
 let isEditing = false;
@@ -36,6 +37,7 @@ let searchText = "";
 let currentPin = "all";
 let currentTheme = localStorage.getItem("theme") || "light";
 let currentCategory = "all";
+let currentSort = "latest";
 
 titleInput.addEventListener("keydown", function(e) {
     if(e.key === "Enter") {
@@ -88,6 +90,12 @@ categoryFilter.addEventListener("change", function() {
     renderNotes();
 });
 
+sortSelectFilter.addEventListener("change", function() {
+    currentSort = sortSelectFilter.value;
+
+    renderNotes();
+})
+
 //note func
 function addNote() {
     const title = titleInput.value.trim();
@@ -113,7 +121,7 @@ function addNote() {
             content,
             pinned: false,
             category: categorySelect.value,
-            createAt: Date.now()
+            createdAt: Date.now()
         };
 
         notes.push(note);
@@ -169,7 +177,7 @@ function createNoteCard(note) {
         <h3>${note.title || "(제목 없음)"}</h3>
         <p class="note-card-category">카테고리: ${getCategoryLabel(note.category)}</p>
         <p>${note.content || "(내용 없음)"}</p>
-        <p class="note-card-date">${formatDate(note.createAt)}</p>
+        <p class="note-card-date">${formatDate(note.createdAt)}</p>
         <button class="child-btn pin-btn">${note.pinned ? "★" : "☆"}</button>
         <button class="child-btn edit-btn">수정</button>
         <button class="child-btn delete-btn">삭제</button>
@@ -227,7 +235,7 @@ function renderNotes() {
         return;
     }
 
-    const sortedNotes = filterSortNotes(pinnedNotes);
+    const sortedNotes = sortNotes(pinnedNotes);
 
     sortedNotes.forEach(note => {
         const card = createNoteCard(note);
@@ -249,7 +257,7 @@ function renderStatus(filteredNotes) {
 
     //가능하다면 '전체, 고정, 일반'의 상태에 따라 값을 달리 출력하는 것도 괜찮아 보인다.
     noteStatus.textContent = `
-        "${currentCategory}" 
+        "${getCategoryLabel(currentCategory)}" 
         📝 메모 ${filteredNotes.length}개
         / 📌 고정 ${pinnedCount}개
     `;
@@ -287,14 +295,30 @@ function filterByPin(notes) {
     });
 }
 
-function filterSortNotes(notes) {
+//sorting
+function sortNotes(notes) {
     return [...notes].sort((a, b) => {
         if(b.pinned !== a.pinned) {
             //핀 기준 정렬
             return b.pinned - a.pinned;
         }
-        //최신순 정렬 (05/18: id에서 createAt으로 변경.)
-        return b.createAt - a.createAt;
+
+        //최신순 정렬 (05/18: id에서 createdAt으로 변경.)
+        if (currentSort === "latest") {
+            return b.createdAt - a.createdAt;
+        }
+
+        //오래된순 정렬
+        if (currentSort === "oldest") {
+            return a.createdAt - b.createdAt;
+        }
+
+        //제목순 정렬
+        if (currentSort === "title") {
+            return (a.title || "").localeCompare(b.title || "");
+        }
+
+        return 0;
     });
 }
 
@@ -425,7 +449,7 @@ renderNotes();
 /* 18일차
  * 내용에 줄바꿈도 넣어서 메모를 저장할 수 있을지 모르음.
  * id:Date.now()        : 식별자
- * createAt: Date.now() : 생성 시각
+ * createdAt: Date.now() : 생성 시각
  * 
  * date.toLocaleDateString()    : 전제는 const date = new Date(timestamp);      < timestamp를 Date 객체로 변환한다.
  *                                JavaScript의 날짜(Date) 객체를 사용자 지역 형식(lacale)에 맞는 날짜 문자열로 변환하는 함수.
@@ -438,4 +462,16 @@ renderNotes();
  *                                반환값은 문자열(string)
  *                                미국 환경이라면 5/18/2026 등으로 보임.
  *                                비슷한 함수   : date.toDateString()   해당 함수는 고정 영어 형식.
+ */
+
+/* 19일차
+ * (a.title || "").localeCompare(b.title || ""));   : localeCompare : 문자열끼리 사전 순서를 비교하는 함수.
+ *                                                                    문자열1.localeCompare(문자열2)라고 할 때, 두 문자열의 사전 순서를 비교.
+ *                                                                    결과가 음수면 문자열 1이 앞, 결과가 양수면 문자열 2가 앞, 결과가 0이면 같음으로 처리.
+ *                                                    (a.title || "")   : title에 값이 없으면 빈 문자열을 사용한다는 의미.
+ *                                                                        왜냐하면 undefined로 localeCompare() 함수가 실행되면 오류가 일어날 확률이 높기 때문.
+ *                                                    a > b로도 해당 기능이 구현될 수 있지만, 지역/언어 규칙에 맞는 문자열을 비교하려면 localeCompare가 더 좋음.
+ *                                                    내림차순을 하려면 b.title.localeCompare(a.title)으로 적으면 됨.
+ * 
+ * 수정 중, 혹은 그 외의 상황에서 esc를 누르면 수정 도중 빠져나오는 기능이 있으면 좋지 않을까 싶음.
  */
