@@ -94,7 +94,35 @@ sortSelectFilter.addEventListener("change", function() {
     currentSort = sortSelectFilter.value;
 
     renderNotes();
-})
+});
+
+titleInput.addEventListener("input", saveDraft);
+contentInput.addEventListener("input", saveDraft);
+categorySelect.addEventListener("change", saveDraft);
+
+//func
+//draft func
+function saveDraft() {
+    const draft = {
+        title: titleInput.value,
+        content: contentInput.value,
+        category: categorySelect.value
+    };
+
+    localStorage.setItem("noteDraft", JSON.stringify(draft));
+}
+
+function loadDraft() {
+    const saved = localStorage.getItem("noteDraft");
+
+    if(!saved) return;
+
+    const draft = JSON.parse(saved);
+
+    titleInput.value = draft.title || "";
+    contentInput.value = draft.content || "";
+    categorySelect.value = draft.category || "general";
+}
 
 //note func
 function addNote() {
@@ -130,6 +158,7 @@ function addNote() {
     saveNotes();
     renderNotes();
 
+    localStorage.removeItem("noteDraft");
     titleInput.value = "";
     contentInput.value = "";
     categorySelect.value = "general";
@@ -353,6 +382,7 @@ function formatDate(timestamp) {
 document.querySelector('[data-pin="all"]').classList.add("active");
 applyTheme(currentTheme);
 updateThemeButton();
+loadDraft();
 renderNotes();
 
 /* 1일차
@@ -474,4 +504,14 @@ renderNotes();
  *                                                    내림차순을 하려면 b.title.localeCompare(a.title)으로 적으면 됨.
  * 
  * 수정 중, 혹은 그 외의 상황에서 esc를 누르면 수정 도중 빠져나오는 기능이 있으면 좋지 않을까 싶음.
+ */
+
+/* 20일차
+ * localStorage.satItem("noteDraft", JSON.stringify(draft));    : 현재 작성 중 상태 저장. draft 변수에는 저장하고 싶은 값을 담는다.
+ *                                                                이번 기능의 경우, '작성 중 상태를 저장'하기 위함이므로, draft에 입력창의 값을 전달받는다.
+ * localStorage.removeItem("noteDraft");    : noteDraft라는 아이템을 제거.
+ * 
+ * 1. 입력 자동저장의 저장 빈도 관리
+ * 2. '수정' 상태에서 새로고침 후, 입력이 임시저장되는 것은 확인되었으나, '수정' 상태가 유지되지 않고 풀려나, 새로운 입력으로 간주되는 중.
+ * 3. draft timestamp 저장하는 것도 고려.
  */
