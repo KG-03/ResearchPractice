@@ -11,7 +11,8 @@ notes = notes.map(note => ({
     ...note,
     pinned: note.pinned ?? false,
     category: note.category ?? "general",
-    createdAt: note.createdAt ?? note.id
+    createdAt: note.createdAt ?? note.id,
+    updatedAt: note.updatedAt ?? note.createdAt ?? note.id
 }));
 
 const titleInput = document.querySelector(".title-input");
@@ -135,7 +136,20 @@ function addNote() {
     if (isEditing) {
         notes = notes.map (note => {
             if(note.id === editingId) {
-                return { ...note, title, content, category: categorySelect.value};
+                const isChanged =
+                    note.title !== title ||
+                    note.content !== content ||
+                    note.category !== categorySelect.value;
+                    
+                return {
+                     ...note,
+                     title,
+                     content,
+                     category: categorySelect.value,
+                     updatedAt: isChanged ?
+                        Date.now() :
+                        note.updatedAt
+                };
             }
             return note;
         });
@@ -149,7 +163,8 @@ function addNote() {
             content,
             pinned: false,
             category: categorySelect.value,
-            createdAt: Date.now()
+            createdAt: Date.now(),
+            updatedAt: Date.now()
         };
 
         notes.push(note);
@@ -202,13 +217,26 @@ function createNoteCard(note) {
     const card = document.createElement("div");
     card.classList.add("note-card");
 
+    const isModified = note.updatedAt !== note.createdAt;
+
     card.innerHTML = `
         <h3>${note.title || "(제목 없음)"}</h3>
+
         <p class="note-card-category">카테고리: ${getCategoryLabel(note.category)}</p>
+
         <p>${note.content || "(내용 없음)"}</p>
-        <p class="note-card-date">${formatDate(note.createdAt)}</p>
+
+        <p class="note-card-date">생성: ${formatDate(note.createdAt)}</p>
+        
+        ${
+            isModified ?
+            `<p class="note-card-date modified">✏️ 수정됨: ${formatDate(note.updatedAt)}</p>` :
+            ""
+        }
         <button class="child-btn pin-btn">${note.pinned ? "★" : "☆"}</button>
+
         <button class="child-btn edit-btn">수정</button>
+
         <button class="child-btn delete-btn">삭제</button>
     `;
 
@@ -286,7 +314,7 @@ function renderStatus(filteredNotes) {
 
     //가능하다면 '전체, 고정, 일반'의 상태에 따라 값을 달리 출력하는 것도 괜찮아 보인다.
     noteStatus.textContent = `
-        "${getCategoryLabel(currentCategory)}" 
+        [카테고리: ${getCategoryLabel(currentCategory)}] 
         📝 메모 ${filteredNotes.length}개
         / 📌 고정 ${pinnedCount}개
     `;
@@ -364,11 +392,12 @@ function updateThemeButton() {
 
 //Category func
 function getCategoryLabel(category) {
+    if(category === "general") return "일반"
     if(category === "study") return "공부";
     if(category === "work") return "작업";
     if(category === "idea") return "아이디어";
 
-    return "일반";
+    return "전체";
 }
 
 //Date func
@@ -514,4 +543,12 @@ renderNotes();
  * 1. 입력 자동저장의 저장 빈도 관리
  * 2. '수정' 상태에서 새로고침 후, 입력이 임시저장되는 것은 확인되었으나, '수정' 상태가 유지되지 않고 풀려나, 새로운 입력으로 간주되는 중.
  * 3. draft timestamp 저장하는 것도 고려.
+ */
+
+/* 21일차
+ * 수정 날짜 표기.
+ * const isChanged = note.title !== title || note.content !== content || note.category !== categorySelect.value; 해당 코드는
+ *      const isChanged = ["title", "content"].some(...)으로 만들 수도 있음을 기억할 것.
+ * 
+ * 수정 버튼을 누르고 취소 버튼도 고려할 것.
  */
