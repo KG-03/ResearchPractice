@@ -15,6 +15,7 @@ notes = notes.map(note => ({
     updatedAt: note.updatedAt ?? note.createdAt ?? note.id
 }));
 
+//DOM link
 const titleInput = document.querySelector(".title-input");
 const contentInput = document.querySelector(".content-input");
 const addBtn = document.querySelector(".add-btn");
@@ -26,6 +27,8 @@ const categorySelect = document.querySelector(".category-select");
 const categoryFilter = document.querySelector(".category-filter");
 const noteStatus = document.querySelector(".note-status");
 const sortSelectFilter = document.querySelector(".sort-select-filter");
+const titleCount = document.querySelector(".title-count");
+const contentCount = document.querySelector(".content-count");
 
 //지금 수정 중인지, 수정중인 메모는 어떤 것인지.
 let isEditing = false;
@@ -97,8 +100,15 @@ sortSelectFilter.addEventListener("change", function() {
     renderNotes();
 });
 
-titleInput.addEventListener("input", saveDraft);
-contentInput.addEventListener("input", saveDraft);
+titleInput.addEventListener("input", function() {
+    saveDraft();
+    updateInputCounts();
+});
+contentInput.addEventListener("input", function() {
+    saveDraft();
+    updateInputCounts();
+    autoResizeContentarea();
+});
 categorySelect.addEventListener("change", saveDraft);
 
 //func
@@ -123,6 +133,7 @@ function loadDraft() {
     titleInput.value = draft.title || "";
     contentInput.value = draft.content || "";
     categorySelect.value = draft.category || "general";
+    autoResizeContentarea();
 }
 
 //note func
@@ -178,6 +189,9 @@ function addNote() {
     contentInput.value = "";
     categorySelect.value = "general";
     addBtn.textContent = isEditing ? "수정 완료" : "추가";
+    updateInputCounts();
+    autoResizeContentarea();
+
     titleInput.focus();
 }
 
@@ -190,6 +204,8 @@ function editNote(note) {
     editingId = note.id;
     addBtn.textContent = isEditing ? "수정 완료" : "추가";
 
+    updateInputCounts();
+    autoResizeContentarea();
     titleInput.focus();
 }
 
@@ -320,6 +336,23 @@ function renderStatus(filteredNotes) {
     `;
 }
 
+function updateInputCounts() {
+    titleCount.textContent = `${titleInput.value.length} / 50`;
+    contentCount.textContent = `${contentInput.value.length} / 500`;
+
+    if(titleInput.value.length > 45) titleCount.classList.add("warning");
+    else titleCount.classList.remove("warning");
+
+    if(contentInput.value.length > 490) contentCount.classList.add("warning");
+    else contentCount.classList.remove("warning");
+}
+
+function autoResizeContentarea() {
+    //줄 삭제 후 높이가 줄어들지 않는 문제가 생길 수 있어, auto부터 대입.
+    contentInput.style.height = "auto";
+    contentInput.style.height = contentInput.scrollHeight + "px";
+}
+
 //filter func
 function filterBySearch(notes) {
     return notes.filter(note => {
@@ -412,6 +445,7 @@ document.querySelector('[data-pin="all"]').classList.add("active");
 applyTheme(currentTheme);
 updateThemeButton();
 loadDraft();
+updateInputCounts();
 renderNotes();
 
 /* 1일차
@@ -551,4 +585,9 @@ renderNotes();
  *      const isChanged = ["title", "content"].some(...)으로 만들 수도 있음을 기억할 것.
  * 
  * 수정 버튼을 누르고 취소 버튼도 고려할 것.
+ */
+
+/* 22일차
+ * 메모 글자수 제한 표기.
+ * content 말고도 title 쪽도 줄바꿈이 이루어지면 좋을 것 같으나, 이렇게 하려면 고려될 지점이 많아질 것 같아 보류.
  */
