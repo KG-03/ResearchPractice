@@ -31,14 +31,23 @@ body.dark-theme {
 
 .input {
     width: 200px;
+
     height: 20px;
+    max-height: 300px;
+    
     margin-bottom: 10px;
+
+    resize: none;
 }
 
 .empty-message {
     padding: 30px;
     text-align: center;
     opacity: 0.7;
+}
+
+.input-count.warning {
+    color: red;
 }
 
 /* ===== Card =====*/
@@ -99,3 +108,8 @@ button:focus {
     background-color: #333;
     color:white;
 }
+
+/* 22일차
+ * overflow: hidden;    스크롤바 제거. 스크롤바가 필요할 것 같아서 사용하지 않았으나, 확인용으로 주석에는 추가해둠.
+ * resize: none;        사용자 수동 resize 제거, 자동 resize와 충돌 방지.
+ */
