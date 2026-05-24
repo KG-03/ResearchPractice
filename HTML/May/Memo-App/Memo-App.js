@@ -29,6 +29,7 @@ const noteStatus = document.querySelector(".note-status");
 const sortSelectFilter = document.querySelector(".sort-select-filter");
 const titleCount = document.querySelector(".title-count");
 const contentCount = document.querySelector(".content-count");
+const appMessage = document.querySelector(".app-message");
 
 //지금 수정 중인지, 수정중인 메모는 어떤 것인지.
 let isEditing = false;
@@ -42,6 +43,8 @@ let currentPin = "all";
 let currentTheme = localStorage.getItem("theme") || "light";
 let currentCategory = "all";
 let currentSort = "latest";
+
+let messageTimer = null;
 
 titleInput.addEventListener("keydown", function(e) {
     if(e.key === "Enter") {
@@ -151,7 +154,11 @@ function addNote() {
                     note.title !== title ||
                     note.content !== content ||
                     note.category !== categorySelect.value;
-                    
+                
+                if (isChanged) {
+                    showMessage("메모가 수정되었습니다.");
+                }
+
                 return {
                      ...note,
                      title,
@@ -179,6 +186,7 @@ function addNote() {
         };
 
         notes.push(note);
+        showMessage("메모가 저장되었습니다.");  
     }
 
     saveNotes();
@@ -188,7 +196,8 @@ function addNote() {
     titleInput.value = "";
     contentInput.value = "";
     categorySelect.value = "general";
-    addBtn.textContent = isEditing ? "수정 완료" : "추가";
+    addBtn.textContent = "추가";
+    
     updateInputCounts();
     autoResizeContentarea();
 
@@ -202,10 +211,11 @@ function editNote(note) {
 
     isEditing = true;
     editingId = note.id;
-    addBtn.textContent = isEditing ? "수정 완료" : "추가";
+    addBtn.textContent = "수정 완료";
 
     updateInputCounts();
     autoResizeContentarea();
+
     titleInput.focus();
 }
 
@@ -223,6 +233,7 @@ function deleteNote(id) {
     
     saveNotes();
     renderNotes();
+    showMessage("메모가 삭제되었습니다.");
 }
 
 function saveNotes() {
@@ -440,6 +451,18 @@ function formatDate(timestamp) {
     return date.toLocaleDateString();
 }
 
+//App message func
+function showMessage(message) {
+    clearTimeout(messageTimer);
+
+    appMessage.textContent = message;
+    appMessage.classList.add("show");
+
+    messageTimer = setTimeout(() => {
+        appMessage.classList.remove("show");
+    }, 2000);
+}
+
 //홈페이지 실행 즉시 보여져야 하는 것.
 document.querySelector('[data-pin="all"]').classList.add("active");
 applyTheme(currentTheme);
@@ -590,4 +613,11 @@ renderNotes();
 /* 22일차
  * 메모 글자수 제한 표기.
  * content 말고도 title 쪽도 줄바꿈이 이루어지면 좋을 것 같으나, 이렇게 하려면 고려될 지점이 많아질 것 같아 보류.
+ */
+
+/* 24일차
+ * setTimeout()     : 예약. 일정 시간이 지난 뒤, 함수를 실행 예약하는 함수. setTimeout(실행할 함수, 시간(ms));
+ *                    console.log(A), setTimeout(() => { console.log("B");}, 1000), console.log("C")가 있다면, A C B 순서로 출력.
+ *                    timeout id를 반환. 나중에 취소하기 위해서 반환된다.
+ * clearTimeout()   : 예약 취소. 예약된 setTimeout 실행 취소. 인자로 'id'를 넣어야 한다.
  */
