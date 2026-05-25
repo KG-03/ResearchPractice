@@ -44,6 +44,10 @@ let currentTheme = localStorage.getItem("theme") || "light";
 let currentCategory = "all";
 let currentSort = "latest";
 
+//마지막으로 제거한 데이터, 복구 가능 시간
+let lastDeletedNote = null;
+let undoTimer = null;
+
 let messageTimer = null;
 
 titleInput.addEventListener("keydown", function(e) {
@@ -220,6 +224,8 @@ function editNote(note) {
 }
 
 function deleteNote(id) {
+    lastDeletedNote = notes.find(note => note.id === id);
+
     notes = notes.filter(note => note.id !== id);
 
     if (editingId === id) {
@@ -233,7 +239,39 @@ function deleteNote(id) {
     
     saveNotes();
     renderNotes();
-    showMessage("메모가 삭제되었습니다.");
+    showMessage(`
+        메모가 삭제되었습니다.
+        <button class="undo-btn">실행 취소</button>
+    `);
+
+    setupUndoHandler();
+}
+
+function setupUndoHandler() {
+    const undoBtn = document.querySelector(".undo-btn");
+    if(undoBtn) {
+        undoBtn.addEventListener("click", restoreDeletedNote);
+    }
+
+    clearTimeout(undoTimer);
+    undoTimer = null;
+    undoTimer = setTimeout(() => {
+        lastDeletedNote = null;
+    }, 2000);
+}
+
+function restoreDeletedNote() {
+    if(!lastDeletedNote) return;
+
+    notes.push(lastDeletedNote);
+
+    saveNotes();
+    renderNotes();
+
+    clearTimeout(undoTimer);
+
+    lastDeletedNote = null;
+    showMessage("메모가 복구되었습니다.");
 }
 
 function saveNotes() {
@@ -455,7 +493,7 @@ function formatDate(timestamp) {
 function showMessage(message) {
     clearTimeout(messageTimer);
 
-    appMessage.textContent = message;
+    appMessage.innerHTML = message;
     appMessage.classList.add("show");
 
     messageTimer = setTimeout(() => {
@@ -620,4 +658,12 @@ renderNotes();
  *                    console.log(A), setTimeout(() => { console.log("B");}, 1000), console.log("C")가 있다면, A C B 순서로 출력.
  *                    timeout id를 반환. 나중에 취소하기 위해서 반환된다.
  * clearTimeout()   : 예약 취소. 예약된 setTimeout 실행 취소. 인자로 'id'를 넣어야 한다.
+ */
+
+/* 25일차
+ *  clearTimeout(undoTimer);                                            : 기존 타이머 취소. 삭제를 반복하면 이전 타이머가 살아있을 수 있기 때문.
+ *                                                                        이러한 제거가 이루어지지 않으면 lastDeletedNote = null이 예상치 못한 시점에 실행될 수 있음.
+ *  undoTimer = null;                                                   : 현재 타이머 변수 초기화. 사실 필요없지만, 명확한 표현을 위해 추가.
+ *  undoTimer = setTimeout(() => { lastDeletedNote = null; }, 2000);    : 2초 뒤에 lastDeletedNote를 제거하는 새 타이머 생성
+ *                                                                        타이머 ID를 저장한 뒤, 복구된 시점에서 clearTimeout(undoTimer)할 수 있음.
  */
