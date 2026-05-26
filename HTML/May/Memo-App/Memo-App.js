@@ -30,6 +30,7 @@ const sortSelectFilter = document.querySelector(".sort-select-filter");
 const titleCount = document.querySelector(".title-count");
 const contentCount = document.querySelector(".content-count");
 const appMessage = document.querySelector(".app-message");
+const exportBtn = document.querySelector(".export-btn");
 
 //지금 수정 중인지, 수정중인 메모는 어떤 것인지.
 let isEditing = false;
@@ -117,6 +118,8 @@ contentInput.addEventListener("input", function() {
     autoResizeContentarea();
 });
 categorySelect.addEventListener("change", saveDraft);
+
+exportBtn.addEventListener("click", exportNotes);
 
 //func
 //draft func
@@ -434,6 +437,28 @@ function filterByPin(notes) {
     });
 }
 
+function exportNotes() {
+    if (!notes.length) {
+        showMessage("저장할 메모가 없습니다.");
+        return;
+    }
+
+    const json = JSON.stringify(notes, null, 2);
+
+    const blob = new Blob([json], { type: "application/json" });
+
+    const url = URL.createObjectURL(blob);
+
+    const date = new Date().toISOString().split("T")[0];
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `note-${date}.json`;
+    a.click();
+
+    URL.revokeObjectURL(url);
+    showMessage("메모를 내보냈습니다.");
+}
+
 //sorting
 function sortNotes(notes) {
     return [...notes].sort((a, b) => {
@@ -666,4 +691,19 @@ renderNotes();
  *  undoTimer = null;                                                   : 현재 타이머 변수 초기화. 사실 필요없지만, 명확한 표현을 위해 추가.
  *  undoTimer = setTimeout(() => { lastDeletedNote = null; }, 2000);    : 2초 뒤에 lastDeletedNote를 제거하는 새 타이머 생성
  *                                                                        타이머 ID를 저장한 뒤, 복구된 시점에서 clearTimeout(undoTimer)할 수 있음.
+ */
+
+/* 26일차
+ * const json = JSON.stringify(notes, null, 2); : 배열에서 JSON 문자열 반환.
+ *                                                null, 2 옵션: 가독성
+ * new Blob(...)                                : 파일처럼 다룰 수 있는 데이터 생성.
+ * URL.createObjectURL(blob)                    : 브라우저 내부 임시 파일 URL 생성.
+ * a.download = "notes.json";                   : 다운로드 파일 이름 지정.
+ * URL.revokeObjectURL(url);                    : 임시 URL 정리.
+ * new Date().toLocaleDateString()              : 현재 날짜를 사용자가 읽기 쉬운 날짜 문자열로 변환.
+ *                                                new Date().toISOString().split("T")[0]을 이용해서 날짜를 표기하는 것도 가능.
+ *                                                      .split("T")의 결과는 배열. [0]은 해당 결과의 첫 번째 요소를 가져오는 것.
+ *                                                      ex: 2026-04-04T12:30:00.000Z의 결과에서 T 아래로를 모두 잘라내, 날짜 부분만 가져오는 형식.
+ * 
+ * 차후 export 전에 confirm 문구('내보내시겠습니까?' 문구) 출력도 고민해볼 것.
  */
