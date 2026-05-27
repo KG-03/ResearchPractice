@@ -23,6 +23,18 @@ body.dark-theme {
 
 /* ===== Input Text =====*/
 .input-area {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+
+    background-color:#cecece
+}
+
+body.dark-theme .input-area {
+    background-color: #464646;
+}
+
+.main-input {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
