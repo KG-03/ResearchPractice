@@ -31,6 +31,7 @@ const titleCount = document.querySelector(".title-count");
 const contentCount = document.querySelector(".content-count");
 const appMessage = document.querySelector(".app-message");
 const exportBtn = document.querySelector(".export-btn");
+const importInput = document.querySelector(".import-input");
 
 //지금 수정 중인지, 수정중인 메모는 어떤 것인지.
 let isEditing = false;
@@ -120,6 +121,8 @@ contentInput.addEventListener("input", function() {
 categorySelect.addEventListener("change", saveDraft);
 
 exportBtn.addEventListener("click", exportNotes);
+
+importInput.addEventListener("change", importNotes);
 
 //func
 //draft func
@@ -405,6 +408,91 @@ function autoResizeContentarea() {
     contentInput.style.height = contentInput.scrollHeight + "px";
 }
 
+function exportNotes() {
+    if (!notes.length) {
+        showMessage("저장할 메모가 없습니다.");
+        return;
+    }
+
+    const json = JSON.stringify(notes, null, 2);
+
+    const blob = new Blob([json], { type: "application/json" });
+
+    const url = URL.createObjectURL(blob);
+
+    const date = new Date().toISOString().split("T")[0];
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `note-${date}.json`;
+    a.click();
+
+    URL.revokeObjectURL(url);
+    showMessage("메모를 내보냈습니다.");
+}
+
+function importNotes(e) {
+    const file = e.target.files[0];
+
+    if (!file) return;
+
+    const isConfirmed = confirm("현재 메모를 덮어쓰시겠습니까?");
+
+    if (!isConfirmed) {
+        importInput.value = "";
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        try {
+            const importedNotes = JSON.parse(event.target.result);
+
+            //배열 검증
+            if(!Array.isArray(importedNotes)) throw new Error();
+
+            //객체 구조 검증
+            const isValid = importedNotes.every(note => {
+                return (typeof note === "object" &&
+                    note !== null &&
+                    typeof note.id === "number" &&
+                    typeof note.title === "string" &&
+                    typeof note.content === "string"
+                );
+            });
+
+            if (!isValid) throw new Error();
+
+            //기존 메모 덮어쓰기
+            notes = importedNotes.map(note => ({
+                ...note,
+                pinned: note.pinned ?? false,
+                category: note.category ?? "general",
+                createdAt: note.createdAt ?? note.id,
+                updatedAt: note.updatedAt ?? note.createdAt ?? note.id
+            }));
+
+            isEditing = false;
+            editingId = null;
+            
+            titleInput.value = "";
+            contentInput.value = "";
+            addBtn.textContent = "추가";
+
+            saveNotes();
+            renderNotes();
+
+            showMessage("메모를 불러왔습니다.");
+        } catch {
+            showMessage("올바른 메모 파일이 아닙니다.");
+        }
+
+        //같은 파일 재선택 가능
+        importInput.value = "";
+    };
+
+    reader.readAsText(file);
+}
+
 //filter func
 function filterBySearch(notes) {
     return notes.filter(note => {
@@ -435,28 +523,6 @@ function filterByPin(notes) {
 
         return true;
     });
-}
-
-function exportNotes() {
-    if (!notes.length) {
-        showMessage("저장할 메모가 없습니다.");
-        return;
-    }
-
-    const json = JSON.stringify(notes, null, 2);
-
-    const blob = new Blob([json], { type: "application/json" });
-
-    const url = URL.createObjectURL(blob);
-
-    const date = new Date().toISOString().split("T")[0];
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `note-${date}.json`;
-    a.click();
-
-    URL.revokeObjectURL(url);
-    showMessage("메모를 내보냈습니다.");
 }
 
 //sorting
@@ -706,4 +772,18 @@ renderNotes();
  *                                                      ex: 2026-04-04T12:30:00.000Z의 결과에서 T 아래로를 모두 잘라내, 날짜 부분만 가져오는 형식.
  * 
  * 차후 export 전에 confirm 문구('내보내시겠습니까?' 문구) 출력도 고민해볼 것.
+ */
+
+/* 27일차
+ * 파일 불러오기.
+ * const file = e.target.files[0];  : 선택한 첫 번째 파일
+ * new FileReader()                 : 파일 내용을 읽는 객체
+ * reader.readAsText(file)          : 파일 > 문자열 변환
+ * JSON.parse(...)                  : 문자열 > 배열/객체 복원
+ * 파일 선택 > 파일 읽기 > 문자열 획득 > JSON.parse > notes 복원 > localStorage 저장 > render
+ * 
+ * "id" in note &&                  : note 객체 안에 id 속성이 존재하는지 확인. 값이 존재하기만 하면 통과된다.
+ * typeof note.id === "number"      : note 객체 안의 id 속성이 '숫자' 속성인지 검사. 속성이 동일해야 통과된다.
+ * 
+ * import 전 자동 백업 고려, import 성공시 메모 수 표시 고려.
  */
