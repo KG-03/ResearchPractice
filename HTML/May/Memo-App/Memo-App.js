@@ -32,6 +32,7 @@ const contentCount = document.querySelector(".content-count");
 const appMessage = document.querySelector(".app-message");
 const exportBtn = document.querySelector(".export-btn");
 const importInput = document.querySelector(".import-input");
+const saveStatus = document.querySelector(".save-status");
 
 //지금 수정 중인지, 수정중인 메모는 어떤 것인지.
 let isEditing = false;
@@ -112,11 +113,13 @@ sortSelectFilter.addEventListener("change", function() {
 titleInput.addEventListener("input", function() {
     saveDraft();
     updateInputCounts();
+    if(!isEditing) updateSaveStatus("✏️ 작성 중...");
 });
 contentInput.addEventListener("input", function() {
     saveDraft();
     updateInputCounts();
     autoResizeContentarea();
+    if(!isEditing) updateSaveStatus("✏️ 작성 중...");
 });
 categorySelect.addEventListener("change", saveDraft);
 
@@ -137,16 +140,21 @@ function saveDraft() {
 }
 
 function loadDraft() {
-    const saved = localStorage.getItem("noteDraft");
+    try {
+        const saved = localStorage.getItem("noteDraft");
 
-    if(!saved) return;
+        if(!saved) return;
 
-    const draft = JSON.parse(saved);
+        const draft = JSON.parse(saved);
 
-    titleInput.value = draft.title || "";
-    contentInput.value = draft.content || "";
-    categorySelect.value = draft.category || "general";
-    autoResizeContentarea();
+        titleInput.value = draft.title || "";
+        contentInput.value = draft.content || "";
+        categorySelect.value = draft.category || "general";
+        autoResizeContentarea();
+    } catch {
+        localStorage.removeItem("noteDraft");
+    }
+    
 }
 
 //note func
@@ -224,6 +232,7 @@ function editNote(note) {
     addBtn.textContent = "수정 완료";
 
     updateInputCounts();
+    updateSaveStatus("✏️ 수정 중...");
     autoResizeContentarea();
 
     titleInput.focus();
@@ -282,6 +291,8 @@ function restoreDeletedNote() {
 
 function saveNotes() {
     localStorage.setItem("notes", JSON.stringify(notes));
+
+    updateSaveStatus("💾 저장되었습니다.");
 }
 
 function createNoteCard(note) {
@@ -339,6 +350,7 @@ function renderNotes() {
     noteList.innerHTML = "";
 
     if(!notes.length) {
+        renderStatus([]);
         renderEmptyMessage("메모가 없습니다!");
         return;
     }
@@ -428,6 +440,7 @@ function exportNotes() {
 
     URL.revokeObjectURL(url);
     showMessage("메모를 내보냈습니다.");
+    updateSaveStatus("📤 내보내기가 완료되었습니다.");
 }
 
 function importNotes(e) {
@@ -474,6 +487,7 @@ function importNotes(e) {
             isEditing = false;
             editingId = null;
             
+            localStorage.removeItem("noteDraft");
             titleInput.value = "";
             contentInput.value = "";
             addBtn.textContent = "추가";
@@ -482,6 +496,7 @@ function importNotes(e) {
             renderNotes();
 
             showMessage("메모를 불러왔습니다.");
+            updateSaveStatus("📂 불러오기가 완료되었습니다.");
         } catch {
             showMessage("올바른 메모 파일이 아닙니다.");
         }
@@ -489,7 +504,6 @@ function importNotes(e) {
         //같은 파일 재선택 가능
         importInput.value = "";
     };
-
     reader.readAsText(file);
 }
 
@@ -592,12 +606,20 @@ function showMessage(message) {
     }, 2000);
 }
 
+//Save Status func
+function updateSaveStatus(message) {
+    const time = new Date().toLocaleTimeString();
+
+    saveStatus.textContent = `${message} (${time})`;
+}
+
 //홈페이지 실행 즉시 보여져야 하는 것.
 document.querySelector('[data-pin="all"]').classList.add("active");
 applyTheme(currentTheme);
 updateThemeButton();
 loadDraft();
 updateInputCounts();
+autoResizeContentarea();
 renderNotes();
 
 /* 1일차
@@ -786,4 +808,13 @@ renderNotes();
  * typeof note.id === "number"      : note 객체 안의 id 속성이 '숫자' 속성인지 검사. 속성이 동일해야 통과된다.
  * 
  * import 전 자동 백업 고려, import 성공시 메모 수 표시 고려.
+ */
+
+/* 28일차
+ * 현재 상태 표기.
+ * renderStatus([]);    : 생성했던 함수가 받는 인자가 배열.
+ *                        notes.filter(...)도 새로운 배열을 결과로 전달함. 원본 배열을 수정하지는 않는다.
+ *                        빈 배열도 배열로 간주하기 때문에 오류가 나지 않고, 비어있는 결과만 보여줄 수 있다. undefined와는 다르다.
+ * 
+ * 안내 문구를 잠깐 띄웠다가 다시 없애는 것도 고려할 것. (텍스트 애니메이션)
  */
