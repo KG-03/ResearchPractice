@@ -53,17 +53,17 @@ let undoTimer = null;
 
 let messageTimer = null;
 
-titleInput.addEventListener("keydown", function(e) {
-    if(e.key === "Enter") {
-        addNote();
-    }
-});
+// titleInput.addEventListener("keydown", function(e) {
+//     if(e.key === "Enter") {
+//         addNote();
+//     }
+// });
 
-contentInput.addEventListener("keydown", function(e) {
-    if(e.key === "Enter" && e.ctrlKey) {
-        addNote();
-    }
-});
+// contentInput.addEventListener("keydown", function(e) {
+//     if(e.key === "Enter" && e.ctrlKey) {
+//         addNote();
+//     }
+// });
 
 addBtn.addEventListener("click", addNote);
 
@@ -126,6 +126,77 @@ categorySelect.addEventListener("change", saveDraft);
 exportBtn.addEventListener("click", exportNotes);
 
 importInput.addEventListener("change", importNotes);
+
+document.addEventListener("keydown", function(e) {
+    //저장 단축
+    if(e.ctrlKey && e.key === "Enter") {
+        addNote();
+    }
+
+    //검색 단축
+    if (e.key === "/") {
+        e.preventDefault();
+        searchInput.focus();
+    }
+
+    //입력 취소 단축
+    if(e.key === "Escape") {
+        titleInput.value = "";
+        contentInput.value = "";
+
+        isEditing = false;
+        editingId = null;
+
+        addBtn.textContent = "추가";
+        showMessage("입력이 취소되었습니다.");
+    }
+
+    if(e.key === "Escape" && document.activeElement === searchInput) {
+        searchInput.value = "";
+        searchText = "";
+
+        renderNotes();
+    }
+
+    //textarea 입력중 막는 것.
+    const active = document.activeElement;
+
+    if(active === titleInput || active === contentInput) return;
+
+    //삭제 undo. (기본 입력 undo에 영향가지 않게)
+    if(e.ctrlKey && e.key.toLowerCase() === "z" && document.activeElement !== contentInput) {
+        e.preventDefault();
+        if(lastDeletedNote) {
+            restoreDeletedNote();
+        }
+    }
+
+    //다크모드 단축
+    if(e.ctrlKey && e.key.toLowerCase() === "d") {
+        e.preventDefault();
+
+        currentTheme = currentTheme === "light" ? "dark" : "light";
+        applyTheme(currentTheme);
+
+        localStorage.setItem("theme", currentTheme);
+        updateThemeButton();
+    }
+
+    //export 단축
+    if(e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "e") {
+        e.preventDefault();
+        exportNotes();
+    }
+
+    //import 단축
+    if(e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "i") {
+        //importInput을 누른 결과를 전달을 해야하는디
+        e.preventDefault();
+        importInput.click();
+
+        titleInput.focus();
+    }
+});
 
 //func
 //draft func
@@ -817,4 +888,12 @@ renderNotes();
  *                        빈 배열도 배열로 간주하기 때문에 오류가 나지 않고, 비어있는 결과만 보여줄 수 있다. undefined와는 다르다.
  * 
  * 안내 문구를 잠깐 띄웠다가 다시 없애는 것도 고려할 것. (텍스트 애니메이션)
+ */
+
+/* 29일차
+ * 단축키 지정.
+ * e.preventDefault();  : 브라우저의 기본 동작을 막는 함수. '기본 행동 취소'.
+ * importInput.click(); : 사용자 액션으로만 열 수 있는 것을 강제로 클릭시키는 것.
+ * 
+ * 단축키 목룍 표시하는 것도 고려해볼 것.
  */
