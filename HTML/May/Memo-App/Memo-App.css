@@ -121,6 +121,10 @@ button:focus {
     color:white;
 }
 
+.cancel-edit-btn {
+    display: none;
+}
+
 /* ===== App Message ===== */
 .app-message {
     opacity: 0;
