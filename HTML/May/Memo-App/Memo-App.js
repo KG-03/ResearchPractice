@@ -33,6 +33,7 @@ const appMessage = document.querySelector(".app-message");
 const exportBtn = document.querySelector(".export-btn");
 const importInput = document.querySelector(".import-input");
 const saveStatus = document.querySelector(".save-status");
+const cancelEditBtn = document.querySelector(".cancel-edit-btn");
 
 //지금 수정 중인지, 수정중인 메모는 어떤 것인지.
 let isEditing = false;
@@ -127,6 +128,8 @@ exportBtn.addEventListener("click", exportNotes);
 
 importInput.addEventListener("change", importNotes);
 
+cancelEditBtn.addEventListener("click", cancelEdit);
+
 document.addEventListener("keydown", function(e) {
     //저장 단축
     if(e.ctrlKey && e.key === "Enter") {
@@ -141,14 +144,7 @@ document.addEventListener("keydown", function(e) {
 
     //입력 취소 단축
     if(e.key === "Escape") {
-        titleInput.value = "";
-        contentInput.value = "";
-
-        isEditing = false;
-        editingId = null;
-
-        addBtn.textContent = "추가";
-        showMessage("입력이 취소되었습니다.");
+        cancelEdit();
     }
 
     if(e.key === "Escape" && document.activeElement === searchInput) {
@@ -263,6 +259,7 @@ function addNote() {
 
         isEditing = false;
         editingId = null;
+        cancelEditBtn.style.display = "none";
     } else {
         const note = {
             id: Date.now(),
@@ -301,11 +298,28 @@ function editNote(note) {
     isEditing = true;
     editingId = note.id;
     addBtn.textContent = "수정 완료";
+    cancelEditBtn.style.display = "inline-block";
 
     updateInputCounts();
     updateSaveStatus("✏️ 수정 중...");
     autoResizeContentarea();
 
+    titleInput.focus();
+}
+
+function cancelEdit() {
+    isEditing = false;
+    editingId = null;
+
+    titleInput.value = "";
+    contentInput.value = "";
+    categorySelect.value = "general";
+
+    addBtn.textContent = "추가";
+    cancelEditBtn.style.display = "none";
+    localStorage.removeItem("noteDraft");
+
+    showMessage("입력이 취소되었습니다.");
     titleInput.focus();
 }
 
@@ -315,12 +329,7 @@ function deleteNote(id) {
     notes = notes.filter(note => note.id !== id);
 
     if (editingId === id) {
-        isEditing = false;
-        editingId = null;
-
-        titleInput.value = "";
-        contentInput.value = "";
-        addBtn.textContent = "추가";
+        cancelEdit();
     }
     
     saveNotes();
@@ -466,12 +475,14 @@ function renderEmptyMessage(message) {
 function renderStatus(filteredNotes) {
     const pinnedCount = filteredNotes.filter(note => note.pinned).length;
 
-    //가능하다면 '전체, 고정, 일반'의 상태에 따라 값을 달리 출력하는 것도 괜찮아 보인다.
-    noteStatus.textContent = `
-        [카테고리: ${getCategoryLabel(currentCategory)}] 
-        📝 메모 ${filteredNotes.length}개
-        / 📌 고정 ${pinnedCount}개
-    `;
+    noteStatus.textContent = `[카테고리: ${getCategoryLabel(currentCategory)}]`;
+    if(currentPin === "pinned" ) {
+        noteStatus.textContent += ` 📌 고정 ${filteredNotes.length}개`;
+    } else if (currentPin === "normal") {
+        noteStatus.textContent += ` 📝 메모 ${filteredNotes.length}개`;
+    } else if (currentPin === "all") {
+        noteStatus.textContent += `📝 메모 ${filteredNotes.length}개 / 📌 고정 ${pinnedCount}개`;
+    }
 }
 
 function updateInputCounts() {
@@ -557,6 +568,7 @@ function importNotes(e) {
 
             isEditing = false;
             editingId = null;
+            cancelEditBtn.style.display = "none";
             
             localStorage.removeItem("noteDraft");
             titleInput.value = "";
@@ -896,4 +908,9 @@ renderNotes();
  * importInput.click(); : 사용자 액션으로만 열 수 있는 것을 강제로 클릭시키는 것.
  * 
  * 단축키 목룍 표시하는 것도 고려해볼 것.
+ */
+
+/* 31일차
+ * 카테고리 고정/일반에 따라 메모 수 달리 보이게 설정
+ * 수정 버튼 누르고 수정 취소 버튼 생성
  */
