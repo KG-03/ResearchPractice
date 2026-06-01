@@ -12,7 +12,8 @@ notes = notes.map(note => ({
     pinned: note.pinned ?? false,
     category: note.category ?? "general",
     createdAt: note.createdAt ?? note.id,
-    updatedAt: note.updatedAt ?? note.createdAt ?? note.id
+    updatedAt: note.updatedAt ?? note.createdAt ?? note.id,
+    expanded: note.expanded ?? true
 }));
 
 //DOM link
@@ -268,7 +269,8 @@ function addNote() {
             pinned: false,
             category: categorySelect.value,
             createdAt: Date.now(),
-            updatedAt: Date.now()
+            updatedAt: Date.now(),
+            expanded: true
         };
 
         notes.push(note);
@@ -386,7 +388,8 @@ function createNoteCard(note) {
 
         <p class="note-card-category">카테고리: ${getCategoryLabel(note.category)}</p>
 
-        <p>${note.content || "(내용 없음)"}</p>
+        ${note.expanded ? `<p>${note.content || "(내용 없음)"}</p>` : ""}
+        <button class="child-btn expand-btn">${note.expanded ? "접기" : "펼치기"}</button>
 
         <p class="note-card-date">생성: ${formatDate(note.createdAt)}</p>
         
@@ -395,6 +398,7 @@ function createNoteCard(note) {
             `<p class="note-card-date modified">✏️ 수정됨: ${formatDate(note.updatedAt)}</p>` :
             ""
         }
+
         <button class="child-btn pin-btn">${note.pinned ? "★" : "☆"}</button>
 
         <button class="child-btn edit-btn">수정</button>
@@ -410,6 +414,9 @@ function createNoteCard(note) {
 
     const pinBtn = card.querySelector(".pin-btn");
     pinBtn.addEventListener("click", () => togglePin(note.id));
+
+    const expandBtn = card.querySelector(".expand-btn");
+    expandBtn.addEventListener("click", () => toggleExpanded(note.id));
 
     return card;
 }
@@ -590,6 +597,22 @@ function importNotes(e) {
     reader.readAsText(file);
 }
 
+function toggleExpanded(id) {
+    notes = notes.map (note => {
+        if(note.id === id) {
+            return {
+                ...note,
+                expanded: !note.expanded
+            };
+        }
+
+        return note;
+    });
+
+    saveNotes();
+    renderNotes();
+}
+
 //filter func
 function filterBySearch(notes) {
     return notes.filter(note => {
@@ -643,6 +666,11 @@ function sortNotes(notes) {
         //제목순 정렬
         if (currentSort === "title") {
             return (a.title || "").localeCompare(b.title || "");
+        }
+
+        //최근 수정순 정렬
+        if(currentSort === "updated") {
+            return b.updatedAt - a.updatedAt;
         }
 
         return 0;
@@ -913,4 +941,10 @@ renderNotes();
 /* 31일차
  * 카테고리 고정/일반에 따라 메모 수 달리 보이게 설정
  * 수정 버튼 누르고 수정 취소 버튼 생성
+ */
+
+/* 32일차
+ * 메모 카드 접기/펼치기 + 최근 수정순 정렬
+ * 
+ * 메모 내용 복사 기능도 고려해볼 것.
  */
