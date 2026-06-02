@@ -35,6 +35,7 @@ const exportBtn = document.querySelector(".export-btn");
 const importInput = document.querySelector(".import-input");
 const saveStatus = document.querySelector(".save-status");
 const cancelEditBtn = document.querySelector(".cancel-edit-btn");
+const helpBtn = document.querySelector(".help-btn");
 
 //지금 수정 중인지, 수정중인 메모는 어떤 것인지.
 let isEditing = false;
@@ -130,6 +131,16 @@ exportBtn.addEventListener("click", exportNotes);
 importInput.addEventListener("change", importNotes);
 
 cancelEditBtn.addEventListener("click", cancelEdit);
+
+helpBtn.addEventListener("click", () => {
+    alert(`
+        Ctrl + Enter : 저장
+        / : 검색 입력
+        Esc : 취소
+        Ctrl + Shift + E : 내보내기
+        Ctrl + Shift + I : 불러오기
+    `);
+});
 
 document.addEventListener("keydown", function(e) {
     //저장 단축
@@ -403,6 +414,8 @@ function createNoteCard(note) {
 
         <button class="child-btn edit-btn">수정</button>
 
+        <button class="child-btn duplicate-btn">복제</button>
+
         <button class="child-btn delete-btn">삭제</button>
     `;
 
@@ -417,6 +430,9 @@ function createNoteCard(note) {
 
     const expandBtn = card.querySelector(".expand-btn");
     expandBtn.addEventListener("click", () => toggleExpanded(note.id));
+
+    const duplicateBtn = card.querySelector(".duplicate-btn");
+    duplicateBtn.addEventListener("click", () => duplicateNote(note.id));
 
     return card;
 }
@@ -482,7 +498,7 @@ function renderEmptyMessage(message) {
 function renderStatus(filteredNotes) {
     const pinnedCount = filteredNotes.filter(note => note.pinned).length;
 
-    noteStatus.textContent = `[카테고리: ${getCategoryLabel(currentCategory)}]`;
+    noteStatus.textContent = `[${getCategoryIcon(currentCategory)} ${getCategoryLabel(currentCategory)} 카테고리]`;
     if(currentPin === "pinned" ) {
         noteStatus.textContent += ` 📌 고정 ${filteredNotes.length}개`;
     } else if (currentPin === "normal") {
@@ -613,6 +629,26 @@ function toggleExpanded(id) {
     renderNotes();
 }
 
+function duplicateNote(id) {
+    const originalNote = notes.find(note => note.id === id);
+
+    if(!originalNote) return;
+
+    const duplicateNote = {
+        ...originalNote,
+        id: Date.now(),
+        title: `${originalNote.title} (복사본)`,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        expanded: true
+    };
+
+    notes.push(duplicateNote);
+
+    saveNotes();
+    renderNotes();
+}
+
 //filter func
 function filterBySearch(notes) {
     return notes.filter(note => {
@@ -696,6 +732,15 @@ function getCategoryLabel(category) {
     if(category === "idea") return "아이디어";
 
     return "전체";
+}
+
+function getCategoryIcon(category) {
+    if(category === "general") return "📝";
+    if(category === "study") return "📚";
+    if(category === "work") return "💼";
+    if(category === "idea") return "💡";
+
+    return "📂";
 }
 
 //Date func
@@ -947,4 +992,12 @@ renderNotes();
  * 메모 카드 접기/펼치기 + 최근 수정순 정렬
  * 
  * 메모 내용 복사 기능도 고려해볼 것.
+ */
+
+/* 33일차
+ * 메모 복제 기능
+ * 단축키 버튼 생성
+ * 카테고리 표기 변경
+ * 
+ * 버튼 누르고나서 '진짜 하겠습니까?' 하는 창 띄우는 것도 고려해볼 것.
  */
