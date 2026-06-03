@@ -1,10 +1,18 @@
 let notes = [];
+let archivedNotes = [];
 
 try {
     const saved = localStorage.getItem("notes");
     notes = saved ? JSON.parse(saved) : [];
 } catch {
     notes = [];
+}
+
+try {
+    const savedArchived = localStorage.getItem("archivedNotes");
+    archivedNotes = savedArchived ? JSON.parse(savedArchived) : [];
+} catch {
+    archivedNotes = [];
 }
 
 notes = notes.map(note => ({
@@ -36,6 +44,7 @@ const importInput = document.querySelector(".import-input");
 const saveStatus = document.querySelector(".save-status");
 const cancelEditBtn = document.querySelector(".cancel-edit-btn");
 const helpBtn = document.querySelector(".help-btn");
+const archiveViewBtn = document.querySelector(".archive-view-btn");
 
 //지금 수정 중인지, 수정중인 메모는 어떤 것인지.
 let isEditing = false;
@@ -141,6 +150,8 @@ helpBtn.addEventListener("click", () => {
         Ctrl + Shift + I : 불러오기
     `);
 });
+
+archiveViewBtn.addEventListener("click", renderArchivedNotes);
 
 document.addEventListener("keydown", function(e) {
     //저장 단축
@@ -388,6 +399,12 @@ function saveNotes() {
     updateSaveStatus("💾 저장되었습니다.");
 }
 
+function saveArchivedNotes() {
+    localStorage.setItem("archivedNotes", JSON.stringify(archivedNotes));
+
+    updateSaveStatus("📦 보관함에 추가되었습니다.");
+}
+
 function createNoteCard(note) {
     const card = document.createElement("div");
     card.classList.add("note-card");
@@ -416,6 +433,8 @@ function createNoteCard(note) {
 
         <button class="child-btn duplicate-btn">복제</button>
 
+        <button class="child-btn archive-btn">보관</button>
+
         <button class="child-btn delete-btn">삭제</button>
     `;
 
@@ -434,7 +453,49 @@ function createNoteCard(note) {
     const duplicateBtn = card.querySelector(".duplicate-btn");
     duplicateBtn.addEventListener("click", () => duplicateNote(note.id));
 
+    const archiveBtn = card.querySelector(".archive-btn");
+    archiveBtn.addEventListener("click", () => archiveNote(note.id));
+
     return card;
+}
+
+function createArchivedCard(note) {
+    const card = document.createElement("div");
+    card.classList.add("note-card");
+
+    const isModified = note.updatedAt !== note.createdAt;
+
+    card.innerHTML = `
+        <h3>${note.title || "(제목 없음)"}</h3>
+
+        <p class="note-card-category">카테고리: ${getCategoryLabel(note.category)}</p>
+
+        ${note.expanded ? `<p>${note.content || "(내용 없음)"}</p>` : ""}
+        <button class="child-btn expand-btn">${note.expanded ? "접기" : "펼치기"}</button>
+
+        <p class="note-card-date">생성: ${formatDate(note.createdAt)}</p>
+        
+        ${
+            isModified ?
+            `<p class="note-card-date modified">✏️ 수정됨: ${formatDate(note.updatedAt)}</p>` :
+            ""
+        }
+
+        <button class="child-btn restore-btn">복구</button>
+
+        <button class="child-btn permanent-delete-btn">영구 삭제</button>
+    `;
+
+    const expandBtn = card.querySelector(".expand-btn");
+    expandBtn.addEventListener("click", () => ArchivetoggleExpanded(note.id));
+
+    const restoreBtn = card.querySelector(".restore-btn");
+    restoreBtn.addEventListener("click", () => restoreArchivedNote(note.id));
+
+    const permanentDelBtn = card.querySelector(".permanent-delete-btn");
+    permanentDelBtn.addEventListener("click", () => permanentDeleteNote(note.id));
+
+    return card;  
 }
 
 function togglePin(id) {
@@ -629,6 +690,22 @@ function toggleExpanded(id) {
     renderNotes();
 }
 
+function ArchivetoggleExpanded(id) {
+    archivedNotes = archivedNotes.map (note => {
+        if(note.id === id) {
+            return {
+                ...note,
+                expanded: !note.expanded
+            };
+        }
+
+        return note;
+    });
+
+    saveArchivedNotes();
+    renderArchivedNotes();
+}
+
 function duplicateNote(id) {
     const originalNote = notes.find(note => note.id === id);
 
@@ -648,6 +725,85 @@ function duplicateNote(id) {
     saveNotes();
     renderNotes();
 }
+
+function archiveNote(id) {
+    const targetNote = notes.find(note => note.id === id);
+
+    if(!targetNote) return;
+
+    archivedNotes.push(targetNote);
+
+    notes = notes.filter(note => note.id !== id);
+
+    saveNotes();
+    saveArchivedNotes();
+
+    renderNotes();
+}
+
+function renderArchivedNotes() {
+    noteList.innerHTML = "";
+
+    if(!archivedNotes.length) {
+        renderStatus([]);
+        renderEmptyMessage("메모가 없습니다!");
+        return;
+    }
+
+    const searchedArchivedNotes = filterBySearch(archivedNotes);
+
+    const categoryFilteredArchivedNotes = filterByCategory(searchedArchivedNotes);
+
+    const pinnedArchivedNotes = filterByPin(categoryFilteredArchivedNotes);
+
+    renderStatus(pinnedArchivedNotes);
+
+    if(!pinnedArchivedNotes.length) {
+        if (currentPin === "pinned" && searchText === "") {
+            renderEmptyMessage("고정된 메모가 없습니다!");
+        } else if (currentPin === "normal" && searchText === "") {
+            renderEmptyMessage("일반 메모가 없습니다!");
+        } else {
+            renderEmptyMessage("검색 결과가 없습니다!");
+        }
+
+        return;
+    }
+
+    const sortedArchivedNotes = sortNotes(pinnedArchivedNotes);
+
+    sortedArchivedNotes.forEach(note => {
+        const card = createArchivedCard(note);
+
+        noteList.appendChild(card);
+    });
+}
+
+function restoreArchivedNote(id) {
+    const targetNote = archivedNotes.find(note => note.id === id);
+
+    if(!targetNote) return;
+
+    notes.push(targetNote);
+
+    archivedNotes = archivedNotes.filter(note => note.id !== id);
+
+    saveNotes();
+    saveArchivedNotes();
+
+    renderArchivedNotes();
+    showMessage("복구되었습니다.");
+}
+
+function permanentDeleteNote(id) {
+    archivedNotes = archivedNotes.filter(note => note.id !== id);
+
+    saveArchivedNotes();
+    renderArchivedNotes();
+    showMessage("메모가 영구 삭제되었습니다.");
+}
+
+
 
 //filter func
 function filterBySearch(notes) {
@@ -1000,4 +1156,9 @@ renderNotes();
  * 카테고리 표기 변경
  * 
  * 버튼 누르고나서 '진짜 하겠습니까?' 하는 창 띄우는 것도 고려해볼 것.
+ */
+
+/* 34일차
+ * 보관함(아카이브) 기능.
+ * 보관함에 넣고 > 복구 or 완전삭제
  */
