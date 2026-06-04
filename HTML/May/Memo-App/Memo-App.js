@@ -58,6 +58,7 @@ let currentPin = "all";
 let currentTheme = localStorage.getItem("theme") || "light";
 let currentCategory = "all";
 let currentSort = "latest";
+let currentView = "notes";
 
 //마지막으로 제거한 데이터, 복구 가능 시간
 let lastDeletedNote = null;
@@ -94,7 +95,7 @@ pinButtons.forEach(button => {
 
             if(btn.dataset.pin === currentPin) {
                 btn.classList.add("active");
-            }            
+            }
         });
 
         renderNotes();
@@ -151,7 +152,10 @@ helpBtn.addEventListener("click", () => {
     `);
 });
 
-archiveViewBtn.addEventListener("click", renderArchivedNotes);
+archiveViewBtn.addEventListener("click", () => {
+    currentView = "archive";
+    renderArchivedNotes();
+});
 
 document.addEventListener("keydown", function(e) {
     //저장 단축
@@ -565,8 +569,12 @@ function renderStatus(filteredNotes) {
     } else if (currentPin === "normal") {
         noteStatus.textContent += ` 📝 메모 ${filteredNotes.length}개`;
     } else if (currentPin === "all") {
-        noteStatus.textContent += `📝 메모 ${filteredNotes.length}개 / 📌 고정 ${pinnedCount}개`;
+        noteStatus.textContent += ` 📝 메모 ${filteredNotes.length}개 / 📌 고정 ${pinnedCount}개`;
     }
+}
+
+function renderArchivedStatus(filteredNotes) {
+    noteStatus.textContent = `[${getCategoryIcon(currentCategory)} ${getCategoryLabel(currentCategory)} 카테고리] 📦 보관 메모 ${filteredNotes.length}개`;
 }
 
 function updateInputCounts() {
@@ -587,14 +595,17 @@ function autoResizeContentarea() {
 }
 
 function exportNotes() {
-    if (!notes.length) {
+    if (!notes.length && !archivedNotes.length) {
         showMessage("저장할 메모가 없습니다.");
         return;
     }
 
-    const json = JSON.stringify(notes, null, 2);
+    const exportData = {
+        notes,
+        archivedNotes
+    };
 
-    const blob = new Blob([json], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {type: "application/json"});
 
     const url = URL.createObjectURL(blob);
 
@@ -603,6 +614,16 @@ function exportNotes() {
     a.href = url;
     a.download = `note-${date}.json`;
     a.click();
+
+    //수정 중인 데이터 없애기
+    isEditing = false;
+    editingId = null;
+    cancelEditBtn.style.display = "none";
+    
+    localStorage.removeItem("noteDraft");
+    titleInput.value = "";
+    contentInput.value = "";
+    addBtn.textContent = "추가";
 
     URL.revokeObjectURL(url);
     showMessage("메모를 내보냈습니다.");
@@ -626,11 +647,15 @@ function importNotes(e) {
         try {
             const importedNotes = JSON.parse(event.target.result);
 
+            //importedNote가 객체인지 검증(null도 객체로 판정하기 때문에 함께 검증)
+            if(typeof importedNotes !== "object" || importedNotes === null) throw new Error;
+
             //배열 검증
-            if(!Array.isArray(importedNotes)) throw new Error();
+            if(!Array.isArray(importedNotes.notes)) throw new Error();
+            if(!Array.isArray(importedNotes.archivedNotes)) throw new Error();
 
             //객체 구조 검증
-            const isValid = importedNotes.every(note => {
+            const notesValid = importedNotes.notes.every(note => {
                 return (typeof note === "object" &&
                     note !== null &&
                     typeof note.id === "number" &&
@@ -639,10 +664,27 @@ function importNotes(e) {
                 );
             });
 
-            if (!isValid) throw new Error();
+            const archivedValid = importedNotes.archivedNotes.every(note => {
+                return (typeof note === "object" &&
+                    note !== null &&
+                    typeof note.id === "number" &&
+                    typeof note.title === "string" &&
+                    typeof note.content === "string"
+                );
+            });
+
+            if (!notesValid || !archivedValid) throw new Error();
 
             //기존 메모 덮어쓰기
-            notes = importedNotes.map(note => ({
+            notes = importedNotes.notes.map(note => ({
+                ...note,
+                pinned: note.pinned ?? false,
+                category: note.category ?? "general",
+                createdAt: note.createdAt ?? note.id,
+                updatedAt: note.updatedAt ?? note.createdAt ?? note.id
+            }));
+
+            archivedNotes = importedNotes.archivedNotes.map(note => ({
                 ...note,
                 pinned: note.pinned ?? false,
                 category: note.category ?? "general",
@@ -660,6 +702,15 @@ function importNotes(e) {
             addBtn.textContent = "추가";
 
             saveNotes();
+            saveArchivedNotes();
+
+            currentView = "notes";
+            currentPin = "all";
+            pinButtons.forEach(btn => {
+                btn.classList.remove("active");
+            })
+            document.querySelector('[data-pin="all"]').classList.add("active");
+            
             renderNotes();
 
             showMessage("메모를 불러왔습니다.");
@@ -735,6 +786,16 @@ function archiveNote(id) {
 
     notes = notes.filter(note => note.id !== id);
 
+    //수정 중이라면 수정 취소
+    isEditing = false;
+    editingId = null;
+    cancelEditBtn.style.display = "none";
+    
+    localStorage.removeItem("noteDraft");
+    titleInput.value = "";
+    contentInput.value = "";
+    addBtn.textContent = "추가";
+
     saveNotes();
     saveArchivedNotes();
 
@@ -745,8 +806,8 @@ function renderArchivedNotes() {
     noteList.innerHTML = "";
 
     if(!archivedNotes.length) {
-        renderStatus([]);
-        renderEmptyMessage("메모가 없습니다!");
+        renderArchivedStatus([]);
+        renderEmptyMessage("📦 보관된 메모가 없습니다.");
         return;
     }
 
@@ -756,7 +817,7 @@ function renderArchivedNotes() {
 
     const pinnedArchivedNotes = filterByPin(categoryFilteredArchivedNotes);
 
-    renderStatus(pinnedArchivedNotes);
+    renderArchivedStatus(pinnedArchivedNotes);
 
     if(!pinnedArchivedNotes.length) {
         if (currentPin === "pinned" && searchText === "") {
@@ -802,8 +863,6 @@ function permanentDeleteNote(id) {
     renderArchivedNotes();
     showMessage("메모가 영구 삭제되었습니다.");
 }
-
-
 
 //filter func
 function filterBySearch(notes) {
@@ -867,6 +926,12 @@ function sortNotes(notes) {
 
         return 0;
     });
+}
+
+//View func
+function showNotesView() {
+    currentView = "notes";
+    renderNotes();
 }
 
 //Light-Dark mode func
@@ -1161,4 +1226,14 @@ renderNotes();
 /* 34일차
  * 보관함(아카이브) 기능.
  * 보관함에 넣고 > 복구 or 완전삭제
+ */
+
+/* 35일차
+ * 보관함에 들어간 메모 수 표시. / import, export 시, 보관함이 작동하는지 확인.
+ * 보관함 카테고리를 어떻게 해결할 것인지 확인 필요.
+ * 나중에 보관함은 전체/고정/일반에서 뜯어서 관리하는 게 낫다.
+ * 
+ * if(typeof importedNotes !== "object" || importedNotes === null) throw new Error;     : importedNotes가 객체인지, 그리고 null은 아닌지 확인하는 것.
+ *                                                                                        typeof로 importedNote의 값 타입을 문자열로 반환한다.
+ *                                                                                        js에서는 typeof null이 object으로 표현된다. 따라서 null을 따로 검사해야 한다.
  */
