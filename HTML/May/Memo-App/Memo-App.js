@@ -66,18 +66,6 @@ let undoTimer = null;
 
 let messageTimer = null;
 
-// titleInput.addEventListener("keydown", function(e) {
-//     if(e.key === "Enter") {
-//         addNote();
-//     }
-// });
-
-// contentInput.addEventListener("keydown", function(e) {
-//     if(e.key === "Enter" && e.ctrlKey) {
-//         addNote();
-//     }
-// });
-
 addBtn.addEventListener("click", addNote);
 
 searchInput.addEventListener("input", function() {
@@ -89,10 +77,10 @@ searchInput.addEventListener("input", function() {
 pinButtons.forEach(button => {   
     button.addEventListener("click", function() {
         currentPin = button.dataset.pin;
+        currentView = "notes";
 
+        clearActiveButton();
         pinButtons.forEach(btn => {
-            btn.classList.remove("active");
-
             if(btn.dataset.pin === currentPin) {
                 btn.classList.add("active");
             }
@@ -114,7 +102,8 @@ themeToggleBtn.addEventListener("click", function() {
 categoryFilter.addEventListener("change", function() {
     currentCategory = categoryFilter.value;
 
-    renderNotes();
+    if (currentView === "notes") renderNotes();
+    else if (currentView === "archive") renderArchivedNotes();
 });
 
 sortSelectFilter.addEventListener("change", function() {
@@ -153,7 +142,10 @@ helpBtn.addEventListener("click", () => {
 });
 
 archiveViewBtn.addEventListener("click", () => {
+    currentPin = "all";
     currentView = "archive";
+    clearActiveButton();
+    archiveViewBtn.classList.add("active");
     renderArchivedNotes();
 });
 
@@ -491,7 +483,7 @@ function createArchivedCard(note) {
     `;
 
     const expandBtn = card.querySelector(".expand-btn");
-    expandBtn.addEventListener("click", () => ArchivetoggleExpanded(note.id));
+    expandBtn.addEventListener("click", () => archiveToggleExpanded(note.id));
 
     const restoreBtn = card.querySelector(".restore-btn");
     restoreBtn.addEventListener("click", () => restoreArchivedNote(note.id));
@@ -562,6 +554,7 @@ function renderEmptyMessage(message) {
 
 function renderStatus(filteredNotes) {
     const pinnedCount = filteredNotes.filter(note => note.pinned).length;
+    const archivedCount = archivedNotes.length;
 
     noteStatus.textContent = `[${getCategoryIcon(currentCategory)} ${getCategoryLabel(currentCategory)} 카테고리]`;
     if(currentPin === "pinned" ) {
@@ -569,7 +562,7 @@ function renderStatus(filteredNotes) {
     } else if (currentPin === "normal") {
         noteStatus.textContent += ` 📝 메모 ${filteredNotes.length}개`;
     } else if (currentPin === "all") {
-        noteStatus.textContent += ` 📝 메모 ${filteredNotes.length}개 / 📌 고정 ${pinnedCount}개`;
+        noteStatus.textContent += ` 📝 메모 ${filteredNotes.length}개 / 📌 고정 ${pinnedCount}개 / 📦 보관 ${archivedCount}개`;
     }
 }
 
@@ -600,6 +593,10 @@ function exportNotes() {
         return;
     }
 
+    const isConfirmed = confirm("현재 메모를 내보내시겠습니까?");
+
+    if(!isConfirmed) return;
+
     const exportData = {
         notes,
         archivedNotes
@@ -614,16 +611,6 @@ function exportNotes() {
     a.href = url;
     a.download = `note-${date}.json`;
     a.click();
-
-    //수정 중인 데이터 없애기
-    isEditing = false;
-    editingId = null;
-    cancelEditBtn.style.display = "none";
-    
-    localStorage.removeItem("noteDraft");
-    titleInput.value = "";
-    contentInput.value = "";
-    addBtn.textContent = "추가";
 
     URL.revokeObjectURL(url);
     showMessage("메모를 내보냈습니다.");
@@ -681,7 +668,8 @@ function importNotes(e) {
                 pinned: note.pinned ?? false,
                 category: note.category ?? "general",
                 createdAt: note.createdAt ?? note.id,
-                updatedAt: note.updatedAt ?? note.createdAt ?? note.id
+                updatedAt: note.updatedAt ?? note.createdAt ?? note.id,
+                expanded: note.expanded ?? true
             }));
 
             archivedNotes = importedNotes.archivedNotes.map(note => ({
@@ -689,7 +677,8 @@ function importNotes(e) {
                 pinned: note.pinned ?? false,
                 category: note.category ?? "general",
                 createdAt: note.createdAt ?? note.id,
-                updatedAt: note.updatedAt ?? note.createdAt ?? note.id
+                updatedAt: note.updatedAt ?? note.createdAt ?? note.id,
+                expanded: note.expanded ?? true
             }));
 
             isEditing = false;
@@ -704,12 +693,11 @@ function importNotes(e) {
             saveNotes();
             saveArchivedNotes();
 
-            currentView = "notes";
-            currentPin = "all";
-            pinButtons.forEach(btn => {
-                btn.classList.remove("active");
-            })
+            clearActiveButton();
             document.querySelector('[data-pin="all"]').classList.add("active");
+
+            currentView = "notes";
+            currentPin = "all";            
             
             renderNotes();
 
@@ -741,7 +729,7 @@ function toggleExpanded(id) {
     renderNotes();
 }
 
-function ArchivetoggleExpanded(id) {
+function archiveToggleExpanded(id) {
     archivedNotes = archivedNotes.map (note => {
         if(note.id === id) {
             return {
@@ -786,10 +774,7 @@ function archiveNote(id) {
 
     notes = notes.filter(note => note.id !== id);
 
-    //수정 중이라면 수정 취소
-    isEditing = false;
-    editingId = null;
-    cancelEditBtn.style.display = "none";
+    if(editingId === id) cancelEdit();
     
     localStorage.removeItem("noteDraft");
     titleInput.value = "";
@@ -928,12 +913,6 @@ function sortNotes(notes) {
     });
 }
 
-//View func
-function showNotesView() {
-    currentView = "notes";
-    renderNotes();
-}
-
 //Light-Dark mode func
 function applyTheme(theme) {
     document.body.classList.remove("light-theme", "dark-theme");
@@ -988,6 +967,15 @@ function updateSaveStatus(message) {
     const time = new Date().toLocaleTimeString();
 
     saveStatus.textContent = `${message} (${time})`;
+}
+
+//btn active func
+function clearActiveButton() {
+    pinButtons.forEach(btn => {
+        btn.classList.remove("active");
+    });
+
+    archiveViewBtn.classList.remove("active");
 }
 
 //홈페이지 실행 즉시 보여져야 하는 것.
@@ -1135,7 +1123,7 @@ renderNotes();
  * const isChanged = note.title !== title || note.content !== content || note.category !== categorySelect.value; 해당 코드는
  *      const isChanged = ["title", "content"].some(...)으로 만들 수도 있음을 기억할 것.
  * 
- * 수정 버튼을 누르고 취소 버튼도 고려할 것.
+ * ★수정 버튼을 누르고 취소 버튼도 고려할 것.
  */
 
 /* 22일차
@@ -1201,7 +1189,7 @@ renderNotes();
  * e.preventDefault();  : 브라우저의 기본 동작을 막는 함수. '기본 행동 취소'.
  * importInput.click(); : 사용자 액션으로만 열 수 있는 것을 강제로 클릭시키는 것.
  * 
- * 단축키 목룍 표시하는 것도 고려해볼 것.
+ * ★단축키 목룍 표시하는 것도 고려해볼 것.
  */
 
 /* 31일차
@@ -1212,7 +1200,7 @@ renderNotes();
 /* 32일차
  * 메모 카드 접기/펼치기 + 최근 수정순 정렬
  * 
- * 메모 내용 복사 기능도 고려해볼 것.
+ * ★메모 내용 복사 기능도 고려해볼 것.
  */
 
 /* 33일차
@@ -1230,10 +1218,19 @@ renderNotes();
 
 /* 35일차
  * 보관함에 들어간 메모 수 표시. / import, export 시, 보관함이 작동하는지 확인.
- * 보관함 카테고리를 어떻게 해결할 것인지 확인 필요.
- * 나중에 보관함은 전체/고정/일반에서 뜯어서 관리하는 게 낫다.
+ * ★보관함 카테고리를 어떻게 해결할 것인지 확인 필요.
+ * ★나중에 보관함은 전체/고정/일반에서 뜯어서 관리하는 게 낫다.
  * 
  * if(typeof importedNotes !== "object" || importedNotes === null) throw new Error;     : importedNotes가 객체인지, 그리고 null은 아닌지 확인하는 것.
  *                                                                                        typeof로 importedNote의 값 타입을 문자열로 반환한다.
  *                                                                                        js에서는 typeof null이 object으로 표현된다. 따라서 null을 따로 검사해야 한다.
+ */
+
+/* 36일차
+ * 보관함 카테고리 오류 해결
+ * 상태바 (전체 카테고리 메모 n개 고정 n개) 수정. '전체 카테고리 메모 n개 고정 n개 보관 n개'로 표시됨
+ * export 시 comfirm 문구가 나오도록 설정.
+ * 사용하지 않는 함수 제거(showNotesView())
+ * import 시, expanded: note.expanded ?? true 설정을 추가
+ * archiveNote()에서 수정 취소시의 동작 수정.
  */
