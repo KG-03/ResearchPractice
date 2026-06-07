@@ -109,7 +109,8 @@ categoryFilter.addEventListener("change", function() {
 sortSelectFilter.addEventListener("change", function() {
     currentSort = sortSelectFilter.value;
 
-    renderNotes();
+    if (currentView === "notes") renderNotes();
+    else if (currentView === "archive") renderArchivedNotes();
 });
 
 titleInput.addEventListener("input", function() {
@@ -162,15 +163,15 @@ document.addEventListener("keydown", function(e) {
     }
 
     //입력 취소 단축
-    if(e.key === "Escape") {
-        cancelEdit();
-    }
-
     if(e.key === "Escape" && document.activeElement === searchInput) {
         searchInput.value = "";
         searchText = "";
 
         renderNotes();
+    }
+
+    if(e.key === "Escape") {
+        cancelEdit();
     }
 
     //textarea 입력중 막는 것.
@@ -372,7 +373,7 @@ function setupUndoHandler() {
     undoTimer = null;
     undoTimer = setTimeout(() => {
         lastDeletedNote = null;
-    }, 2000);
+    }, 3000);
 }
 
 function restoreDeletedNote() {
@@ -556,7 +557,7 @@ function renderStatus(filteredNotes) {
     const pinnedCount = filteredNotes.filter(note => note.pinned).length;
     const archivedCount = archivedNotes.length;
 
-    noteStatus.textContent = `[${getCategoryIcon(currentCategory)} ${getCategoryLabel(currentCategory)} 카테고리]`;
+    noteStatus.textContent = `[${getCategoryIcon(currentCategory)} ${getCategoryLabel(currentCategory)}] 🔄${getSortLabel(currentSort)} `;
     if(currentPin === "pinned" ) {
         noteStatus.textContent += ` 📌 고정 ${filteredNotes.length}개`;
     } else if (currentPin === "normal") {
@@ -567,7 +568,7 @@ function renderStatus(filteredNotes) {
 }
 
 function renderArchivedStatus(filteredNotes) {
-    noteStatus.textContent = `[${getCategoryIcon(currentCategory)} ${getCategoryLabel(currentCategory)} 카테고리] 📦 보관 메모 ${filteredNotes.length}개`;
+    noteStatus.textContent = `[${getCategoryIcon(currentCategory)} ${getCategoryLabel(currentCategory)}] 🔄${getSortLabel(currentSort)} 📦 보관 메모 ${filteredNotes.length}개`;
 }
 
 function updateInputCounts() {
@@ -775,11 +776,6 @@ function archiveNote(id) {
     notes = notes.filter(note => note.id !== id);
 
     if(editingId === id) cancelEdit();
-    
-    localStorage.removeItem("noteDraft");
-    titleInput.value = "";
-    contentInput.value = "";
-    addBtn.textContent = "추가";
 
     saveNotes();
     saveArchivedNotes();
@@ -800,19 +796,10 @@ function renderArchivedNotes() {
 
     const categoryFilteredArchivedNotes = filterByCategory(searchedArchivedNotes);
 
-    const pinnedArchivedNotes = filterByPin(categoryFilteredArchivedNotes);
+    renderArchivedStatus(categoryFilteredArchivedNotes);
 
-    renderArchivedStatus(pinnedArchivedNotes);
-
-    if(!pinnedArchivedNotes.length) {
-        if (currentPin === "pinned" && searchText === "") {
-            renderEmptyMessage("고정된 메모가 없습니다!");
-        } else if (currentPin === "normal" && searchText === "") {
-            renderEmptyMessage("일반 메모가 없습니다!");
-        } else {
-            renderEmptyMessage("검색 결과가 없습니다!");
-        }
-
+    if(!categoryFilteredArchivedNotes.length) {
+        renderEmptyMessage("📦 보관된 메모가 없습니다.");
         return;
     }
 
@@ -838,7 +825,7 @@ function restoreArchivedNote(id) {
     saveArchivedNotes();
 
     renderArchivedNotes();
-    showMessage("복구되었습니다.");
+    showMessage("메모가 복구되었습니다.");
 }
 
 function permanentDeleteNote(id) {
@@ -924,9 +911,9 @@ function updateThemeButton() {
     themeToggleBtn.textContent = currentTheme === "light" ? "🌙 다크모드" : "☀️ 라이트모드";
 }
 
-//Category func
+//Get func
 function getCategoryLabel(category) {
-    if(category === "general") return "일반"
+    if(category === "general") return "일반";
     if(category === "study") return "공부";
     if(category === "work") return "작업";
     if(category === "idea") return "아이디어";
@@ -943,11 +930,18 @@ function getCategoryIcon(category) {
     return "📂";
 }
 
+function getSortLabel(sort) {
+    if(sort === "latest") return "최신순";
+    if(sort === "oldest") return "오래된순";
+    if(sort === "title") return "제목순";
+    if(sort === "updated") return "최근 수정순";
+}
+
 //Date func
 function formatDate(timestamp) {
     const date = new Date(timestamp);
 
-    return date.toLocaleDateString();
+    return date.toLocaleString();
 }
 
 //App message func
@@ -959,7 +953,8 @@ function showMessage(message) {
 
     messageTimer = setTimeout(() => {
         appMessage.classList.remove("show");
-    }, 2000);
+        setTimeout(() => {appMessage.innerHTML = ""}, 2000);
+    }, 3000);
 }
 
 //Save Status func
@@ -1233,4 +1228,10 @@ renderNotes();
  * 사용하지 않는 함수 제거(showNotesView())
  * import 시, expanded: note.expanded ?? true 설정을 추가
  * archiveNote()에서 수정 취소시의 동작 수정.
+ */
+
+/* 38일차
+ * 상태 메시지 통일 '메모가'로 시작하도록 통일
+ * 상태바에 현재 정렬순 표기
+ * 정렬 기준 오류(보관함에서 정렬 기준을 바꾸면 보관함 바깥으로 나와지는 현상) 해결
  */
