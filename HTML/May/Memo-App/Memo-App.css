@@ -139,6 +139,10 @@ button:focus {
     float: right;
 }
 
+.archive-view-btn {
+    margin-top: 10px;
+}
+
 /* 22일차
  * overflow: hidden;    스크롤바 제거. 스크롤바가 필요할 것 같아서 사용하지 않았으나, 확인용으로 주석에는 추가해둠.
  * resize: none;        사용자 수동 resize 제거, 자동 resize와 충돌 방지.
