@@ -78,6 +78,7 @@ pinButtons.forEach(button => {
     button.addEventListener("click", function() {
         currentPin = button.dataset.pin;
         currentView = "notes";
+        localStorage.setItem("currentPin", currentPin);
 
         clearActiveButton();
         pinButtons.forEach(btn => {
@@ -101,6 +102,7 @@ themeToggleBtn.addEventListener("click", function() {
 
 categoryFilter.addEventListener("change", function() {
     currentCategory = categoryFilter.value;
+    localStorage.setItem("currentCategory", currentCategory);
 
     if (currentView === "notes") renderNotes();
     else if (currentView === "archive") renderArchivedNotes();
@@ -108,6 +110,7 @@ categoryFilter.addEventListener("change", function() {
 
 sortSelectFilter.addEventListener("change", function() {
     currentSort = sortSelectFilter.value;
+    localStorage.setItem("currentSort", currentSort);
 
     if (currentView === "notes") renderNotes();
     else if (currentView === "archive") renderArchivedNotes();
@@ -145,6 +148,9 @@ helpBtn.addEventListener("click", () => {
 archiveViewBtn.addEventListener("click", () => {
     currentPin = "all";
     currentView = "archive";
+
+    localStorage.setItem("currentPin", currentPin);
+
     clearActiveButton();
     archiveViewBtn.classList.add("active");
     renderArchivedNotes();
@@ -698,7 +704,16 @@ function importNotes(e) {
             document.querySelector('[data-pin="all"]').classList.add("active");
 
             currentView = "notes";
-            currentPin = "all";            
+            currentSort = "latest";
+            currentCategory = "all";
+            currentPin = "all";
+
+            categoryFilter.value = currentCategory;
+            sortSelectFilter.value = currentSort;
+
+            localStorage.setItem("currentSort", currentSort);
+            localStorage.setItem("currentCategory", currentCategory);
+            localStorage.setItem("currentPin", currentPin);
             
             renderNotes();
 
@@ -803,7 +818,7 @@ function renderArchivedNotes() {
         return;
     }
 
-    const sortedArchivedNotes = sortNotes(pinnedArchivedNotes);
+    const sortedArchivedNotes = sortNotes(categoryFilteredArchivedNotes);
 
     sortedArchivedNotes.forEach(note => {
         const card = createArchivedCard(note);
@@ -975,6 +990,18 @@ function clearActiveButton() {
 
 //홈페이지 실행 즉시 보여져야 하는 것.
 document.querySelector('[data-pin="all"]').classList.add("active");
+
+currentSort = localStorage.getItem("currentSort") || "latest";
+sortSelectFilter.value = currentSort;
+
+currentCategory = localStorage.getItem("currentCategory") || "all";
+categoryFilter.value = currentCategory;
+
+currentPin = localStorage.getItem("currentPin") || "all";
+clearActiveButton();
+const activePinButton = document.querySelector(`[data-pin="${currentPin}"]`);
+if(activePinButton) activePinButton.classList.add("active");
+
 applyTheme(currentTheme);
 updateThemeButton();
 loadDraft();
@@ -1234,4 +1261,11 @@ renderNotes();
  * 상태 메시지 통일 '메모가'로 시작하도록 통일
  * 상태바에 현재 정렬순 표기
  * 정렬 기준 오류(보관함에서 정렬 기준을 바꾸면 보관함 바깥으로 나와지는 현상) 해결
+ */
+
+/* 39일차
+ * currentSort, currentCategory, currentPin 고정. (설정값 고정)
+ * renderArchivedNotes() 안에 있던 오류 수정.
+ * 
+ * 수정 중 새로고침하면 '수정되던 것'에서 빠져나와서 새 메모로 간주됨. 해결해야 할지 말아야 할지 확인.
  */
