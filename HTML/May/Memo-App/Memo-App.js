@@ -1,3 +1,6 @@
+//========================================
+//State
+//========================================
 let notes = [];
 let archivedNotes = [];
 
@@ -24,7 +27,10 @@ notes = notes.map(note => ({
     expanded: note.expanded ?? true
 }));
 
-//DOM link
+
+//========================================
+//DOM Elements
+//========================================
 const titleInput = document.querySelector(".title-input");
 const contentInput = document.querySelector(".content-input");
 const addBtn = document.querySelector(".add-btn");
@@ -66,12 +72,17 @@ let undoTimer = null;
 
 let messageTimer = null;
 
+
+//========================================
+//Event Listeners
+//========================================
 addBtn.addEventListener("click", addNote);
 
 searchInput.addEventListener("input", function() {
     searchText = searchInput.value.trim().toLowerCase();
 
-    renderNotes();
+    if(currentView === "notes") renderNotes();
+    else if (currentView === "archive") renderArchivedNotes();
 });
 
 pinButtons.forEach(button => {   
@@ -220,37 +231,10 @@ document.addEventListener("keydown", function(e) {
     }
 });
 
-//func
-//draft func
-function saveDraft() {
-    const draft = {
-        title: titleInput.value,
-        content: contentInput.value,
-        category: categorySelect.value
-    };
 
-    localStorage.setItem("noteDraft", JSON.stringify(draft));
-}
-
-function loadDraft() {
-    try {
-        const saved = localStorage.getItem("noteDraft");
-
-        if(!saved) return;
-
-        const draft = JSON.parse(saved);
-
-        titleInput.value = draft.title || "";
-        contentInput.value = draft.content || "";
-        categorySelect.value = draft.category || "general";
-        autoResizeContentarea();
-    } catch {
-        localStorage.removeItem("noteDraft");
-    }
-    
-}
-
-//note func
+//========================================
+//note CRUD
+//========================================
 function addNote() {
     const title = titleInput.value.trim();
     const content = contentInput.value.trim();
@@ -396,16 +380,242 @@ function restoreDeletedNote() {
     showMessage("메모가 복구되었습니다.");
 }
 
-function saveNotes() {
-    localStorage.setItem("notes", JSON.stringify(notes));
+function duplicateNote(id) {
+    const originalNote = notes.find(note => note.id === id);
 
-    updateSaveStatus("💾 저장되었습니다.");
+    if(!originalNote) return;
+
+    const duplicateNote = {
+        ...originalNote,
+        id: Date.now(),
+        title: `${originalNote.title} (복사본)`,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        expanded: true
+    };
+
+    notes.push(duplicateNote);
+
+    saveNotes();
+    renderNotes();
 }
 
-function saveArchivedNotes() {
-    localStorage.setItem("archivedNotes", JSON.stringify(archivedNotes));
+function togglePin(id) {
+    notes = notes.map(note => {
+        if (note.id === id) {
+            return {...note, pinned: !note.pinned};
+        }
+        return note;
+    })
 
-    updateSaveStatus("📦 보관함에 추가되었습니다.");
+    saveNotes();
+    renderNotes();
+}
+
+//========================================
+//Archive
+//========================================
+function archiveNote(id) {
+    const targetNote = notes.find(note => note.id === id);
+
+    if(!targetNote) return;
+
+    archivedNotes.push(targetNote);
+
+    notes = notes.filter(note => note.id !== id);
+
+    if(editingId === id) cancelEdit();
+
+    saveNotes();
+    saveArchivedNotes();
+
+    renderNotes();
+}
+
+function restoreArchivedNote(id) {
+    const targetNote = archivedNotes.find(note => note.id === id);
+
+    if(!targetNote) return;
+
+    notes.push(targetNote);
+
+    archivedNotes = archivedNotes.filter(note => note.id !== id);
+
+    saveNotes();
+    saveArchivedNotes();
+
+    renderArchivedNotes();
+    showMessage("메모가 복구되었습니다.");
+}
+
+function permanentDeleteNote(id) {
+    archivedNotes = archivedNotes.filter(note => note.id !== id);
+
+    saveArchivedNotes();
+    renderArchivedNotes();
+    showMessage("메모가 영구 삭제되었습니다.");
+}
+
+function renderArchivedNotes() {
+    noteList.innerHTML = "";
+
+    if(!archivedNotes.length) {
+        renderArchivedStatus([]);
+        renderEmptyMessage("📦 보관된 메모가 없습니다.");
+        return;
+    }
+
+    const searchedArchivedNotes = filterBySearch(archivedNotes);
+
+    const categoryFilteredArchivedNotes = filterByCategory(searchedArchivedNotes);
+
+    renderArchivedStatus(categoryFilteredArchivedNotes);
+
+    if(!categoryFilteredArchivedNotes.length) {
+        renderEmptyMessage("📦 보관된 메모가 없습니다.");
+        return;
+    }
+
+    const sortedArchivedNotes = sortNotes(categoryFilteredArchivedNotes);
+
+    sortedArchivedNotes.forEach(note => {
+        const card = createArchivedCard(note);
+
+        noteList.appendChild(card);
+    });
+}
+
+function renderArchivedStatus(filteredNotes) {
+    noteStatus.textContent = `[${getCategoryIcon(currentCategory)} ${getCategoryLabel(currentCategory)}] 🔄${getSortLabel(currentSort)} 📦 보관 메모 ${filteredNotes.length}개`;
+}
+
+function archiveToggleExpanded(id) {
+    archivedNotes = archivedNotes.map (note => {
+        if(note.id === id) {
+            return {
+                ...note,
+                expanded: !note.expanded
+            };
+        }
+
+        return note;
+    });
+
+    saveArchivedNotes();
+    renderArchivedNotes();
+}
+
+//========================================
+//Filter & Sort
+//========================================
+function filterBySearch(notes) {
+    return notes.filter(note => {
+        const titleMatch = (note.title || "").toLowerCase().includes(searchText);
+        const contentMatch = (note.content || "").toLowerCase().includes(searchText);
+
+        return titleMatch || contentMatch;
+    });
+}
+
+function filterByCategory(notes) {
+    return notes.filter(note => {
+        if (currentCategory === "all") return true;
+
+        return note.category === currentCategory;
+    });
+}
+
+function filterByPin(notes) {
+    return notes.filter(note => {
+        if (currentPin === "pinned") {
+            return note.pinned;
+        }
+
+        if (currentPin === "normal") {
+            return !note.pinned;
+        }
+
+        return true;
+    });
+}
+
+function sortNotes(notes) {
+    return [...notes].sort((a, b) => {
+        if(b.pinned !== a.pinned) {
+            //핀 기준 정렬
+            return b.pinned - a.pinned;
+        }
+
+        //최신순 정렬 (05/18: id에서 createdAt으로 변경.)
+        if (currentSort === "latest") {
+            return b.createdAt - a.createdAt;
+        }
+
+        //오래된순 정렬
+        if (currentSort === "oldest") {
+            return a.createdAt - b.createdAt;
+        }
+
+        //제목순 정렬
+        if (currentSort === "title") {
+            return (a.title || "").localeCompare(b.title || "");
+        }
+
+        //최근 수정순 정렬
+        if(currentSort === "updated") {
+            return b.updatedAt - a.updatedAt;
+        }
+
+        return 0;
+    });
+}
+
+function getSortLabel(sort) {
+    if(sort === "latest") return "최신순";
+    if(sort === "oldest") return "오래된순";
+    if(sort === "title") return "제목순";
+    if(sort === "updated") return "최근 수정순";
+}
+
+//========================================
+//Rendering
+//========================================
+function renderNotes() {
+    noteList.innerHTML = "";
+
+    if(!notes.length) {
+        renderStatus([]);
+        renderEmptyMessage("메모가 없습니다!");
+        return;
+    }
+
+    const searchedNotes = filterBySearch(notes);
+
+    const categoryFilteredNotes = filterByCategory(searchedNotes);
+
+    const pinnedNotes = filterByPin(categoryFilteredNotes);
+
+    renderStatus(pinnedNotes);
+
+    if(!pinnedNotes.length) {
+        if (currentPin === "pinned" && searchText === "") {
+            renderEmptyMessage("고정된 메모가 없습니다!");
+        } else if (currentPin === "normal" && searchText === "") {
+            renderEmptyMessage("일반 메모가 없습니다!");
+        } else {
+            renderEmptyMessage("검색 결과가 없습니다!");
+        }
+
+        return;
+    }
+
+    const sortedNotes = sortNotes(pinnedNotes);
+
+    sortedNotes.forEach(note => {
+        const card = createNoteCard(note);
+
+        noteList.appendChild(card);
+    });
 }
 
 function createNoteCard(note) {
@@ -501,56 +711,6 @@ function createArchivedCard(note) {
     return card;  
 }
 
-function togglePin(id) {
-    notes = notes.map(note => {
-        if (note.id === id) {
-            return {...note, pinned: !note.pinned};
-        }
-        return note;
-    })
-
-    saveNotes();
-    renderNotes();
-}
-
-function renderNotes() {
-    noteList.innerHTML = "";
-
-    if(!notes.length) {
-        renderStatus([]);
-        renderEmptyMessage("메모가 없습니다!");
-        return;
-    }
-
-    const searchedNotes = filterBySearch(notes);
-
-    const categoryFilteredNotes = filterByCategory(searchedNotes);
-
-    const pinnedNotes = filterByPin(categoryFilteredNotes);
-
-    renderStatus(pinnedNotes);
-
-    if(!pinnedNotes.length) {
-        if (currentPin === "pinned" && searchText === "") {
-            renderEmptyMessage("고정된 메모가 없습니다!");
-        } else if (currentPin === "normal" && searchText === "") {
-            renderEmptyMessage("일반 메모가 없습니다!");
-        } else {
-            renderEmptyMessage("검색 결과가 없습니다!");
-        }
-
-        return;
-    }
-
-    const sortedNotes = sortNotes(pinnedNotes);
-
-    sortedNotes.forEach(note => {
-        const card = createNoteCard(note);
-
-        noteList.appendChild(card);
-    });
-}
-
 function renderEmptyMessage(message) {
     noteList.innerHTML = `
         <div class="empty-message">
@@ -573,27 +733,80 @@ function renderStatus(filteredNotes) {
     }
 }
 
-function renderArchivedStatus(filteredNotes) {
-    noteStatus.textContent = `[${getCategoryIcon(currentCategory)} ${getCategoryLabel(currentCategory)}] 🔄${getSortLabel(currentSort)} 📦 보관 메모 ${filteredNotes.length}개`;
+function toggleExpanded(id) {
+    notes = notes.map (note => {
+        if(note.id === id) {
+            return {
+                ...note,
+                expanded: !note.expanded
+            };
+        }
+
+        return note;
+    });
+
+    saveNotes();
+    renderNotes();
 }
 
-function updateInputCounts() {
-    titleCount.textContent = `${titleInput.value.length} / 50`;
-    contentCount.textContent = `${contentInput.value.length} / 500`;
+//========================================
+//Storage
+//========================================
+function saveNotes() {
+    localStorage.setItem("notes", JSON.stringify(notes));
 
-    if(titleInput.value.length > 45) titleCount.classList.add("warning");
-    else titleCount.classList.remove("warning");
-
-    if(contentInput.value.length > 490) contentCount.classList.add("warning");
-    else contentCount.classList.remove("warning");
+    updateSaveStatus("💾 저장되었습니다.");
 }
 
-function autoResizeContentarea() {
-    //줄 삭제 후 높이가 줄어들지 않는 문제가 생길 수 있어, auto부터 대입.
-    contentInput.style.height = "auto";
-    contentInput.style.height = contentInput.scrollHeight + "px";
+function saveArchivedNotes() {
+    localStorage.setItem("archivedNotes", JSON.stringify(archivedNotes));
+
+    updateSaveStatus("📦 보관함에 추가되었습니다.");
 }
 
+function saveDraft() {
+    const draft = {
+        title: titleInput.value,
+        content: contentInput.value,
+        category: categorySelect.value,
+
+        isEditing,
+        editingId
+    };
+
+    localStorage.setItem("noteDraft", JSON.stringify(draft));
+}
+
+function loadDraft() {
+    try {
+        const saved = localStorage.getItem("noteDraft");
+
+        if(!saved) return;
+
+        const draft = JSON.parse(saved);
+
+        titleInput.value = draft.title || "";
+        contentInput.value = draft.content || "";
+        categorySelect.value = draft.category || "general";
+
+        if(draft.isEditing) {
+            isEditing = true;
+            editingId = draft.editingId;
+
+            addBtn.textContent = "수정 완료";
+            cancelEditBtn.style.display = "inline-block";
+        }
+
+        autoResizeContentarea();
+    } catch {
+        localStorage.removeItem("noteDraft");
+    }
+    
+}
+
+//========================================
+//Import / Export
+//========================================
 function exportNotes() {
     if (!notes.length && !archivedNotes.length) {
         showMessage("저장할 메모가 없습니다.");
@@ -729,193 +942,38 @@ function importNotes(e) {
     reader.readAsText(file);
 }
 
-function toggleExpanded(id) {
-    notes = notes.map (note => {
-        if(note.id === id) {
-            return {
-                ...note,
-                expanded: !note.expanded
-            };
-        }
+//========================================
+//UI Helpers
+//========================================
+function showMessage(message) {
+    clearTimeout(messageTimer);
 
-        return note;
-    });
+    appMessage.innerHTML = message;
+    appMessage.classList.add("show");
 
-    saveNotes();
-    renderNotes();
+    messageTimer = setTimeout(() => {
+        appMessage.classList.remove("show");
+        setTimeout(() => {appMessage.innerHTML = ""}, 2000);
+    }, 3000);
 }
 
-function archiveToggleExpanded(id) {
-    archivedNotes = archivedNotes.map (note => {
-        if(note.id === id) {
-            return {
-                ...note,
-                expanded: !note.expanded
-            };
-        }
+function updateInputCounts() {
+    titleCount.textContent = `${titleInput.value.length} / 50`;
+    contentCount.textContent = `${contentInput.value.length} / 500`;
 
-        return note;
-    });
+    if(titleInput.value.length > 45) titleCount.classList.add("warning");
+    else titleCount.classList.remove("warning");
 
-    saveArchivedNotes();
-    renderArchivedNotes();
+    if(contentInput.value.length > 490) contentCount.classList.add("warning");
+    else contentCount.classList.remove("warning");
 }
 
-function duplicateNote(id) {
-    const originalNote = notes.find(note => note.id === id);
-
-    if(!originalNote) return;
-
-    const duplicateNote = {
-        ...originalNote,
-        id: Date.now(),
-        title: `${originalNote.title} (복사본)`,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        expanded: true
-    };
-
-    notes.push(duplicateNote);
-
-    saveNotes();
-    renderNotes();
+function autoResizeContentarea() {
+    //줄 삭제 후 높이가 줄어들지 않는 문제가 생길 수 있어, auto부터 대입.
+    contentInput.style.height = "auto";
+    contentInput.style.height = contentInput.scrollHeight + "px";
 }
 
-function archiveNote(id) {
-    const targetNote = notes.find(note => note.id === id);
-
-    if(!targetNote) return;
-
-    archivedNotes.push(targetNote);
-
-    notes = notes.filter(note => note.id !== id);
-
-    if(editingId === id) cancelEdit();
-
-    saveNotes();
-    saveArchivedNotes();
-
-    renderNotes();
-}
-
-function renderArchivedNotes() {
-    noteList.innerHTML = "";
-
-    if(!archivedNotes.length) {
-        renderArchivedStatus([]);
-        renderEmptyMessage("📦 보관된 메모가 없습니다.");
-        return;
-    }
-
-    const searchedArchivedNotes = filterBySearch(archivedNotes);
-
-    const categoryFilteredArchivedNotes = filterByCategory(searchedArchivedNotes);
-
-    renderArchivedStatus(categoryFilteredArchivedNotes);
-
-    if(!categoryFilteredArchivedNotes.length) {
-        renderEmptyMessage("📦 보관된 메모가 없습니다.");
-        return;
-    }
-
-    const sortedArchivedNotes = sortNotes(categoryFilteredArchivedNotes);
-
-    sortedArchivedNotes.forEach(note => {
-        const card = createArchivedCard(note);
-
-        noteList.appendChild(card);
-    });
-}
-
-function restoreArchivedNote(id) {
-    const targetNote = archivedNotes.find(note => note.id === id);
-
-    if(!targetNote) return;
-
-    notes.push(targetNote);
-
-    archivedNotes = archivedNotes.filter(note => note.id !== id);
-
-    saveNotes();
-    saveArchivedNotes();
-
-    renderArchivedNotes();
-    showMessage("메모가 복구되었습니다.");
-}
-
-function permanentDeleteNote(id) {
-    archivedNotes = archivedNotes.filter(note => note.id !== id);
-
-    saveArchivedNotes();
-    renderArchivedNotes();
-    showMessage("메모가 영구 삭제되었습니다.");
-}
-
-//filter func
-function filterBySearch(notes) {
-    return notes.filter(note => {
-        const titleMatch = (note.title || "").toLowerCase().includes(searchText);
-        const contentMatch = (note.content || "").toLowerCase().includes(searchText);
-
-        return titleMatch || contentMatch;
-    });
-}
-
-function filterByCategory(notes) {
-    return notes.filter(note => {
-        if (currentCategory === "all") return true;
-
-        return note.category === currentCategory;
-    });
-}
-
-function filterByPin(notes) {
-    return notes.filter(note => {
-        if (currentPin === "pinned") {
-            return note.pinned;
-        }
-
-        if (currentPin === "normal") {
-            return !note.pinned;
-        }
-
-        return true;
-    });
-}
-
-//sorting
-function sortNotes(notes) {
-    return [...notes].sort((a, b) => {
-        if(b.pinned !== a.pinned) {
-            //핀 기준 정렬
-            return b.pinned - a.pinned;
-        }
-
-        //최신순 정렬 (05/18: id에서 createdAt으로 변경.)
-        if (currentSort === "latest") {
-            return b.createdAt - a.createdAt;
-        }
-
-        //오래된순 정렬
-        if (currentSort === "oldest") {
-            return a.createdAt - b.createdAt;
-        }
-
-        //제목순 정렬
-        if (currentSort === "title") {
-            return (a.title || "").localeCompare(b.title || "");
-        }
-
-        //최근 수정순 정렬
-        if(currentSort === "updated") {
-            return b.updatedAt - a.updatedAt;
-        }
-
-        return 0;
-    });
-}
-
-//Light-Dark mode func
 function applyTheme(theme) {
     document.body.classList.remove("light-theme", "dark-theme");
 
@@ -926,7 +984,29 @@ function updateThemeButton() {
     themeToggleBtn.textContent = currentTheme === "light" ? "🌙 다크모드" : "☀️ 라이트모드";
 }
 
-//Get func
+function updateSaveStatus(message) {
+    const time = new Date().toLocaleTimeString();
+
+    saveStatus.textContent = `${message} (${time})`;
+}
+
+function clearActiveButton() {
+    pinButtons.forEach(btn => {
+        btn.classList.remove("active");
+    });
+
+    archiveViewBtn.classList.remove("active");
+}
+
+//========================================
+//Utilities
+//========================================
+function formatDate(timestamp) {
+    const date = new Date(timestamp);
+
+    return date.toLocaleString();
+}
+
 function getCategoryLabel(category) {
     if(category === "general") return "일반";
     if(category === "study") return "공부";
@@ -945,50 +1025,11 @@ function getCategoryIcon(category) {
     return "📂";
 }
 
-function getSortLabel(sort) {
-    if(sort === "latest") return "최신순";
-    if(sort === "oldest") return "오래된순";
-    if(sort === "title") return "제목순";
-    if(sort === "updated") return "최근 수정순";
-}
 
-//Date func
-function formatDate(timestamp) {
-    const date = new Date(timestamp);
-
-    return date.toLocaleString();
-}
-
-//App message func
-function showMessage(message) {
-    clearTimeout(messageTimer);
-
-    appMessage.innerHTML = message;
-    appMessage.classList.add("show");
-
-    messageTimer = setTimeout(() => {
-        appMessage.classList.remove("show");
-        setTimeout(() => {appMessage.innerHTML = ""}, 2000);
-    }, 3000);
-}
-
-//Save Status func
-function updateSaveStatus(message) {
-    const time = new Date().toLocaleTimeString();
-
-    saveStatus.textContent = `${message} (${time})`;
-}
-
-//btn active func
-function clearActiveButton() {
-    pinButtons.forEach(btn => {
-        btn.classList.remove("active");
-    });
-
-    archiveViewBtn.classList.remove("active");
-}
-
+//========================================
+//Initialization
 //홈페이지 실행 즉시 보여져야 하는 것.
+//========================================
 document.querySelector('[data-pin="all"]').classList.add("active");
 
 currentSort = localStorage.getItem("currentSort") || "latest";
@@ -1008,6 +1049,7 @@ loadDraft();
 updateInputCounts();
 autoResizeContentarea();
 renderNotes();
+
 
 /* 1일차
  * 구조 생성
@@ -1267,5 +1309,9 @@ renderNotes();
  * currentSort, currentCategory, currentPin 고정. (설정값 고정)
  * renderArchivedNotes() 안에 있던 오류 수정.
  * 
- * 수정 중 새로고침하면 '수정되던 것'에서 빠져나와서 새 메모로 간주됨. 해결해야 할지 말아야 할지 확인.
+ * ★수정 중 새로고침하면 '수정되던 것'에서 빠져나와서 새 메모로 간주됨. 해결해야 할지 말아야 할지 확인.
+ */
+
+/* 40일차
+ * 코드 정리 및 수정 중 새로고침 시 일어나는 문제 해결.
  */
