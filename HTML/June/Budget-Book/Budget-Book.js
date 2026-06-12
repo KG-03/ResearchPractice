@@ -22,7 +22,8 @@ function addTransaction() {
         id: Date.now(),
         amount,
         category,
-        type
+        type,
+        createdAt: Date.now()
     };
 
     transactions.push(transaction);
@@ -32,22 +33,50 @@ function addTransaction() {
     console.log(transactions);
 }
 
+function deleteTransaction(id) {
+    transactions = transactions.filter(note => note.id !== id);
+    renderTransactions();
+}
+
 function renderTransactions() {
     budgetList.innerHTML = "";
-    transactions.forEach(transaction => {
-        const card = document.createElement("div");
-        card.classList.add("budget-card");
-        card.textContent = `${getCategoryLabel(transaction.category)} ${transaction.amount}원`;
 
-        budgetList.append(card);
+    if(transactions.length === 0) {
+        budgetList.innerHTML = '<p class="empty-message">아직 등록된 거래가 없습니다.</p>';
+        return;
+    }
+
+    transactions.forEach(transaction => {
+        budgetList.append(
+            createTransactionCard(transaction)
+        );
     });
 }
 
+function createTransactionCard(transaction) {
+    const card = document.createElement("div");
+
+    card.classList.add("budget-card");
+    card.textContent = `${getCategoryLabel(transaction.category)} ${transaction.amount}원 `;
+
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "삭제";
+    delBtn.addEventListener("click", () => {
+        deleteTransaction(transaction.id);
+    });
+
+    card.append(delBtn);
+
+    return card;
+}
+
 function getCategoryLabel(category) {
-    if(category === "food") return "식비";
-    if(category === "traffic") return "교통";
-    if(category === "shopping") return "쇼핑";
-    if(category === "salary") return "급여";
+    switch(category) {
+        case "food": return "🍚 식비";
+        case "traffic": return "🚌 교통";
+        case "shopping": return "🛍 쇼핑";
+        case "salary": return "💰 급여";
+    }
     
     return "기타";
 }
@@ -55,4 +84,10 @@ function getCategoryLabel(category) {
 /* 2일차
  * 1일차에는 기본 html 구조, css 효과 생성.
  * 2일차에 기본적인 card 추가 및 렌더링 함수 생성.
+ */
+
+/* 3일차
+ * 삭제 버튼 생성.
+ * addTransaction()할 때, const transaction에 createdAt 추가.
+ * renderTransactions()에서 카드를 생성하던 것을 따로 createTransactionCard() 함수를 만들어 관리.
  */
