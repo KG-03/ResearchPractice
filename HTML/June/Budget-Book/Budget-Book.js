@@ -5,6 +5,9 @@ const categorySelect = document.querySelector(".category-select");
 const typeSelect = document.querySelector(".type-select");
 const addBtn = document.querySelector(".add-btn");
 const budgetList = document.querySelector(".budget-list");
+const incomeTotal = document.querySelector(".income-total");
+const expenseTotal = document.querySelector(".expense-total");
+const balanceTotal = document.querySelector(".balance-total");
 
 addBtn.addEventListener("click", addTransaction);
 
@@ -44,7 +47,7 @@ function createTransactionCard(transaction) {
     const card = document.createElement("div");
 
     card.classList.add("budget-card");
-    card.textContent = `${getCategoryLabel(transaction.category)} ${transaction.amount}원 `;
+    card.textContent = `${getCategoryLabel(transaction.category)} ${transaction.amount.toLocaleString()}원 `;
 
     const delBtn = document.createElement("button");
     delBtn.textContent = "삭제";
@@ -63,14 +66,40 @@ function renderTransactions() {
 
     if(transactions.length === 0) {
         budgetList.innerHTML = '<p class="empty-message">아직 등록된 거래가 없습니다.</p>';
-        return;
+    } else {
+        transactions.forEach(transaction => {
+            budgetList.append(
+                createTransactionCard(transaction)
+            );
+        });
     }
 
-    transactions.forEach(transaction => {
-        budgetList.append(
-            createTransactionCard(transaction)
-        );
-    });
+    updateSummary();
+}
+
+//Update func
+function updateSummary() {
+    const totalIncome = transactions.reduce((sum, transaction) => {
+        if(transaction.type === "income") {
+            return sum + transaction.amount;
+        }
+
+        return sum;
+    }, 0);
+
+    const totalExpense = transactions.reduce((sum, transaction) => {
+        if(transaction.type === "expense") {
+            return sum + transaction.amount;
+        }
+
+        return sum;
+    }, 0);
+
+    const totalBalance = totalIncome - totalExpense;
+
+    incomeTotal.textContent = `총 수입 : ${totalIncome.toLocaleString()}원`;
+    expenseTotal.textContent = `총 지출 : ${totalExpense.toLocaleString()}원`;
+    balanceTotal.textContent = `잔액 : ${totalBalance.toLocaleString()}원`;
 }
 
 //Storage func
@@ -108,4 +137,13 @@ renderTransactions();
 
 /* 5일차
  * saveTransactions() 생성.
+ */
+
+/* 6일차
+ * reduce() : 배열의 모든 요소를 하나의 값으로 축약(reduce)하는 함수.
+ *            형태는 '배열.reduce((누적값, 현재 요소) => { ... }, 초기값))'.
+ *            [1, 2, 3, 4]라는 배열을 10이라는 하나의 값으로 만들 수 있다.
+ *            숫자가 아닌, 문자열도 합칠 수 있다. ["안녕", "하세요"]를 reduce로 합치면 "안녕하세요"가 된다.
+ * 
+ * 수입일 때 +, 지출일 때 -를 붙이는 구조를 생각해보기.
  */
