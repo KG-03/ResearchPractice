@@ -8,8 +8,18 @@ const budgetList = document.querySelector(".budget-list");
 const incomeTotal = document.querySelector(".income-total");
 const expenseTotal = document.querySelector(".expense-total");
 const balanceTotal = document.querySelector(".balance-total");
+const categoryFilter = document.querySelector(".category-filter");
+
+
+let currentCategory = "all";
 
 addBtn.addEventListener("click", addTransaction);
+
+categoryFilter.addEventListener("change", () => {
+    currentCategory = categoryFilter.value;
+
+    renderTransactions();
+})
 
 //Transaction func
 function addTransaction() {
@@ -64,14 +74,16 @@ function createTransactionCard(transaction) {
 function renderTransactions() {
     budgetList.innerHTML = "";
 
-    if(transactions.length === 0) {
+    let filteredTransactions = transactions;
+
+    if(currentCategory !== "all") {
+        filteredTransactions = transactions.filter(transaction => transaction.category === currentCategory);
+    }
+
+    if(filteredTransactions.length === 0) {
         budgetList.innerHTML = '<p class="empty-message">아직 등록된 거래가 없습니다.</p>';
     } else {
-        transactions.forEach(transaction => {
-            budgetList.append(
-                createTransactionCard(transaction)
-            );
-        });
+        filteredTransactions.forEach(transaction => {budgetList.append(createTransactionCard(transaction));});
     }
 
     updateSummary();
@@ -115,7 +127,7 @@ function getCategoryLabel(category) {
         case "salary": return "💰 급여";
     }
     
-    return "기타";
+    return "📦 기타";
 }
 
 renderTransactions();
@@ -146,4 +158,11 @@ renderTransactions();
  *            숫자가 아닌, 문자열도 합칠 수 있다. ["안녕", "하세요"]를 reduce로 합치면 "안녕하세요"가 된다.
  * 
  * 수입일 때 +, 지출일 때 -를 붙이는 구조를 생각해보기.
+ */
+
+/* 7일차
+ * 카테고리 필터 생성.
+ * 이후, getCategoryLabel()을 const CATEGORY_LABEL = {...} 형식으로 바꿀 수 있음을 기억해둘 것.
+ *      현재는 함수 형식으로도 괜찮지만, getCategoryColor() 등의 함수가 추가되어 사용되어야 한다면,
+ *          const CATEGORY_INFO = { food: { label: "식비", icon: "🍚", color: "orange" } } 등의 형식으로 생성할 수 있기 때문.
  */
