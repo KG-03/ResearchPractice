@@ -38,12 +38,22 @@ button {
     flex-wrap: wrap;
     gap: 10px;
 
-    margin-bottom: 20px;
+    margin-bottom: 10px;
 }
 
 .amount-input {
     width: 150px;
 }
+
+/* ===== filter area ===== */
+.filter-area {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+
+    margin-bottom: 10px;
+}
+
 
 /* ===== budget list ===== */
 .budget-list {
