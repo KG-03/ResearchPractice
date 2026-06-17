@@ -9,9 +9,10 @@ const incomeTotal = document.querySelector(".income-total");
 const expenseTotal = document.querySelector(".expense-total");
 const balanceTotal = document.querySelector(".balance-total");
 const categoryFilter = document.querySelector(".category-filter");
-
+const sortSelect = document.querySelector(".sort-select");
 
 let currentCategory = "all";
+let currentSort = "latest";
 
 addBtn.addEventListener("click", addTransaction);
 
@@ -19,7 +20,13 @@ categoryFilter.addEventListener("change", () => {
     currentCategory = categoryFilter.value;
 
     renderTransactions();
-})
+});
+
+sortSelect.addEventListener("change", () => {
+    currentSort = sortSelect.value;
+
+    renderTransactions();
+});
 
 //Transaction func
 function addTransaction() {
@@ -74,11 +81,13 @@ function createTransactionCard(transaction) {
 function renderTransactions() {
     budgetList.innerHTML = "";
 
-    let filteredTransactions = transactions;
+    let filteredTransactions = [...transactions];
 
     if(currentCategory !== "all") {
-        filteredTransactions = transactions.filter(transaction => transaction.category === currentCategory);
+        filteredTransactions = filteredTransactions.filter(transaction => transaction.category === currentCategory);
     }
+
+    filteredTransactions = sortTransactions(filteredTransactions);
 
     if(filteredTransactions.length === 0) {
         budgetList.innerHTML = '<p class="empty-message">아직 등록된 거래가 없습니다.</p>';
@@ -87,6 +96,35 @@ function renderTransactions() {
     }
 
     updateSummary();
+}
+
+// filter func
+function sortTransactions(transaction) {
+    if(currentSort === "latest") {
+        transaction.sort((a,b) => {
+            return b.createdAt - a.createdAt;
+        });
+    }
+    
+    if (currentSort === "oldest") {
+        transaction.sort((a,b)=> {
+            return a.createdAt - b.createdAt;
+        });
+    }
+    
+    if (currentSort === "amount-desc") {
+        transaction.sort((a,b) => {
+            return b.amount - a.amount;
+        });
+    }
+    
+    if (currentSort === "amount-asc") {
+        transaction.sort((a,b) => {
+            return a.amount - b.amount;
+        });
+    }
+
+    return transaction;
 }
 
 //Update func
@@ -165,4 +203,11 @@ renderTransactions();
  * 이후, getCategoryLabel()을 const CATEGORY_LABEL = {...} 형식으로 바꿀 수 있음을 기억해둘 것.
  *      현재는 함수 형식으로도 괜찮지만, getCategoryColor() 등의 함수가 추가되어 사용되어야 한다면,
  *          const CATEGORY_INFO = { food: { label: "식비", icon: "🍚", color: "orange" } } 등의 형식으로 생성할 수 있기 때문.
+ */
+
+/* 8일차
+ * 정렬 필터 생성.
+ * let filteredTransactions = [...transactions];    : 이 형식을 쓰면 '원본 배열'을 건드리지 않는다.
+ * 
+ * 이후 '지출'과 '수입' 필터도 고려할 것.
  */
