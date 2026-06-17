@@ -13,7 +13,7 @@
 
         <main>
             <div class="app">
-                <section class="input-area">
+                <section class="input-area">입력: 
                     <input class="amount-input" type="number" placeholder="금액 입력">
 
                     <select class="category-select">
@@ -32,7 +32,7 @@
                     <button class="add-btn">추가</button>
                 </section>
 
-                <section class="filter-area">
+                <section class="filter-area">필터: 
                     <select class="category-filter">
                         <option value="all">전체</option>
                         <option value="food">식비</option>
@@ -40,6 +40,13 @@
                         <option value="shopping">쇼핑</option>
                         <option value="salary">급여</option>
                         <option value="etc">기타</option>
+                    </select>
+
+                    <select class="sort-select">
+                        <option value="latest">최신순</option>
+                        <option value="oldest">오래된순</option>
+                        <option value="amount-desc">금액 큰 순</option>
+                        <option value="amount-asc">금액 작은 순</option>
                     </select>
                 </section>
 
