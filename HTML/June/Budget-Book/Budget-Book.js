@@ -10,9 +10,34 @@ const expenseTotal = document.querySelector(".expense-total");
 const balanceTotal = document.querySelector(".balance-total");
 const categoryFilter = document.querySelector(".category-filter");
 const sortSelect = document.querySelector(".sort-select");
+const typeFilter = document.querySelector(".type-filter");
+
+const CATEGORY_OPTIONS = {
+    all: [
+        {value: "all", label: "전체"},
+        {value: "food", label: "식비"},
+        {value: "traffic", label: "교통"},
+        {value: "shopping", label: "쇼핑"},
+        {value: "salary", label: "급여"},
+        {value: "etc", label: "기타"}
+    ],
+
+    income: [
+        {value: "salary", label: "급여"},
+        {value: "etc", label: "기타"}
+    ],
+
+    expense: [
+        {value: "food", label: "식비"},
+        {value: "traffic", label: "교통"},
+        {value: "shopping", label: "쇼핑"},
+        {value: "etc", label: "기타"}
+    ]
+};
 
 let currentCategory = "all";
 let currentSort = "latest";
+let currentType = "all";
 
 addBtn.addEventListener("click", addTransaction);
 
@@ -27,6 +52,18 @@ sortSelect.addEventListener("change", () => {
 
     renderTransactions();
 });
+
+typeSelect.addEventListener("change", () => {
+    renderCategoryOptions();
+});
+
+typeFilter.addEventListener("change", () => {
+    currentType = typeFilter.value;
+
+    renderCategoryFilterOptions();
+    renderTransactions();
+});
+
 
 //Transaction func
 function addTransaction() {
@@ -55,7 +92,7 @@ function addTransaction() {
 }
 
 function deleteTransaction(id) {
-    transactions = transactions.filter(note => note.id !== id);
+    transactions = transactions.filter(transaction => transaction.id !== id);
     saveTransactions();
     renderTransactions();
 }
@@ -63,8 +100,9 @@ function deleteTransaction(id) {
 function createTransactionCard(transaction) {
     const card = document.createElement("div");
 
+    const typeLable = transaction.type === "income" ? "➕" : "➖";
     card.classList.add("budget-card");
-    card.textContent = `${getCategoryLabel(transaction.category)} ${transaction.amount.toLocaleString()}원 `;
+    card.textContent = `${typeLable} ${getCategoryLabel(transaction.category)} ${transaction.amount.toLocaleString()}원 `;
 
     const delBtn = document.createElement("button");
     delBtn.textContent = "삭제";
@@ -83,6 +121,10 @@ function renderTransactions() {
 
     let filteredTransactions = [...transactions];
 
+    if(currentType !== "all") {
+        filteredTransactions = filteredTransactions.filter(transaction => transaction.type === currentType);
+    }
+
     if(currentCategory !== "all") {
         filteredTransactions = filteredTransactions.filter(transaction => transaction.category === currentCategory);
     }
@@ -98,27 +140,53 @@ function renderTransactions() {
     updateSummary();
 }
 
+function renderCategoryOptions() {
+    const type = typeSelect.value;
+
+    categorySelect.innerHTML = "";
+
+    CATEGORY_OPTIONS[type].forEach(category => {
+        const option = document.createElement("option");
+
+        option.value = category.value;
+        option.textContent = category.label;
+
+        categorySelect.append(option);
+    });
+}
+
+function renderCategoryFilterOptions() {
+    const type = typeFilter.value;
+
+    categoryFilter.innerHTML = "";
+
+    CATEGORY_OPTIONS[type].forEach(category => {
+        const option = document.createElement("option");
+
+        option.value = category.value;
+        option.textContent = category.label;
+
+        categoryFilter.append(option);
+    });
+
+    currentCategory = categoryFilter.value;
+}
+
 // filter func
 function sortTransactions(transaction) {
     if(currentSort === "latest") {
         transaction.sort((a,b) => {
             return b.createdAt - a.createdAt;
         });
-    }
-    
-    if (currentSort === "oldest") {
+    } else if (currentSort === "oldest") {
         transaction.sort((a,b)=> {
             return a.createdAt - b.createdAt;
         });
-    }
-    
-    if (currentSort === "amount-desc") {
+    } else if (currentSort === "amount-desc") {
         transaction.sort((a,b) => {
             return b.amount - a.amount;
         });
-    }
-    
-    if (currentSort === "amount-asc") {
+    } else if (currentSort === "amount-asc") {
         transaction.sort((a,b) => {
             return a.amount - b.amount;
         });
@@ -168,6 +236,8 @@ function getCategoryLabel(category) {
     return "📦 기타";
 }
 
+renderCategoryOptions();
+renderCategoryFilterOptions();
 renderTransactions();
 
 /* 참고
@@ -210,4 +280,9 @@ renderTransactions();
  * let filteredTransactions = [...transactions];    : 이 형식을 쓰면 '원본 배열'을 건드리지 않는다.
  * 
  * 이후 '지출'과 '수입' 필터도 고려할 것.
+ */
+
+/* 9일차
+ * 타입 필터 생성.
+ * '타입'에 따라 선택할 수 있는 '카테고리'를 달리하도록 설정. 이는 '입력'과 '필터' 두 가지에서 모두 이용된다.
  */
