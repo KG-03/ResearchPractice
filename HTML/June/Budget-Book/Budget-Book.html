@@ -16,6 +16,11 @@
                 <section class="input-area">입력: 
                     <input class="amount-input" type="number" placeholder="금액 입력">
 
+                    <select class="type-select">
+                        <option value="expense">지출</option>
+                        <option value="income">수입</option>
+                    </select>                    
+
                     <select class="category-select">
                         <option value="food">식비</option>
                         <option value="traffic">교통</option>
@@ -23,16 +28,17 @@
                         <option value="salary">급여</option>
                         <option value="etc">기타</option>
                     </select>
-                    
-                    <select class="type-select">
-                        <option value="expense">지출</option>
-                        <option value="income">수입</option>
-                    </select>
 
                     <button class="add-btn">추가</button>
                 </section>
 
                 <section class="filter-area">필터: 
+                    <select class="type-filter">
+                        <option value="all">전체</option>
+                        <option value="expense">지출</option>
+                        <option value="income">수입</option>
+                    </select>
+
                     <select class="category-filter">
                         <option value="all">전체</option>
                         <option value="food">식비</option>
