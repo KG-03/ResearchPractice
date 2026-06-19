@@ -18,6 +18,15 @@ button {
     cursor: pointer;
 
     padding: 8px 12px;
+    margin-right: 5px;
+
+    background-color: #dbd894;
+    border: 1px solid #dbd894;
+    border-radius: 10px;
+}
+
+button:hover {
+    opacity: 0.6;
 }
 
 .app {
@@ -45,6 +54,10 @@ button {
 
 .amount-input {
     width: 150px;
+}
+
+.cancel-edit-btn {
+    display: none;
 }
 
 /* ===== filter area ===== */
