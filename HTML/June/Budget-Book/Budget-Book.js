@@ -11,6 +11,7 @@ const balanceTotal = document.querySelector(".balance-total");
 const categoryFilter = document.querySelector(".category-filter");
 const sortSelect = document.querySelector(".sort-select");
 const typeFilter = document.querySelector(".type-filter");
+const cancelEditBtn = document.querySelector(".cancel-edit-btn");
 
 const CATEGORY_OPTIONS = {
     all: [
@@ -23,11 +24,13 @@ const CATEGORY_OPTIONS = {
     ],
 
     income: [
+        {value: "all", label: "전체"},
         {value: "salary", label: "급여"},
         {value: "etc", label: "기타"}
     ],
 
     expense: [
+        {value: "all", label: "전체"},
         {value: "food", label: "식비"},
         {value: "traffic", label: "교통"},
         {value: "shopping", label: "쇼핑"},
@@ -39,7 +42,16 @@ let currentCategory = "all";
 let currentSort = "latest";
 let currentType = "all";
 
-addBtn.addEventListener("click", addTransaction);
+let isEditing = false;
+let editingId = null;
+
+addBtn.addEventListener("click", () => {
+    if(isEditing) {
+        updateTransaction();
+    } else {
+        addTransaction();
+    }
+});
 
 categoryFilter.addEventListener("change", () => {
     currentCategory = categoryFilter.value;
@@ -64,6 +76,10 @@ typeFilter.addEventListener("change", () => {
     renderTransactions();
 });
 
+cancelEditBtn.addEventListener("click", () => {
+    cancelEdit();
+});
+
 
 //Transaction func
 function addTransaction() {
@@ -81,7 +97,8 @@ function addTransaction() {
         amount,
         category,
         type,
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        updatedAt: Date.now()
     };
 
     transactions.push(transaction);
@@ -93,8 +110,64 @@ function addTransaction() {
 
 function deleteTransaction(id) {
     transactions = transactions.filter(transaction => transaction.id !== id);
+
+    if(editingId === id) cancelEdit();
+
     saveTransactions();
     renderTransactions();
+}
+
+function startEdit(id) {
+    const editTransaction = transactions.find(transaction => transaction.id === id);
+
+    if(!editTransaction) return;
+
+    amountInput.value = editTransaction.amount;
+    categorySelect.value = editTransaction.category;
+    typeSelect.value = editTransaction.type;
+
+    isEditing = true;
+    editingId = id;
+
+    addBtn.textContent = "수정 완료";
+    cancelEditBtn.style.display = "inline-block";
+
+}
+
+function updateTransaction() {
+    const editTransaction = transactions.find(transaction => transaction.id === editingId);
+
+    if (amountInput.value <= 0) {
+        alert("올바른 금액이 아닙니다.");
+        return;
+    }
+
+    if(!editTransaction) return;
+
+    editTransaction.amount = Number(amountInput.value);
+    editTransaction.category = categorySelect.value;
+    editTransaction.type = typeSelect.value;
+    editTransaction.updatedAt = Date.now();
+
+    saveTransactions();
+
+    isEditing = false;
+    editingId = null;
+
+    addBtn.textContent = "추가";
+    amountInput.value = "";
+    
+    renderTransactions();
+}
+
+function cancelEdit() {
+    isEditing = false;
+    editingId = null;
+
+    amountInput.value = "";
+
+    addBtn.textContent = "추가";
+    cancelEditBtn.style.display = "none";
 }
 
 function createTransactionCard(transaction) {
@@ -110,7 +183,14 @@ function createTransactionCard(transaction) {
         deleteTransaction(transaction.id);
     });
 
+    const editBtn = document.createElement("button");
+    editBtn.textContent = "수정";
+    editBtn.addEventListener("click", () => {
+        startEdit(transaction.id);
+    });
+
     card.append(delBtn);
+    card.append(editBtn);
 
     return card;
 }
@@ -285,4 +365,9 @@ renderTransactions();
 /* 9일차
  * 타입 필터 생성.
  * '타입'에 따라 선택할 수 있는 '카테고리'를 달리하도록 설정. 이는 '입력'과 '필터' 두 가지에서 모두 이용된다.
+ */
+
+/* 10일차
+ * 등록된 카드 수정 기능.
+ * 수정 모드 진입, 수정 취소, 수정 완료, 수정 중 삭제 처리 확인.
  */
