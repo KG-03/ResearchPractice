@@ -1,5 +1,10 @@
 let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
 
+transactions = transactions.map(transaction => ({
+    ...transaction,
+    updatedAt: transaction.updatedAt ?? transaction.createdAt
+}));
+
 const amountInput = document.querySelector(".amount-input");
 const categorySelect = document.querySelector(".category-select");
 const typeSelect = document.querySelector(".type-select");
@@ -14,6 +19,20 @@ const typeFilter = document.querySelector(".type-filter");
 const cancelEditBtn = document.querySelector(".cancel-edit-btn");
 
 const CATEGORY_OPTIONS = {
+    income: [
+        {value: "salary", label: "급여"},
+        {value: "etc", label: "기타"}
+    ],
+
+    expense: [
+        {value: "food", label: "식비"},
+        {value: "traffic", label: "교통"},
+        {value: "shopping", label: "쇼핑"},
+        {value: "etc", label: "기타"}
+    ]
+};
+
+const CATEGORY_FILTER_OPTIONS = {
     all: [
         {value: "all", label: "전체"},
         {value: "food", label: "식비"},
@@ -131,7 +150,6 @@ function startEdit(id) {
 
     addBtn.textContent = "수정 완료";
     cancelEditBtn.style.display = "inline-block";
-
 }
 
 function updateTransaction() {
@@ -172,10 +190,19 @@ function cancelEdit() {
 
 function createTransactionCard(transaction) {
     const card = document.createElement("div");
+    card.classList.add("budget-card");
 
     const typeLable = transaction.type === "income" ? "➕" : "➖";
-    card.classList.add("budget-card");
-    card.textContent = `${typeLable} ${getCategoryLabel(transaction.category)} ${transaction.amount.toLocaleString()}원 `;
+    const amount = document.createElement("p");
+    amount.textContent = `${typeLable} ${getCategoryLabel(transaction.category)} ${transaction.amount.toLocaleString()}원`;
+
+    const date = document.createElement("p");
+    date.classList.add("card-date-text");
+    date.textContent = `생성: ${formatDate(transaction.createdAt)}`;
+
+    if(transaction.updatedAt !== transaction.createdAt) {
+        date.textContent += `\n(수정: ${formatDate(transaction.updatedAt)})`;
+    }
 
     const delBtn = document.createElement("button");
     delBtn.textContent = "삭제";
@@ -189,6 +216,8 @@ function createTransactionCard(transaction) {
         startEdit(transaction.id);
     });
 
+    card.append(amount);
+    card.append(date);
     card.append(delBtn);
     card.append(editBtn);
 
@@ -240,7 +269,7 @@ function renderCategoryFilterOptions() {
 
     categoryFilter.innerHTML = "";
 
-    CATEGORY_OPTIONS[type].forEach(category => {
+    CATEGORY_FILTER_OPTIONS[type].forEach(category => {
         const option = document.createElement("option");
 
         option.value = category.value;
@@ -303,6 +332,14 @@ function updateSummary() {
 //Storage func
 function saveTransactions() {
     localStorage.setItem("transactions", JSON.stringify(transactions));
+}
+
+function formatDate(timestamp) {
+    if(!timestamp) return "";
+
+    const date = new Date(timestamp);
+
+    return date.toLocaleDateString("ko-KR");
 }
 
 function getCategoryLabel(category) {
@@ -370,4 +407,8 @@ renderTransactions();
 /* 10일차
  * 등록된 카드 수정 기능.
  * 수정 모드 진입, 수정 취소, 수정 완료, 수정 중 삭제 처리 확인.
+ */
+
+/* 12일차
+ * 날짜 표기. 생성 날짜 및 수정 날짜 표기.
  */
