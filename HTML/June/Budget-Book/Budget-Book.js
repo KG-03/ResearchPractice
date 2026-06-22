@@ -17,6 +17,7 @@ const categoryFilter = document.querySelector(".category-filter");
 const sortSelect = document.querySelector(".sort-select");
 const typeFilter = document.querySelector(".type-filter");
 const cancelEditBtn = document.querySelector(".cancel-edit-btn");
+const dateFilter = document.querySelector(".date-filter");
 
 const CATEGORY_OPTIONS = {
     income: [
@@ -60,6 +61,7 @@ const CATEGORY_FILTER_OPTIONS = {
 let currentCategory = "all";
 let currentSort = "latest";
 let currentType = "all";
+let currentDateFilter = "all";
 
 let isEditing = false;
 let editingId = null;
@@ -98,6 +100,12 @@ typeFilter.addEventListener("change", () => {
 cancelEditBtn.addEventListener("click", () => {
     cancelEdit();
 });
+
+dateFilter.addEventListener("change", () => {
+    currentDateFilter = dateFilter.value;
+
+    renderTransactions();
+})
 
 
 //Transaction func
@@ -230,15 +238,13 @@ function renderTransactions() {
 
     let filteredTransactions = [...transactions];
 
-    if(currentType !== "all") {
-        filteredTransactions = filteredTransactions.filter(transaction => transaction.type === currentType);
-    }
+    filteredTransactions = filterByType(filteredTransactions);
 
-    if(currentCategory !== "all") {
-        filteredTransactions = filteredTransactions.filter(transaction => transaction.category === currentCategory);
-    }
+    filteredTransactions = filterByCategory(filteredTransactions);
 
     filteredTransactions = sortTransactions(filteredTransactions);
+
+    filteredTransactions = filterByDate(filteredTransactions);
 
     if(filteredTransactions.length === 0) {
         budgetList.innerHTML = '<p class="empty-message">아직 등록된 거래가 없습니다.</p>';
@@ -298,6 +304,61 @@ function sortTransactions(transaction) {
     } else if (currentSort === "amount-asc") {
         transaction.sort((a,b) => {
             return a.amount - b.amount;
+        });
+    }
+
+    return transaction;
+}
+
+function filterByType (transaction) {
+    if(currentType !== "all") {
+        transaction = transaction.filter(transac => transac.type === currentType);
+    }
+
+    return transaction;
+}
+
+function filterByCategory(transaction) {
+    if(currentCategory !== "all") {
+        transaction = transaction.filter(transac => transac.category === currentCategory);
+    }
+
+    return transaction;
+}
+
+function filterByDate(transaction) {
+    if(currentDateFilter === "all") {
+        return transaction;
+    }
+
+    const now = new Date();
+
+    if(currentDateFilter === "today") {
+        return transaction.filter(transac => {
+            const date = new Date(transac.createdAt);
+
+            return (
+                date.getFullYear() === now.getFullYear() &&
+                date.getMonth() === now.getMonth() &&
+                date.getDate() === now.getDate()
+            );
+        });
+    } 
+    
+    if (currentDateFilter === "week") {
+        const weekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+
+        return transaction.filter(transac => transac.createdAt >= weekAgo);
+    } 
+    
+    if (currentDateFilter === "month") {
+        return transaction.filter(transac => {
+            const date = new Date(transac.createdAt);
+
+            return (
+                date.getFullYear() === now.getFullYear() &&
+                date.getMonth() === now.getMonth()
+            );
         });
     }
 
@@ -411,4 +472,13 @@ renderTransactions();
 
 /* 12일차
  * 날짜 표기. 생성 날짜 및 수정 날짜 표기.
+ */
+
+/* 13일차
+ * 기간 필터.
+ * filter 함수 분리
+ * Date             : 현재 날짜와 시간 정보를 저장하는 객체 생성.
+ * getFullYear()    : 연도를 가져온다.
+ * getMonth()       : 월을 가져온다. 0~11의 반환값을 가져오는 특징이 있다.
+ * getDate()        : 일을 가져온다. getDay()를 하면 '요일'이 가져와지니 주의해야 한다.
  */
