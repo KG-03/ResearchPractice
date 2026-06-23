@@ -2,6 +2,7 @@ let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
 
 transactions = transactions.map(transaction => ({
     ...transaction,
+    description: transaction.description ?? "",
     updatedAt: transaction.updatedAt ?? transaction.createdAt
 }));
 
@@ -18,6 +19,7 @@ const sortSelect = document.querySelector(".sort-select");
 const typeFilter = document.querySelector(".type-filter");
 const cancelEditBtn = document.querySelector(".cancel-edit-btn");
 const dateFilter = document.querySelector(".date-filter");
+const descriptionInput = document.querySelector(".description-input");
 
 const CATEGORY_OPTIONS = {
     income: [
@@ -113,6 +115,7 @@ function addTransaction() {
     const amount = Number(amountInput.value);
     const category = categorySelect.value;
     const type = typeSelect.value;
+    const description = descriptionInput.value.trim();
 
     if (amount <= 0) {
         alert("올바른 금액이 아닙니다.");
@@ -124,6 +127,7 @@ function addTransaction() {
         amount,
         category,
         type,
+        description,
         createdAt: Date.now(),
         updatedAt: Date.now()
     };
@@ -132,6 +136,7 @@ function addTransaction() {
     saveTransactions();
 
     amountInput.value = "";
+    descriptionInput.value= "";
     renderTransactions();
 }
 
@@ -152,6 +157,7 @@ function startEdit(id) {
     amountInput.value = editTransaction.amount;
     categorySelect.value = editTransaction.category;
     typeSelect.value = editTransaction.type;
+    descriptionInput.value = editTransaction.description;
 
     isEditing = true;
     editingId = id;
@@ -173,6 +179,7 @@ function updateTransaction() {
     editTransaction.amount = Number(amountInput.value);
     editTransaction.category = categorySelect.value;
     editTransaction.type = typeSelect.value;
+    editTransaction.description = descriptionInput.value.trim();
     editTransaction.updatedAt = Date.now();
 
     saveTransactions();
@@ -182,6 +189,7 @@ function updateTransaction() {
 
     addBtn.textContent = "추가";
     amountInput.value = "";
+    descriptionInput.value = "";
     
     renderTransactions();
 }
@@ -203,6 +211,15 @@ function createTransactionCard(transaction) {
     const typeLable = transaction.type === "income" ? "➕" : "➖";
     const amount = document.createElement("p");
     amount.textContent = `${typeLable} ${getCategoryLabel(transaction.category)} ${transaction.amount.toLocaleString()}원`;
+    card.append(amount);
+
+    if(transaction.description) {
+        const description = document.createElement("p");
+        description.classList.add("card-description-text")
+        description.textContent = `${transaction.description}`;
+
+        card.append(description);
+    }
 
     const date = document.createElement("p");
     date.classList.add("card-date-text");
@@ -212,21 +229,20 @@ function createTransactionCard(transaction) {
         date.textContent += `\n(수정: ${formatDate(transaction.updatedAt)})`;
     }
 
+    card.append(date);
+
     const delBtn = document.createElement("button");
     delBtn.textContent = "삭제";
     delBtn.addEventListener("click", () => {
         deleteTransaction(transaction.id);
     });
+    card.append(delBtn);
 
     const editBtn = document.createElement("button");
     editBtn.textContent = "수정";
     editBtn.addEventListener("click", () => {
         startEdit(transaction.id);
     });
-
-    card.append(amount);
-    card.append(date);
-    card.append(delBtn);
     card.append(editBtn);
 
     return card;
@@ -481,4 +497,9 @@ renderTransactions();
  * getFullYear()    : 연도를 가져온다.
  * getMonth()       : 월을 가져온다. 0~11의 반환값을 가져오는 특징이 있다.
  * getDate()        : 일을 가져온다. getDay()를 하면 '요일'이 가져와지니 주의해야 한다.
+ */
+
+/* 14일차
+ * 메모 기능 추가.
+ * 차후 html에서 maxlength를 사용할 것인지 고민해볼 것.
  */
