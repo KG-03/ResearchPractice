@@ -104,6 +104,13 @@ button:hover {
     color:#999999;
 }
 
+.card-description-text {
+    font-size: 15px;
+    background: #f3f1da;
+
+    padding: 5px;
+}
+
 /* ===== total-area ===== */
 .total-area {
     padding: 15px;
