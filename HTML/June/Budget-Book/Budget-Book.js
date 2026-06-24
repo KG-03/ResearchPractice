@@ -20,6 +20,7 @@ const typeFilter = document.querySelector(".type-filter");
 const cancelEditBtn = document.querySelector(".cancel-edit-btn");
 const dateFilter = document.querySelector(".date-filter");
 const descriptionInput = document.querySelector(".description-input");
+const transactionCount = document.querySelector(".transaction-count");
 
 const CATEGORY_OPTIONS = {
     income: [
@@ -157,6 +158,7 @@ function startEdit(id) {
     amountInput.value = editTransaction.amount;
     categorySelect.value = editTransaction.category;
     typeSelect.value = editTransaction.type;
+    renderCategoryOptions();
     descriptionInput.value = editTransaction.description;
 
     isEditing = true;
@@ -188,6 +190,7 @@ function updateTransaction() {
     editingId = null;
 
     addBtn.textContent = "추가";
+    cancelEditBtn.style.display = "none";
     amountInput.value = "";
     descriptionInput.value = "";
     
@@ -199,9 +202,12 @@ function cancelEdit() {
     editingId = null;
 
     amountInput.value = "";
+    descriptionInput.value= "";
 
     addBtn.textContent = "추가";
     cancelEditBtn.style.display = "none";
+    typeSelect.value = "expense";
+    categorySelect.value = "food";
 }
 
 function createTransactionCard(transaction) {
@@ -258,9 +264,9 @@ function renderTransactions() {
 
     filteredTransactions = filterByCategory(filteredTransactions);
 
-    filteredTransactions = sortTransactions(filteredTransactions);
-
     filteredTransactions = filterByDate(filteredTransactions);
+
+    filteredTransactions = sortTransactions(filteredTransactions);
 
     if(filteredTransactions.length === 0) {
         budgetList.innerHTML = '<p class="empty-message">아직 등록된 거래가 없습니다.</p>';
@@ -268,7 +274,9 @@ function renderTransactions() {
         filteredTransactions.forEach(transaction => {budgetList.append(createTransactionCard(transaction));});
     }
 
-    updateSummary();
+    transactionCount.textContent = `현재 표시 중: ${filteredTransactions.length}건`;
+
+    updateSummary(filteredTransactions);
 }
 
 function renderCategoryOptions() {
@@ -382,8 +390,8 @@ function filterByDate(transaction) {
 }
 
 //Update func
-function updateSummary() {
-    const totalIncome = transactions.reduce((sum, transaction) => {
+function updateSummary(transactionsSummary) {
+    const totalIncome = transactionsSummary.reduce((sum, transaction) => {
         if(transaction.type === "income") {
             return sum + transaction.amount;
         }
@@ -391,7 +399,7 @@ function updateSummary() {
         return sum;
     }, 0);
 
-    const totalExpense = transactions.reduce((sum, transaction) => {
+    const totalExpense = transactionsSummary.reduce((sum, transaction) => {
         if(transaction.type === "expense") {
             return sum + transaction.amount;
         }
@@ -401,8 +409,8 @@ function updateSummary() {
 
     const totalBalance = totalIncome - totalExpense;
 
-    incomeTotal.textContent = `총 수입 : ${totalIncome.toLocaleString()}원`;
-    expenseTotal.textContent = `총 지출 : ${totalExpense.toLocaleString()}원`;
+    incomeTotal.textContent = `수입 : ${totalIncome.toLocaleString()}원`;
+    expenseTotal.textContent = `지출 : ${totalExpense.toLocaleString()}원`;
     balanceTotal.textContent = `잔액 : ${totalBalance.toLocaleString()}원`;
 }
 
@@ -416,7 +424,7 @@ function formatDate(timestamp) {
 
     const date = new Date(timestamp);
 
-    return date.toLocaleDateString("ko-KR");
+    return date.toLocaleString("ko-KR");
 }
 
 function getCategoryLabel(category) {
@@ -502,4 +510,9 @@ renderTransactions();
 /* 14일차
  * 메모 기능 추가.
  * 차후 html에서 maxlength를 사용할 것인지 고민해볼 것.
+ */
+
+/* 15일차
+ * 필터 결과에 맞는 수입/지출/잔액 표기
+ * 필터 결과에 맞는 '현재 표시 중'인 입력값 관리
  */
