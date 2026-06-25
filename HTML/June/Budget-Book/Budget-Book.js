@@ -21,6 +21,7 @@ const cancelEditBtn = document.querySelector(".cancel-edit-btn");
 const dateFilter = document.querySelector(".date-filter");
 const descriptionInput = document.querySelector(".description-input");
 const transactionCount = document.querySelector(".transaction-count");
+const statsList = document.querySelector(".stats-list");
 
 const CATEGORY_OPTIONS = {
     income: [
@@ -60,6 +61,18 @@ const CATEGORY_FILTER_OPTIONS = {
         {value: "etc", label: "기타"}
     ]
 };
+
+const EXPENSE_ORDER = [
+    "food",
+    "traffic",
+    "shopping",
+    "etc"
+];
+
+const INCOME_ORDER = [
+    "salary",
+    "etc"
+];
 
 let currentCategory = "all";
 let currentSort = "latest";
@@ -274,9 +287,10 @@ function renderTransactions() {
         filteredTransactions.forEach(transaction => {budgetList.append(createTransactionCard(transaction));});
     }
 
-    transactionCount.textContent = `현재 표시 중: ${filteredTransactions.length}건`;
+    transactionCount.textContent = `현재 표시 중 : ${filteredTransactions.length}건`;
 
     updateSummary(filteredTransactions);
+    renderStatistics(filteredTransactions);
 }
 
 function renderCategoryOptions() {
@@ -309,6 +323,51 @@ function renderCategoryFilterOptions() {
     });
 
     currentCategory = categoryFilter.value;
+}
+
+function renderStatistics(transaction) {
+    const incomeStats = {};
+    const expenseStats = {};
+
+    transaction.forEach(transactionStats => {
+        const target = transactionStats.type === "income" ? incomeStats : expenseStats;
+
+        const category = transactionStats.category;
+
+        if(target[category]) {
+            target[category] += transactionStats.amount;
+        } else {
+            target[category] = transactionStats.amount;
+        }
+    });
+
+    statsList.innerHTML = "";
+    
+    const expenseTitle = document.createElement("h4");
+    expenseTitle.textContent = "지출 통계";
+    statsList.append(expenseTitle);
+
+    EXPENSE_ORDER.forEach(category => {
+        if(expenseStats[category] === undefined) return;
+
+        const item = document.createElement("p");
+
+        item.textContent = `${getCategoryLabel(category)} : ${expenseStats[category].toLocaleString()}원`;
+        statsList.append(item);
+    })
+
+    const incomeTitle = document.createElement("h4");
+    incomeTitle.textContent = "수입 통계";
+    statsList.append(incomeTitle);
+
+    INCOME_ORDER.forEach(category => {
+        if(incomeStats[category] === undefined) return;
+
+        const item = document.createElement("p");
+
+        item.textContent = `${getCategoryLabel(category)} : ${incomeStats[category].toLocaleString()}원`;
+        statsList.append(item);
+    })
 }
 
 // filter func
@@ -515,4 +574,27 @@ renderTransactions();
 /* 15일차
  * 필터 결과에 맞는 수입/지출/잔액 표기
  * 필터 결과에 맞는 '현재 표시 중'인 입력값 관리
+ */
+
+/* 16일차
+ * 카테고리별 통계 영역 생성.
+ * Object.entries()     :
+ *      Object.entries(incomeStats).forEach(([category, amount]) => {
+ *      const item = document.createElement("p");
+ *
+ *      item.textContent = `${getCategoryLabel(category)} : ${amount.toLocaleString()}원`;
+ *      statsList.append(item);
+ *  });
+ *                          다음과 같은 방식으로 사용하려고 했으나, '정렬 순서'를 정하게 되며 쓰지 못하게 되었다.
+ * 
+ *                          객체를 다룰 때 사용하는 방식. 객체의 (key, value) 쌍들을 배열로 변환하는 함수.
+ *                          기본 형태는 Object.entries(객체).
+ * 
+ *                              const user = { name: "Kim", age: 20 };
+ *                              console.log(Object.entries(user));
+ *                          이러한 코드가 있다면, 결과는 [ ["name", "Kim"], ["age", 20] ]로 나온다. (배열 안에 배열)
+ *                          따라서 console.log(entries[0][0])을 하면 name이, console.log(entries[0][1])을 하면 Kim이 출력된다.
+ * 
+ *                          키만 꺼낸다면 Object.keys(...)를, 값만 꺼낸다면 Object.values(...)를 사용한다.
+ *                          객체는 배열처럼 forEach(), map(), filter()를 사용할 수 없어, entries를 적용시킨 뒤, 사용하는 것.
  */
