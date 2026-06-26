@@ -22,6 +22,7 @@ const dateFilter = document.querySelector(".date-filter");
 const descriptionInput = document.querySelector(".description-input");
 const transactionCount = document.querySelector(".transaction-count");
 const statsList = document.querySelector(".stats-list");
+const exportBtn = document.querySelector(".export-btn");
 
 const CATEGORY_OPTIONS = {
     income: [
@@ -121,7 +122,9 @@ dateFilter.addEventListener("change", () => {
     currentDateFilter = dateFilter.value;
 
     renderTransactions();
-})
+});
+
+exportBtn.addEventListener("click", exportCSV);
 
 
 //Transaction func
@@ -478,6 +481,68 @@ function saveTransactions() {
     localStorage.setItem("transactions", JSON.stringify(transactions));
 }
 
+function exportCSV() {
+    if(!transactions.length) {
+        alert("내보낼 데이터가 없습니다.");
+        return;
+    }
+
+    const isConfirmed = confirm("내보내시겠습니까?");
+    if(!isConfirmed) return;
+
+    let csv = "날짜,타입,카테고리,금액,메모\n";
+    transactions.forEach(transaction => {
+        const line = `${formatCSVDate(transaction.createdAt)},`+
+                    `${getCSVType(transaction.type)},`+
+                    `${getCSVCategory(transaction.category)},`+
+                    `${transaction.amount},`+
+                    `${transaction.description.replace(/\n/g, " ")}`;
+
+        csv += line + "\n";
+    });
+
+    const blob = new Blob([csv], {type: "text/csv;charset-utf-8;"});
+
+    const url = URL.createObjectURL(blob);
+
+    const date = new Date().toISOString().split("T")[0];
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `budget-book-${date}.csv`;
+    a.click();
+
+    URL.revokeObjectURL(url);
+}
+
+function formatCSVDate(timestamp) {
+    if(!timestamp) return "";
+
+    const date = new Date(timestamp);
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+}
+
+function getCSVType(type) {
+    if (type === "income") return "수입";
+    return "지출";
+}
+
+function getCSVCategory(category) {
+    switch(category) {
+        case "food": return "식비";
+        case "traffic": return "교통";
+        case "shopping": return "쇼핑";
+        case "salary": return "급여";
+    }
+
+    return "기타";
+}
+
+//etc
 function formatDate(timestamp) {
     if(!timestamp) return "";
 
@@ -597,4 +662,18 @@ renderTransactions();
  * 
  *                          키만 꺼낸다면 Object.keys(...)를, 값만 꺼낸다면 Object.values(...)를 사용한다.
  *                          객체는 배열처럼 forEach(), map(), filter()를 사용할 수 없어, entries를 적용시킨 뒤, 사용하는 것.
+ */
+
+/* 17일차
+ * csv 내보내기
+ * const blob = new Blob([csv], {type: "text/csv;charset-utf-8;"});     : [csv] : 이 문자열을 하나의 파일 내용으로 쓴다는 의미.
+ *                                                                                'csv 문자열 > blob > CSV 파일'이 되는 순서.
+ * 
+ * transaction.description.replace(/\n/g, " ")      : 줄바꿈(마트 \n 우유 구입)을 공백으로 바꾸는 것.
+ * String(date.getMonth() + 1).padStart(2, "0");    : '2026-06-06'을 만들 때, date-getMonth()+1만 하면 2026-6만 나오기 때문에 padStart로 앞에 0을 붙여주는 것.
+ *                                                    padStart() : 문자열의 앞부분을 특정 길이로 채우는 역할을 한다. padEnd()도 존재.
+ * 
+ * confirm(), alert()   : 두 가지 모두 브라우저가 제공하는 대화상자(dialog)를 띄운다.
+ *                        confirm() : 사용자에게 확인을 받는다. true or false가 반환된다.
+ *                        alert()   : 사용자에게 알림만 보여준다. 반환값은 없다.
  */
