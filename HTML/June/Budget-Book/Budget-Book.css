@@ -60,6 +60,15 @@ button:hover {
     display: none;
 }
 
+/* ===== control ===== */
+.control {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom: 10px;
+}
+
 /* ===== filter area ===== */
 .filter-area {
     display: flex;
@@ -67,10 +76,12 @@ button:hover {
     gap: 10px;
 
     align-items: center;
-
-    margin-bottom: 10px;
 }
 
+/* ===== import/export ===== */
+.import-export {
+    gap: 10px;
+}
 
 /* ===== budget list ===== */
 .budget-list {
