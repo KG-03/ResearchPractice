@@ -23,6 +23,7 @@ const descriptionInput = document.querySelector(".description-input");
 const transactionCount = document.querySelector(".transaction-count");
 const statsList = document.querySelector(".stats-list");
 const exportBtn = document.querySelector(".export-btn");
+const themeToggleBtn = document.querySelector(".theme-toggle-btn");
 
 const CATEGORY_OPTIONS = {
     income: [
@@ -79,6 +80,7 @@ let currentCategory = "all";
 let currentSort = "latest";
 let currentType = "all";
 let currentDateFilter = "all";
+let currentTheme = localStorage.getItem("theme") || "light";
 
 let isEditing = false;
 let editingId = null;
@@ -125,6 +127,14 @@ dateFilter.addEventListener("change", () => {
 });
 
 exportBtn.addEventListener("click", exportCSV);
+
+themeToggleBtn.addEventListener("click", () => {
+    currentTheme = currentTheme === "light" ? "dark" : "light";
+
+    localStorage.setItem("theme", currentTheme);
+    applyTheme(currentTheme);
+    updateThemeButton();
+});
 
 
 //Transaction func
@@ -562,9 +572,21 @@ function getCategoryLabel(category) {
     return "📦 기타";
 }
 
+function applyTheme(theme) {
+    document.body.classList.remove("light-theme", "dark-theme");
+    document.body.classList.add(`${theme}-theme`);
+}
+
+function updateThemeButton() {
+    themeToggleBtn.textContent = currentTheme === "light" ? "🌙" : "☀️";
+}
+
 renderCategoryOptions();
 renderCategoryFilterOptions();
 renderTransactions();
+
+applyTheme(currentTheme);
+updateThemeButton();
 
 /* 참고
  * 콘솔에서 localStorage.clear();를 하면 저장되어 있는 값이 모두 삭제됨.
@@ -676,4 +698,8 @@ renderTransactions();
  * confirm(), alert()   : 두 가지 모두 브라우저가 제공하는 대화상자(dialog)를 띄운다.
  *                        confirm() : 사용자에게 확인을 받는다. true or false가 반환된다.
  *                        alert()   : 사용자에게 알림만 보여준다. 반환값은 없다.
+ */
+
+/* 19일차
+ * 다크모드/화이트모드
  */
