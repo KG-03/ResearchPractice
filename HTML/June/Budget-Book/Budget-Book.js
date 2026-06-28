@@ -24,6 +24,7 @@ const transactionCount = document.querySelector(".transaction-count");
 const statsList = document.querySelector(".stats-list");
 const exportBtn = document.querySelector(".export-btn");
 const themeToggleBtn = document.querySelector(".theme-toggle-btn");
+const searchInput = document.querySelector(".search-input");
 
 const CATEGORY_OPTIONS = {
     income: [
@@ -81,6 +82,7 @@ let currentSort = "latest";
 let currentType = "all";
 let currentDateFilter = "all";
 let currentTheme = localStorage.getItem("theme") || "light";
+let currentKeyword = "";
 
 let isEditing = false;
 let editingId = null;
@@ -134,6 +136,11 @@ themeToggleBtn.addEventListener("click", () => {
     localStorage.setItem("theme", currentTheme);
     applyTheme(currentTheme);
     updateThemeButton();
+});
+
+searchInput.addEventListener("input", () => {
+    currentKeyword = searchInput.value.trim().toLowerCase();
+    renderTransactions();
 });
 
 
@@ -292,10 +299,13 @@ function renderTransactions() {
 
     filteredTransactions = filterByDate(filteredTransactions);
 
+    filteredTransactions = filterByKeyword(filteredTransactions);
+
     filteredTransactions = sortTransactions(filteredTransactions);
 
     if(filteredTransactions.length === 0) {
-        budgetList.innerHTML = '<p class="empty-message">아직 등록된 거래가 없습니다.</p>';
+        if(currentKeyword !== "") budgetList.innerHTML = `<p class="empty-message">검색 결과가 없습니다.</p>`;
+        else budgetList.innerHTML = '<p class="empty-message">아직 등록된 거래가 없습니다.</p>';
     } else {
         filteredTransactions.forEach(transaction => {budgetList.append(createTransactionCard(transaction));});
     }
@@ -459,6 +469,17 @@ function filterByDate(transaction) {
     }
 
     return transaction;
+}
+
+function filterByKeyword(transaction) {
+    if(currentKeyword === "") return transaction;
+
+    return transaction.filter(transac => {
+        const descriptionMatch = (transac.description || "").toLowerCase().includes(currentKeyword);
+        const amountMatch = String(transac.amount || "").toLowerCase().replaceAll(",", "").includes(currentKeyword.replaceAll(",", ""));
+
+        return descriptionMatch || amountMatch;
+    });
 }
 
 //Update func
@@ -702,4 +723,21 @@ updateThemeButton();
 
 /* 19일차
  * 다크모드/화이트모드
+ */
+
+/* 20일차
+ * const descriptionMatch = (transac.description || "").toLowerCase().includes(currentKeyword);
+ *      : includes()는 문자열에서만 사용 가능한 함수. 숫자에서는 사용할 수 없다.
+ * const amountMatch = String(transac.amount || "").toLowerCase().replaceAll(",", "").includes(currentKeyword.replaceAll(",", ""));
+ *      : includes()를 사용하기 위해 number를 string으로 형변환시켜서 사용.
+ *        이후, '33,333원'으로 표기되고 있는 중이기 때문에 쉼표를 고려해서 값을 찾아야 한다.
+ * 
+ *        replaceAll()  : string의 메서드. 문자열에서 특정 내용을 모두 찾아 다른 내용으로 바꾸는 함수.
+ *                        형태: 문자열.replaceAll(찾을 문자열, 바꿀 문자열)
+ *                        원본 문자열은 변경되지 않기 때문에 반드시 반환값을 받아야 한다.
+ * 
+ *                        본 코드에서는 ","을 ""으로 변경했다.
+ * 
+ *                        replace() 함수도 있는데, replace() 함수로는 첫 번째 값만 변경된다.
+ *                            따라서 '33,333,333'이라는 값이 있으면, replace()로는 '33333,333'으로 변경되는 것.
  */
