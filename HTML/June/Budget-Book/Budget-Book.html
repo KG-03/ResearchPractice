@@ -16,7 +16,7 @@
             <div class="app">
                 <button class="theme-toggle-btn">🌙</button>
                 <section class="input-area">입력: 
-                    <input class="amount-input" type="number" placeholder="금액 입력">
+                    <input class="amount-input" type="number" maxlength="9" step="1" min="1" placeholder="금액 입력">
 
                     <select class="type-select">
                         <option value="expense">지출</option>
@@ -96,4 +96,8 @@
 
         <script src="Budget-Book.js"></script>
     </body>
+    <!--
+        step="1"    : 1 단위만 입력 가능(정수)
+        min="1"     : 1 이상만 입력 가능
+    -->
 </html>
