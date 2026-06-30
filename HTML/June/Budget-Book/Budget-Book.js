@@ -143,6 +143,16 @@ searchInput.addEventListener("input", () => {
     renderTransactions();
 });
 
+amountInput.addEventListener("input", () => {
+    maxLengthCheck(amountInput);
+});
+
+document.addEventListener("keydown", function(e) {
+    if(e.ctrlKey && e.key === "Enter") {
+        if(!isEditing) addTransaction();
+        else updateTransaction();
+    }
+});
 
 //Transaction func
 function addTransaction() {
@@ -151,10 +161,7 @@ function addTransaction() {
     const type = typeSelect.value;
     const description = descriptionInput.value.trim();
 
-    if (amount <= 0) {
-        alert("올바른 금액이 아닙니다.");
-        return;
-    }
+    if(!validateTransaction(amount)) return;
 
     const transaction = {
         id: Date.now(),
@@ -172,6 +179,8 @@ function addTransaction() {
     amountInput.value = "";
     descriptionInput.value= "";
     renderTransactions();
+
+    amountInput.focus();
 }
 
 function deleteTransaction(id) {
@@ -189,9 +198,9 @@ function startEdit(id) {
     if(!editTransaction) return;
 
     amountInput.value = editTransaction.amount;
-    categorySelect.value = editTransaction.category;
     typeSelect.value = editTransaction.type;
     renderCategoryOptions();
+    categorySelect.value = editTransaction.category;
     descriptionInput.value = editTransaction.description;
 
     isEditing = true;
@@ -199,15 +208,14 @@ function startEdit(id) {
 
     addBtn.textContent = "수정 완료";
     cancelEditBtn.style.display = "inline-block";
+
+    amountInput.focus();
 }
 
 function updateTransaction() {
     const editTransaction = transactions.find(transaction => transaction.id === editingId);
 
-    if (amountInput.value <= 0) {
-        alert("올바른 금액이 아닙니다.");
-        return;
-    }
+    if (!validateTransaction(Number(amountInput.value))) return;
 
     if(!editTransaction) return;
 
@@ -224,9 +232,14 @@ function updateTransaction() {
 
     addBtn.textContent = "추가";
     cancelEditBtn.style.display = "none";
+    typeSelect.value = "expense";
+    renderCategoryOptions();
+    categorySelect.value = "food";
+
     amountInput.value = "";
     descriptionInput.value = "";
     
+    amountInput.focus();
     renderTransactions();
 }
 
@@ -240,6 +253,7 @@ function cancelEdit() {
     addBtn.textContent = "추가";
     cancelEditBtn.style.display = "none";
     typeSelect.value = "expense";
+    renderCategoryOptions();
     categorySelect.value = "food";
 }
 
@@ -393,7 +407,7 @@ function renderStatistics(transaction) {
     })
 }
 
-// filter func
+//filter func
 function sortTransactions(transaction) {
     if(currentSort === "latest") {
         transaction.sort((a,b) => {
@@ -527,7 +541,7 @@ function exportCSV() {
                     `${getCSVType(transaction.type)},`+
                     `${getCSVCategory(transaction.category)},`+
                     `${transaction.amount},`+
-                    `${transaction.description.replace(/\n/g, " ")}`;
+                    `"${transaction.description.replace(/\n/g, " ")}"`;
 
         csv += line + "\n";
     });
@@ -600,6 +614,31 @@ function applyTheme(theme) {
 
 function updateThemeButton() {
     themeToggleBtn.textContent = currentTheme === "light" ? "🌙" : "☀️";
+}
+
+function maxLengthCheck(input) {
+    if(input.value.length > input.maxLength) {
+        input.value = input.value.slice(0, input.maxLength);
+    }
+}
+
+function validateTransaction(amount) {
+    if (Number.isNaN(amount)) {
+        alert("금액을 입력해 주세요.");
+        return false;
+    }
+
+    if (amount <= 0) {
+        alert("올바른 금액이 아닙니다.");
+        return false;
+    }
+
+    if (!Number.isInteger(amount)) {
+        alert("금액은 정수만 입력할 수 있습니다.");
+        return false;
+    }
+
+    return true;
 }
 
 renderCategoryOptions();
@@ -740,4 +779,14 @@ updateThemeButton();
  * 
  *                        replace() 함수도 있는데, replace() 함수로는 첫 번째 값만 변경된다.
  *                            따라서 '33,333,333'이라는 값이 있으면, replace()로는 '33333,333'으로 변경되는 것.
+ */
+
+/* 21일차
+ * 숫자 입력 제한. 정수 외 입력을 저장할 수 없게 지정.
+ * 단축키 (ctrl + enter) 추가.
+ * slice(0, input.maxLength)    : slice(begin, end).
+ *                                어떤 배열의 begin부터 end까지에 대한 복사본을 새 배열 객체로 반환.
+ * Number.isNaN()               : 전달받은 값이 NaN인지 여부를 결정하고 Number 유형이 아니라면 false를 반환.
+ *                                현재 코드에서는 Number가 아닌 값이 들어갈 수 없는 구조이기 때문에 실행되는 경우는 거의 없으나,
+ *                                  혹시 모를 상황에 대비하여 코드를 유지하는 중.
  */
