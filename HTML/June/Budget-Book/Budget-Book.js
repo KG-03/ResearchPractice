@@ -176,8 +176,7 @@ function addTransaction() {
     transactions.push(transaction);
     saveTransactions();
 
-    amountInput.value = "";
-    descriptionInput.value= "";
+    resetTransactionForm();
     renderTransactions();
 
     amountInput.focus();
@@ -230,31 +229,16 @@ function updateTransaction() {
     isEditing = false;
     editingId = null;
 
-    addBtn.textContent = "추가";
-    cancelEditBtn.style.display = "none";
-    typeSelect.value = "expense";
-    renderCategoryOptions();
-    categorySelect.value = "food";
-
-    amountInput.value = "";
-    descriptionInput.value = "";
-    
-    amountInput.focus();
+    resetTransactionForm();
     renderTransactions();
+    amountInput.focus();
 }
 
 function cancelEdit() {
     isEditing = false;
     editingId = null;
 
-    amountInput.value = "";
-    descriptionInput.value= "";
-
-    addBtn.textContent = "추가";
-    cancelEditBtn.style.display = "none";
-    typeSelect.value = "expense";
-    renderCategoryOptions();
-    categorySelect.value = "food";
+    resetTransactionForm();
 }
 
 function createTransactionCard(transaction) {
@@ -641,6 +625,17 @@ function validateTransaction(amount) {
     return true;
 }
 
+function resetTransactionForm() {
+    amountInput.value = "";
+    descriptionInput.value = "";
+
+    addBtn.textContent = "추가";
+    cancelEditBtn.style.display = "none";
+    typeSelect.value = "expense";
+    renderCategoryOptions();
+    categorySelect.value = "food";
+}
+
 renderCategoryOptions();
 renderCategoryFilterOptions();
 renderTransactions();
@@ -789,4 +784,8 @@ updateThemeButton();
  * Number.isNaN()               : 전달받은 값이 NaN인지 여부를 결정하고 Number 유형이 아니라면 false를 반환.
  *                                현재 코드에서는 Number가 아닌 값이 들어갈 수 없는 구조이기 때문에 실행되는 경우는 거의 없으나,
  *                                  혹시 모를 상황에 대비하여 코드를 유지하는 중.
+ */
+
+/* 22일차
+ * 코드 리팩토링
  */
