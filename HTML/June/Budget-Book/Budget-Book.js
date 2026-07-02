@@ -1,11 +1,3 @@
-let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
-
-transactions = transactions.map(transaction => ({
-    ...transaction,
-    description: transaction.description ?? "",
-    updatedAt: transaction.updatedAt ?? transaction.createdAt
-}));
-
 const amountInput = document.querySelector(".amount-input");
 const categorySelect = document.querySelector(".category-select");
 const typeSelect = document.querySelector(".type-select");
@@ -77,6 +69,14 @@ const INCOME_ORDER = [
     "etc"
 ];
 
+let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
+
+transactions = transactions.map(transaction => ({
+    ...transaction,
+    description: transaction.description ?? "",
+    updatedAt: transaction.updatedAt ?? transaction.createdAt
+}));
+
 let currentCategory = "all";
 let currentSort = "latest";
 let currentType = "all";
@@ -87,12 +87,32 @@ let currentKeyword = "";
 let isEditing = false;
 let editingId = null;
 
+
+amountInput.addEventListener("input", () => {
+    maxLengthCheck(amountInput);
+});
+
 addBtn.addEventListener("click", () => {
     if(isEditing) {
         updateTransaction();
     } else {
         addTransaction();
     }
+});
+
+typeSelect.addEventListener("change", () => {
+    renderCategorySelectOptions();
+});
+
+cancelEditBtn.addEventListener("click", () => {
+    cancelEdit();
+});
+
+typeFilter.addEventListener("change", () => {
+    currentType = typeFilter.value;
+
+    renderCategoryFilterOptions();
+    renderTransactions();
 });
 
 categoryFilter.addEventListener("change", () => {
@@ -107,24 +127,14 @@ sortSelect.addEventListener("change", () => {
     renderTransactions();
 });
 
-typeSelect.addEventListener("change", () => {
-    renderCategoryOptions();
-});
-
-typeFilter.addEventListener("change", () => {
-    currentType = typeFilter.value;
-
-    renderCategoryFilterOptions();
-    renderTransactions();
-});
-
-cancelEditBtn.addEventListener("click", () => {
-    cancelEdit();
-});
-
 dateFilter.addEventListener("change", () => {
     currentDateFilter = dateFilter.value;
 
+    renderTransactions();
+});
+
+searchInput.addEventListener("input", () => {
+    currentKeyword = searchInput.value.trim().toLowerCase();
     renderTransactions();
 });
 
@@ -138,15 +148,6 @@ themeToggleBtn.addEventListener("click", () => {
     updateThemeButton();
 });
 
-searchInput.addEventListener("input", () => {
-    currentKeyword = searchInput.value.trim().toLowerCase();
-    renderTransactions();
-});
-
-amountInput.addEventListener("input", () => {
-    maxLengthCheck(amountInput);
-});
-
 document.addEventListener("keydown", function(e) {
     if(e.ctrlKey && e.key === "Enter") {
         if(!isEditing) addTransaction();
@@ -154,7 +155,17 @@ document.addEventListener("keydown", function(e) {
     }
 });
 
-//Transaction func
+document.addEventListener("DOMContentLoaded", () => {
+    renderCategorySelectOptions();
+    renderCategoryFilterOptions();
+    
+    renderTransactions();
+
+    applyTheme(currentTheme);
+    updateThemeButton();
+})
+
+//===== Transaction =====
 function addTransaction() {
     const amount = Number(amountInput.value);
     const category = categorySelect.value;
@@ -198,7 +209,7 @@ function startEdit(id) {
 
     amountInput.value = editTransaction.amount;
     typeSelect.value = editTransaction.type;
-    renderCategoryOptions();
+    renderCategorySelectOptions();
     categorySelect.value = editTransaction.category;
     descriptionInput.value = editTransaction.description;
 
@@ -214,9 +225,9 @@ function startEdit(id) {
 function updateTransaction() {
     const editTransaction = transactions.find(transaction => transaction.id === editingId);
 
-    if (!validateTransaction(Number(amountInput.value))) return;
+    if (!editTransaction) return;
 
-    if(!editTransaction) return;
+    if (!validateTransaction(Number(amountInput.value))) return;
 
     editTransaction.amount = Number(amountInput.value);
     editTransaction.category = categorySelect.value;
@@ -247,7 +258,7 @@ function createTransactionCard(transaction) {
 
     const typeLable = transaction.type === "income" ? "➕" : "➖";
     const amount = document.createElement("p");
-    amount.textContent = `${typeLable} ${getCategoryLabel(transaction.category)} ${transaction.amount.toLocaleString()}원`;
+    amount.textContent = `${typeLable} ${getCategoryIcon(transaction.category)} ${getCategoryLabel(transaction.category)} ${transaction.amount.toLocaleString()}원`;
     card.append(amount);
 
     if(transaction.description) {
@@ -285,113 +296,7 @@ function createTransactionCard(transaction) {
     return card;
 }
 
-//Render func
-function renderTransactions() {
-    budgetList.innerHTML = "";
-
-    let filteredTransactions = [...transactions];
-
-    filteredTransactions = filterByType(filteredTransactions);
-
-    filteredTransactions = filterByCategory(filteredTransactions);
-
-    filteredTransactions = filterByDate(filteredTransactions);
-
-    filteredTransactions = filterByKeyword(filteredTransactions);
-
-    filteredTransactions = sortTransactions(filteredTransactions);
-
-    if(filteredTransactions.length === 0) {
-        if(currentKeyword !== "") budgetList.innerHTML = `<p class="empty-message">검색 결과가 없습니다.</p>`;
-        else budgetList.innerHTML = '<p class="empty-message">아직 등록된 거래가 없습니다.</p>';
-    } else {
-        filteredTransactions.forEach(transaction => {budgetList.append(createTransactionCard(transaction));});
-    }
-
-    transactionCount.textContent = `현재 표시 중 : ${filteredTransactions.length}건`;
-
-    updateSummary(filteredTransactions);
-    renderStatistics(filteredTransactions);
-}
-
-function renderCategoryOptions() {
-    const type = typeSelect.value;
-
-    categorySelect.innerHTML = "";
-
-    CATEGORY_OPTIONS[type].forEach(category => {
-        const option = document.createElement("option");
-
-        option.value = category.value;
-        option.textContent = category.label;
-
-        categorySelect.append(option);
-    });
-}
-
-function renderCategoryFilterOptions() {
-    const type = typeFilter.value;
-
-    categoryFilter.innerHTML = "";
-
-    CATEGORY_FILTER_OPTIONS[type].forEach(category => {
-        const option = document.createElement("option");
-
-        option.value = category.value;
-        option.textContent = category.label;
-
-        categoryFilter.append(option);
-    });
-
-    currentCategory = categoryFilter.value;
-}
-
-function renderStatistics(transaction) {
-    const incomeStats = {};
-    const expenseStats = {};
-
-    transaction.forEach(transactionStats => {
-        const target = transactionStats.type === "income" ? incomeStats : expenseStats;
-
-        const category = transactionStats.category;
-
-        if(target[category]) {
-            target[category] += transactionStats.amount;
-        } else {
-            target[category] = transactionStats.amount;
-        }
-    });
-
-    statsList.innerHTML = "";
-    
-    const expenseTitle = document.createElement("h4");
-    expenseTitle.textContent = "지출 통계";
-    statsList.append(expenseTitle);
-
-    EXPENSE_ORDER.forEach(category => {
-        if(expenseStats[category] === undefined) return;
-
-        const item = document.createElement("p");
-
-        item.textContent = `${getCategoryLabel(category)} : ${expenseStats[category].toLocaleString()}원`;
-        statsList.append(item);
-    })
-
-    const incomeTitle = document.createElement("h4");
-    incomeTitle.textContent = "수입 통계";
-    statsList.append(incomeTitle);
-
-    INCOME_ORDER.forEach(category => {
-        if(incomeStats[category] === undefined) return;
-
-        const item = document.createElement("p");
-
-        item.textContent = `${getCategoryLabel(category)} : ${incomeStats[category].toLocaleString()}원`;
-        statsList.append(item);
-    })
-}
-
-//filter func
+//===== filter =====
 function sortTransactions(transaction) {
     if(currentSort === "latest") {
         transaction.sort((a,b) => {
@@ -474,38 +379,13 @@ function filterByKeyword(transaction) {
 
     return transaction.filter(transac => {
         const descriptionMatch = (transac.description || "").toLowerCase().includes(currentKeyword);
-        const amountMatch = String(transac.amount || "").toLowerCase().replaceAll(",", "").includes(currentKeyword.replaceAll(",", ""));
+        const amountMatch = String(transac.amount).includes(currentKeyword.replaceAll(",", ""));
 
         return descriptionMatch || amountMatch;
     });
 }
 
-//Update func
-function updateSummary(transactionsSummary) {
-    const totalIncome = transactionsSummary.reduce((sum, transaction) => {
-        if(transaction.type === "income") {
-            return sum + transaction.amount;
-        }
-
-        return sum;
-    }, 0);
-
-    const totalExpense = transactionsSummary.reduce((sum, transaction) => {
-        if(transaction.type === "expense") {
-            return sum + transaction.amount;
-        }
-
-        return sum;
-    }, 0);
-
-    const totalBalance = totalIncome - totalExpense;
-
-    incomeTotal.textContent = `수입 : ${totalIncome.toLocaleString()}원`;
-    expenseTotal.textContent = `지출 : ${totalExpense.toLocaleString()}원`;
-    balanceTotal.textContent = `잔액 : ${totalBalance.toLocaleString()}원`;
-}
-
-//Storage func
+//===== Storage(CSV) =====
 function saveTransactions() {
     localStorage.setItem("transactions", JSON.stringify(transactions));
 }
@@ -521,13 +401,13 @@ function exportCSV() {
 
     let csv = "날짜,타입,카테고리,금액,메모\n";
     transactions.forEach(transaction => {
-        const line = `${formatCSVDate(transaction.createdAt)},`+
-                    `${getCSVType(transaction.type)},`+
-                    `${getCSVCategory(transaction.category)},`+
-                    `${transaction.amount},`+
-                    `"${transaction.description.replace(/\n/g, " ")}"`;
+        const date = `${formatCSVDate(transaction.createdAt)}`;
+        const type = `${getCSVType(transaction.type)}`;
+        const category = `${getCategoryLabel(transaction.category)}`;
+        const amount = `${transaction.amount}`;
+        const memo = `"${(transaction.description.replace(/\n/g, " ") ?? "")}"`;
 
-        csv += line + "\n";
+        csv += `${date},${type},${category},${amount},${memo}` + "\n";
     });
 
     const blob = new Blob([csv], {type: "text/csv;charset-utf-8;"});
@@ -555,42 +435,118 @@ function formatCSVDate(timestamp) {
     return `${year}-${month}-${day}`;
 }
 
-function getCSVType(type) {
-    if (type === "income") return "수입";
-    return "지출";
-}
+//===== Render ======
+function renderTransactions() {
+    budgetList.innerHTML = "";
 
-function getCSVCategory(category) {
-    switch(category) {
-        case "food": return "식비";
-        case "traffic": return "교통";
-        case "shopping": return "쇼핑";
-        case "salary": return "급여";
+    let filteredTransactions = [...transactions];
+
+    filteredTransactions = filterByType(filteredTransactions);
+
+    filteredTransactions = filterByCategory(filteredTransactions);
+
+    filteredTransactions = filterByDate(filteredTransactions);
+
+    filteredTransactions = filterByKeyword(filteredTransactions);
+
+    filteredTransactions = sortTransactions(filteredTransactions);
+
+    if(filteredTransactions.length === 0) {
+        if(currentKeyword !== "") budgetList.innerHTML = `<p class="empty-message">검색 결과가 없습니다.</p>`;
+        else budgetList.innerHTML = '<p class="empty-message">아직 등록된 거래가 없습니다.</p>';
+    } else {
+        filteredTransactions.forEach(transaction => {budgetList.append(createTransactionCard(transaction));});
     }
 
-    return "기타";
+    transactionCount.textContent = `현재 표시 중 : ${filteredTransactions.length}건`;
+
+    updateSummary(filteredTransactions);
+    renderStatistics(filteredTransactions);
 }
 
-//etc
-function formatDate(timestamp) {
-    if(!timestamp) return "";
+function renderCategoryOption(selectElement, option) {
+    selectElement.innerHTML = "";
+    option.forEach(optionData => {
+        const categoryoption = document.createElement("option");
+        categoryoption.value = optionData.value;
+        categoryoption.textContent = optionData.label;
 
-    const date = new Date(timestamp);
-
-    return date.toLocaleString("ko-KR");
+        selectElement.append(categoryoption);
+    })
 }
 
-function getCategoryLabel(category) {
-    switch(category) {
-        case "food": return "🍚 식비";
-        case "traffic": return "🚌 교통";
-        case "shopping": return "🛍 쇼핑";
-        case "salary": return "💰 급여";
-    }
+function renderCategorySelectOptions() {
+    renderCategoryOption(categorySelect, CATEGORY_OPTIONS[typeSelect.value]);
+}
+
+function renderCategoryFilterOptions() {
+    renderCategoryOption(categoryFilter, CATEGORY_FILTER_OPTIONS[typeFilter.value]);
+
+    currentCategory = categoryFilter.value;
+}
+
+function renderStatistics(transaction) {
+    const incomeStats = {};
+    const expenseStats = {};
+
+    transaction.forEach(transactionStats => {
+        const target = transactionStats.type === "income" ? incomeStats : expenseStats;
+
+        const category = transactionStats.category;
+
+        if(target[category]) {
+            target[category] += transactionStats.amount;
+        } else {
+            target[category] = transactionStats.amount;
+        }
+    });
+
+    statsList.innerHTML = "";
     
-    return "📦 기타";
+    renderStatisticsSection("지출 통계", EXPENSE_ORDER, expenseStats);
+    renderStatisticsSection("수입 통계", INCOME_ORDER, incomeStats);
 }
 
+function renderStatisticsSection(title, order, stats) {
+    const sectionTitle = document.createElement("h4");
+    sectionTitle.textContent = title;
+    statsList.append(sectionTitle);
+
+    order.forEach(category => {
+        if(stats[category] === undefined) return;
+
+        const item = document.createElement("p");
+
+        item.textContent = `${getCategoryIcon(category)} ${getCategoryLabel(category)} : ${stats[category].toLocaleString()}원`;
+        statsList.append(item);
+    })
+}
+
+function updateSummary(transactionsSummary) {
+    const totalIncome = transactionsSummary.reduce((sum, transaction) => {
+        if(transaction.type === "income") {
+            return sum + transaction.amount;
+        }
+
+        return sum;
+    }, 0);
+
+    const totalExpense = transactionsSummary.reduce((sum, transaction) => {
+        if(transaction.type === "expense") {
+            return sum + transaction.amount;
+        }
+
+        return sum;
+    }, 0);
+
+    const totalBalance = totalIncome - totalExpense;
+
+    incomeTotal.textContent = `수입 : ${totalIncome.toLocaleString()}원`;
+    expenseTotal.textContent = `지출 : ${totalExpense.toLocaleString()}원`;
+    balanceTotal.textContent = `잔액 : ${totalBalance.toLocaleString()}원`;
+}
+
+//===== Theme =====
 function applyTheme(theme) {
     document.body.classList.remove("light-theme", "dark-theme");
     document.body.classList.add(`${theme}-theme`);
@@ -600,12 +556,7 @@ function updateThemeButton() {
     themeToggleBtn.textContent = currentTheme === "light" ? "🌙" : "☀️";
 }
 
-function maxLengthCheck(input) {
-    if(input.value.length > input.maxLength) {
-        input.value = input.value.slice(0, input.maxLength);
-    }
-}
-
+//===== Validation =====
 function validateTransaction(amount) {
     if (Number.isNaN(amount)) {
         alert("금액을 입력해 주세요.");
@@ -625,6 +576,43 @@ function validateTransaction(amount) {
     return true;
 }
 
+//===== etc =====
+function formatDate(timestamp) {
+    if(!timestamp) return "";
+
+    const date = new Date(timestamp);
+
+    return date.toLocaleString("ko-KR");
+}
+
+function getCategoryLabel(category) {
+    switch(category) {
+        case "food": return "식비";
+        case "traffic": return "교통";
+        case "shopping": return "쇼핑";
+        case "salary": return "급여";
+    }
+    
+    return "기타";
+}
+
+function getCategoryIcon(category) {
+    switch(category) {
+        case "food": return "🍚";
+        case "traffic": return "🚌";
+        case "shopping": return "🛍";
+        case "salary": return "💰";
+    }
+
+    return "📦";
+}
+
+function maxLengthCheck(input) {
+    if(input.value.length > input.maxLength) {
+        input.value = input.value.slice(0, input.maxLength);
+    }
+}
+
 function resetTransactionForm() {
     amountInput.value = "";
     descriptionInput.value = "";
@@ -632,16 +620,9 @@ function resetTransactionForm() {
     addBtn.textContent = "추가";
     cancelEditBtn.style.display = "none";
     typeSelect.value = "expense";
-    renderCategoryOptions();
+    renderCategorySelectOptions();
     categorySelect.value = "food";
 }
-
-renderCategoryOptions();
-renderCategoryFilterOptions();
-renderTransactions();
-
-applyTheme(currentTheme);
-updateThemeButton();
 
 /* 참고
  * 콘솔에서 localStorage.clear();를 하면 저장되어 있는 값이 모두 삭제됨.
@@ -788,4 +769,8 @@ updateThemeButton();
 
 /* 22일차
  * 코드 리팩토링
+ */
+
+/* 23일차
+ * 코드 재배치
  */
