@@ -17,6 +17,7 @@ const statsList = document.querySelector(".stats-list");
 const exportBtn = document.querySelector(".export-btn");
 const themeToggleBtn = document.querySelector(".theme-toggle-btn");
 const searchInput = document.querySelector(".search-input");
+const toast = document.querySelector(".toast");
 
 const CATEGORY_OPTIONS = {
     income: [
@@ -86,6 +87,8 @@ let currentKeyword = "";
 
 let isEditing = false;
 let editingId = null;
+
+let toastTimer = null;
 
 
 amountInput.addEventListener("input", () => {
@@ -190,6 +193,7 @@ function addTransaction() {
     resetTransactionForm();
     renderTransactions();
 
+    showToast("거래가 추가되었습니다.");
     amountInput.focus();
 }
 
@@ -200,6 +204,8 @@ function deleteTransaction(id) {
 
     saveTransactions();
     renderTransactions();
+
+    showToast("거래가 삭제되었습니다.");
 }
 
 function startEdit(id) {
@@ -242,6 +248,8 @@ function updateTransaction() {
 
     resetTransactionForm();
     renderTransactions();
+
+    showToast("거래가 수정되었습니다.");
     amountInput.focus();
 }
 
@@ -250,6 +258,9 @@ function cancelEdit() {
     editingId = null;
 
     resetTransactionForm();
+
+    showToast("수정이 취소되었습니다.");
+    amountInput.focus();
 }
 
 function createTransactionCard(transaction) {
@@ -405,7 +416,7 @@ function exportCSV() {
         const type = `${getCSVType(transaction.type)}`;
         const category = `${getCategoryLabel(transaction.category)}`;
         const amount = `${transaction.amount}`;
-        const memo = `"${(transaction.description.replace(/\n/g, " ") ?? "")}"`;
+        const memo = `"""${(transaction.description.replace(/\n/g, " ") ?? "")}"""`;
 
         csv += `${date},${type},${category},${amount},${memo}` + "\n";
     });
@@ -421,6 +432,13 @@ function exportCSV() {
     a.click();
 
     URL.revokeObjectURL(url);
+
+    showToast("CSV로 내보내기가 성공했습니다.");
+}
+
+function getCSVType(type) {
+    if (type === "income") return "수입";
+    return "지출";
 }
 
 function formatCSVDate(timestamp) {
@@ -624,6 +642,18 @@ function resetTransactionForm() {
     categorySelect.value = "food";
 }
 
+function showToast(message) {
+    clearTimeout(toastTimer);
+
+    toast.innerHTML = message;
+    toast.classList.add("show");
+
+    toastTimer = setTimeout(() => {
+        toast.classList.remove("show");
+        setTimeout(() => {toast.innerHTML = "";}, 2000);
+    }, 3000);
+}
+
 /* 참고
  * 콘솔에서 localStorage.clear();를 하면 저장되어 있는 값이 모두 삭제됨.
  */
@@ -773,4 +803,8 @@ function resetTransactionForm() {
 
 /* 23일차
  * 코드 재배치
+ */
+
+/* 24일차
+ * toast 추가.
  */
