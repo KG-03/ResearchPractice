@@ -18,6 +18,7 @@ const exportBtn = document.querySelector(".export-btn");
 const themeToggleBtn = document.querySelector(".theme-toggle-btn");
 const searchInput = document.querySelector(".search-input");
 const toast = document.querySelector(".toast");
+const delAllBtn = document.querySelector(".delete-all-btn")
 
 const CATEGORY_OPTIONS = {
     income: [
@@ -151,6 +152,20 @@ themeToggleBtn.addEventListener("click", () => {
     updateThemeButton();
 });
 
+delAllBtn.addEventListener("click", () => {
+    const isConfirmed = confirm("정말 모두 삭제 하시겠습니까?");
+    if (!isConfirmed) return;
+
+    transactions = [];
+    saveTransactions();
+
+    cancelEdit();
+    renderTransactions();
+
+    showToast("모든 거래가 삭제되었습니다.");
+});
+
+
 document.addEventListener("keydown", function(e) {
     if(e.ctrlKey && e.key === "Enter") {
         if(!isEditing) addTransaction();
@@ -166,7 +181,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     applyTheme(currentTheme);
     updateThemeButton();
-})
+});
+
 
 //===== Transaction =====
 function addTransaction() {
@@ -213,11 +229,7 @@ function startEdit(id) {
 
     if(!editTransaction) return;
 
-    amountInput.value = editTransaction.amount;
-    typeSelect.value = editTransaction.type;
-    renderCategorySelectOptions();
-    categorySelect.value = editTransaction.category;
-    descriptionInput.value = editTransaction.description;
+    fillForm(editTransaction);
 
     isEditing = true;
     editingId = id;
@@ -263,6 +275,14 @@ function cancelEdit() {
     amountInput.focus();
 }
 
+function fillForm(transaction) {
+    amountInput.value = transaction.amount;
+    typeSelect.value = transaction.type;
+    renderCategorySelectOptions();
+    categorySelect.value = transaction.category;
+    descriptionInput.value = transaction.description;
+}
+
 function createTransactionCard(transaction) {
     const card = document.createElement("div");
     card.classList.add("budget-card");
@@ -287,7 +307,6 @@ function createTransactionCard(transaction) {
     if(transaction.updatedAt !== transaction.createdAt) {
         date.textContent += `\n(수정: ${formatDate(transaction.updatedAt)})`;
     }
-
     card.append(date);
 
     const delBtn = document.createElement("button");
@@ -303,6 +322,15 @@ function createTransactionCard(transaction) {
         startEdit(transaction.id);
     });
     card.append(editBtn);
+
+    const copyBtn = document.createElement("button");
+    copyBtn.textContent = "복사";
+    copyBtn.addEventListener("click", () => {
+        fillForm(transaction);
+        amountInput.focus();
+        showToast("거래가 입력창에 복사되었습니다.");
+    })
+    card.append(copyBtn);
 
     return card;
 }
@@ -807,4 +835,8 @@ function showToast(message) {
 
 /* 24일차
  * toast 추가.
+ */
+
+/* 26일차
+ * 메모 복제 기능 + 전체 삭제 기능
  */
