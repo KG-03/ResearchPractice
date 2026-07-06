@@ -18,7 +18,9 @@ const exportBtn = document.querySelector(".export-btn");
 const themeToggleBtn = document.querySelector(".theme-toggle-btn");
 const searchInput = document.querySelector(".search-input");
 const toast = document.querySelector(".toast");
-const delAllBtn = document.querySelector(".delete-all-btn")
+const delAllBtn = document.querySelector(".delete-all-btn");
+const importBtn = document.querySelector(".import-btn");
+const importInput = document.querySelector(".import-input");
 
 const CATEGORY_OPTIONS = {
     income: [
@@ -163,6 +165,56 @@ delAllBtn.addEventListener("click", () => {
     renderTransactions();
 
     showToast("모든 거래가 삭제되었습니다.");
+});
+
+importBtn.addEventListener("click", () => {
+    importInput.click();
+});
+
+importInput.addEventListener("change", () => {
+    const file = importInput.files[0];
+    const reader = new FileReader();
+
+    if (!file) {
+        showToast("불러오기가 취소되었습니다.");
+        return;
+    }
+
+    const isReplace = confirm("기존 거래를 모두 삭제하고 불러오시겠습니까?\n취소를 누르면 기존 거래에 추가됩니다.");
+
+    if(isReplace) { transactions = []; }
+    
+    reader.onload = () => {
+        const csv = reader.result;
+        const rows = csv.split("\n");
+        rows.shift();
+        rows.forEach(row => {
+            if(row.trim() === "") return;
+
+            const columns = row.split(",");
+
+            if(columns.length < 5) return;
+
+            const transaction = {
+                id: formatImportDate(columns[0]) + Math.random(),
+                amount: Number(columns[3]),
+                category: setCSVCategory(columns[2]),
+                type: setCSVType(columns[1]),
+                description: columns[4].replaceAll('"', ""),
+                createdAt: formatImportDate(columns[0]),
+                updatedAt: formatImportDate(columns[0])
+            };
+
+            transactions.push(transaction);
+        });
+
+        saveTransactions();
+        renderTransactions();
+        showToast("불러오기가 완료되었습니다.");
+    };
+
+    reader.readAsText(file, "utf-8");
+    importInput.value = "";
 });
 
 
@@ -440,11 +492,11 @@ function exportCSV() {
 
     let csv = "날짜,타입,카테고리,금액,메모\n";
     transactions.forEach(transaction => {
-        const date = `${formatCSVDate(transaction.createdAt)}`;
+        const date = `${formatExportDate(transaction.createdAt)}`;
         const type = `${getCSVType(transaction.type)}`;
         const category = `${getCategoryLabel(transaction.category)}`;
         const amount = `${transaction.amount}`;
-        const memo = `"""${(transaction.description.replace(/\n/g, " ") ?? "")}"""`;
+        const memo = `"${(transaction.description.replace(/\n/g, " ") ?? "")}"`;
 
         csv += `${date},${type},${category},${amount},${memo}` + "\n";
     });
@@ -464,12 +516,7 @@ function exportCSV() {
     showToast("CSV로 내보내기가 성공했습니다.");
 }
 
-function getCSVType(type) {
-    if (type === "income") return "수입";
-    return "지출";
-}
-
-function formatCSVDate(timestamp) {
+function formatExportDate(timestamp) {
     if(!timestamp) return "";
 
     const date = new Date(timestamp);
@@ -478,7 +525,36 @@ function formatCSVDate(timestamp) {
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
 
-    return `${year}-${month}-${day}`;
+    const hour = String(date.getHours()).padStart(2, "0");
+    const minute = String(date.getMinutes()).padStart(2, "0");
+    const second = String(date.getSeconds()).padStart(2, "0");
+
+    return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
+}
+
+function getCSVType(type) {
+    if (type === "income") return "수입";
+    return "지출";
+}
+
+function setCSVType(type) {
+    if(type === "수입") return "income";
+    return "expense";
+}
+
+function setCSVCategory(category) {
+    switch(category) {
+        case "식비": return "food";
+        case "교통": return "traffic";
+        case "쇼핑": return "shopping";
+        case "급여": return "salary";
+    }
+
+    return "etc";
+}
+
+function formatImportDate(dateString) {
+    return new Date(dateString).getTime();
 }
 
 //===== Render ======
@@ -839,4 +915,22 @@ function showToast(message) {
 
 /* 26일차
  * 메모 복제 기능 + 전체 삭제 기능
+ */
+
+/* 27일차
+ * import
+ * 날짜 값 저장할 때, export 당시에 아예 타임 스탬프 란을 만들어서 export 한 뒤,
+ *      import 할 때 그 스탬프 값을 읽어들이는 방법도 하나의 방법이 될 것 같다.
+ * 
+ * const reader = new FileReader();     : FileReader는 브라우저가 제공하는 파일 읽기 전용 객체.
+ *                                        File은 파일 자체를 나타내는 객체. 다른 객체임을 기억할 것.
+ * 
+ * reader.onload(...)                   : 읽기가 끝나고 ... 내부 함수를 실행하라는 의미.
+ * reader.readAsText(file, "utf-8");    : file을 텍스트로 읽어달라는 요청.
+ *                                        readAsDataURL(...)과 같은 비슷한 함수도 존재. 예시의 함수는 이미지를 Base64 문자열로 변환한다.
+ * reader.result                        : FileReader가 파일을 읽은 결과(내용)가 저장되는 속성(Property). 읽기의 결과.
+ * 
+ * reader.onload() 이후에 read.readAsText()가 호출되는 방식은 '읽기가 끝났을 때 실행할 함수를 미리 등록하고 실제로 읽기를 시작하다'에 가깝다.
+ *      read 자체에 시간이 걸리기 때문에 read 바로 뒤에 실행해야 할 코드를 입력해두면 정상 작동하지 않을 가능성이 높다.
+ *      때문에 onload()로 '읽기가 끝난 뒤 실행할 코드'를 미리 설정해두는 것.
  */
