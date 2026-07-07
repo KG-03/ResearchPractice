@@ -73,6 +73,38 @@ const INCOME_ORDER = [
     "etc"
 ];
 
+const CATEGORY_LABEL = {
+    food: "식비",
+    traffic: "교통",
+    shopping: "쇼핑",
+    salary: "급여",
+    etc: "기타"
+};
+
+const IMPORT_CATEGORY = {
+    식비: "food",
+    교통: "traffic",
+    쇼핑: "shopping",
+    급여: "salary",
+    기타: "etc"
+};
+
+const EXPORT_TYPE = {
+    income: "수입",
+    expense: "지출"
+};
+
+const IMPORT_TYPE = {
+    수입: "income",
+    지출: "expense"
+};
+
+const CSV_DATE = 0;
+const CSV_TYPE = 1;
+const CSV_CATEGORY = 2;
+const CSV_AMOUNT = 3;
+const CSV_DESCRIPTION = 4;
+
 let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
 
 transactions = transactions.map(transaction => ({
@@ -192,17 +224,19 @@ importInput.addEventListener("change", () => {
             if(row.trim() === "") return;
 
             const columns = row.split(",");
-
             if(columns.length < 5) return;
 
+            const amount = Number(columns[CSV_AMOUNT]);
+            if (Number.isNaN(amount)) return;
+
             const transaction = {
-                id: formatImportDate(columns[0]) + Math.random(),
-                amount: Number(columns[3]),
-                category: setCSVCategory(columns[2]),
-                type: setCSVType(columns[1]),
-                description: columns[4].replaceAll('"', ""),
-                createdAt: formatImportDate(columns[0]),
-                updatedAt: formatImportDate(columns[0])
+                id: formatImportDate(columns[CSV_DATE]) + Math.random(),
+                amount: amount,
+                category: IMPORT_CATEGORY[columns[CSV_CATEGORY]],
+                type: IMPORT_TYPE[columns[CSV_TYPE]],
+                description: columns[CSV_DESCRIPTION].replaceAll('"', ""),
+                createdAt: formatImportDate(columns[CSV_DATE]),
+                updatedAt: formatImportDate(columns[CSV_DATE])
             };
 
             transactions.push(transaction);
@@ -341,7 +375,7 @@ function createTransactionCard(transaction) {
 
     const typeLable = transaction.type === "income" ? "➕" : "➖";
     const amount = document.createElement("p");
-    amount.textContent = `${typeLable} ${getCategoryIcon(transaction.category)} ${getCategoryLabel(transaction.category)} ${transaction.amount.toLocaleString()}원`;
+    amount.textContent = `${typeLable} ${getCategoryIcon(transaction.category)} ${CATEGORY_LABEL[transaction.category]} ${transaction.amount.toLocaleString()}원`;
     card.append(amount);
 
     if(transaction.description) {
@@ -389,22 +423,30 @@ function createTransactionCard(transaction) {
 
 //===== filter =====
 function sortTransactions(transaction) {
-    if(currentSort === "latest") {
-        transaction.sort((a,b) => {
-            return b.createdAt - a.createdAt;
-        });
-    } else if (currentSort === "oldest") {
-        transaction.sort((a,b)=> {
-            return a.createdAt - b.createdAt;
-        });
-    } else if (currentSort === "amount-desc") {
-        transaction.sort((a,b) => {
-            return b.amount - a.amount;
-        });
-    } else if (currentSort === "amount-asc") {
-        transaction.sort((a,b) => {
-            return a.amount - b.amount;
-        });
+    switch(currentSort) {
+        case "latest":
+            transaction.sort((a,b) => {
+                return b.createdAt - a.createdAt;
+            });
+            break;
+
+        case "oldest":
+            transaction.sort((a,b) => {
+                return a.createdAt - b.createdAt;
+            });
+            break;
+
+        case "amount-desc":
+            transaction.sort((a,b) => {
+                return b.amount - a.amount;
+            });
+            break;
+
+        case "amount-asc":
+            transaction.sort((a,b) => {
+                return a.amount - b.amount;
+            });
+            break;
     }
 
     return transaction;
@@ -433,33 +475,35 @@ function filterByDate(transaction) {
 
     const now = new Date();
 
-    if(currentDateFilter === "today") {
-        return transaction.filter(transac => {
-            const date = new Date(transac.createdAt);
+    switch(currentDateFilter) {
+        case "today":
+            return transaction.filter(transac => {
+                const date = new Date(transac.createdAt);
 
-            return (
-                date.getFullYear() === now.getFullYear() &&
-                date.getMonth() === now.getMonth() &&
-                date.getDate() === now.getDate()
-            );
-        });
-    } 
-    
-    if (currentDateFilter === "week") {
-        const weekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+                return (
+                    date.getFullYear() === now.getFullYear() &&
+                    date.getMonth() === now.getMonth() &&
+                    date.getDate() === now.getDate()
+                );
+            });
+            break;
 
-        return transaction.filter(transac => transac.createdAt >= weekAgo);
-    } 
-    
-    if (currentDateFilter === "month") {
-        return transaction.filter(transac => {
-            const date = new Date(transac.createdAt);
+        case "week":
+            const weekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
 
-            return (
-                date.getFullYear() === now.getFullYear() &&
-                date.getMonth() === now.getMonth()
-            );
-        });
+            return transaction.filter(transac => transac.createdAt >= weekAgo);
+            break;
+
+        case "mount":
+            return transaction.filter(transac => {
+                const date = new Date(transac.createdAt);
+
+                return (
+                    date.getFullYear() === now.getFullYear() &&
+                    date.getMonth() === now.getMonth()
+                );
+            });
+            break;
     }
 
     return transaction;
@@ -493,8 +537,8 @@ function exportCSV() {
     let csv = "날짜,타입,카테고리,금액,메모\n";
     transactions.forEach(transaction => {
         const date = `${formatExportDate(transaction.createdAt)}`;
-        const type = `${getCSVType(transaction.type)}`;
-        const category = `${getCategoryLabel(transaction.category)}`;
+        const type = `${EXPORT_TYPE[transaction.type]}`;
+        const category = `${CATEGORY_LABEL[transaction.category]}`;
         const amount = `${transaction.amount}`;
         const memo = `"${(transaction.description.replace(/\n/g, " ") ?? "")}"`;
 
@@ -516,47 +560,6 @@ function exportCSV() {
     showToast("CSV로 내보내기가 성공했습니다.");
 }
 
-function formatExportDate(timestamp) {
-    if(!timestamp) return "";
-
-    const date = new Date(timestamp);
-
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-
-    const hour = String(date.getHours()).padStart(2, "0");
-    const minute = String(date.getMinutes()).padStart(2, "0");
-    const second = String(date.getSeconds()).padStart(2, "0");
-
-    return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
-}
-
-function getCSVType(type) {
-    if (type === "income") return "수입";
-    return "지출";
-}
-
-function setCSVType(type) {
-    if(type === "수입") return "income";
-    return "expense";
-}
-
-function setCSVCategory(category) {
-    switch(category) {
-        case "식비": return "food";
-        case "교통": return "traffic";
-        case "쇼핑": return "shopping";
-        case "급여": return "salary";
-    }
-
-    return "etc";
-}
-
-function formatImportDate(dateString) {
-    return new Date(dateString).getTime();
-}
-
 //===== Render ======
 function renderTransactions() {
     budgetList.innerHTML = "";
@@ -573,17 +576,28 @@ function renderTransactions() {
 
     filteredTransactions = sortTransactions(filteredTransactions);
 
-    if(filteredTransactions.length === 0) {
-        if(currentKeyword !== "") budgetList.innerHTML = `<p class="empty-message">검색 결과가 없습니다.</p>`;
-        else budgetList.innerHTML = '<p class="empty-message">아직 등록된 거래가 없습니다.</p>';
-    } else {
-        filteredTransactions.forEach(transaction => {budgetList.append(createTransactionCard(transaction));});
-    }
+    renderTransactionList(filteredTransactions);
 
     transactionCount.textContent = `현재 표시 중 : ${filteredTransactions.length}건`;
 
     updateSummary(filteredTransactions);
     renderStatistics(filteredTransactions);
+}
+
+function renderTransactionList(filteredTransactions) {
+    if(filteredTransactions.length === 0) {
+        const message = currentKeyword !== ""
+            ? "검색 결과가 없습니다."
+            : "아직 등록된 거래가 없습니다.";
+
+        budgetList.innerHTML = `<p class="empty-message">${message}</p>`
+
+        return;
+    }
+
+    filteredTransactions.forEach(transaction => {
+        budgetList.append(createTransactionCard(transaction));
+    });
 }
 
 function renderCategoryOption(selectElement, option) {
@@ -639,7 +653,7 @@ function renderStatisticsSection(title, order, stats) {
 
         const item = document.createElement("p");
 
-        item.textContent = `${getCategoryIcon(category)} ${getCategoryLabel(category)} : ${stats[category].toLocaleString()}원`;
+        item.textContent = `${getCategoryIcon(category)} ${CATEGORY_LABEL[category]} : ${stats[category].toLocaleString()}원`;
         statsList.append(item);
     })
 }
@@ -698,7 +712,7 @@ function validateTransaction(amount) {
     return true;
 }
 
-//===== etc =====
+//===== Date ======
 function formatDate(timestamp) {
     if(!timestamp) return "";
 
@@ -707,17 +721,27 @@ function formatDate(timestamp) {
     return date.toLocaleString("ko-KR");
 }
 
-function getCategoryLabel(category) {
-    switch(category) {
-        case "food": return "식비";
-        case "traffic": return "교통";
-        case "shopping": return "쇼핑";
-        case "salary": return "급여";
-    }
-    
-    return "기타";
+function formatExportDate(timestamp) {
+    if(!timestamp) return "";
+
+    const date = new Date(timestamp);
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    const hour = String(date.getHours()).padStart(2, "0");
+    const minute = String(date.getMinutes()).padStart(2, "0");
+    const second = String(date.getSeconds()).padStart(2, "0");
+
+    return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
 }
 
+function formatImportDate(dateString) {
+    return new Date(dateString).getTime();
+}
+
+//===== etc =====
 function getCategoryIcon(category) {
     switch(category) {
         case "food": return "🍚";
@@ -933,4 +957,13 @@ function showToast(message) {
  * reader.onload() 이후에 read.readAsText()가 호출되는 방식은 '읽기가 끝났을 때 실행할 함수를 미리 등록하고 실제로 읽기를 시작하다'에 가깝다.
  *      read 자체에 시간이 걸리기 때문에 read 바로 뒤에 실행해야 할 코드를 입력해두면 정상 작동하지 않을 가능성이 높다.
  *      때문에 onload()로 '읽기가 끝난 뒤 실행할 코드'를 미리 설정해두는 것.
+ */
+
+/* 28일차
+ * 코드 리팩토링.
+ * if문 일부를 switch문으로 변경,
+ * switch문 일부를 객체로 변경,
+ * date 함수끼리 묶어두기,
+ * 상수 정리,
+ * 코드 분리.
  */
