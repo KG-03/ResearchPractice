@@ -81,6 +81,7 @@ button:hover {
 
 /* ===== import/export ===== */
 .import-export {
+    display:flex;
     gap: 10px;
 }
 
@@ -96,9 +97,13 @@ button:hover {
 }
 
 .toast {
+    pointer-events: none;
     opacity: 0;
 
-    transition: 0.3s;
+    transition: 
+        opacity .3s,
+        background-color .3s,
+        color .3s;
 }
 
 .toast.show {
@@ -207,12 +212,12 @@ body.dark-theme .total-area {
         align-items: stretch;
     }
 
-    .amount-input {
-        width: 150px;
-    }
-
     .filter-area {
         flex-direction: column;
         align-items: stretch;
     }
 }
+
+/* pointer-events: none;    : 해당 요소가 마우스(터치) 이벤트를 받지 않도록 하는 것.
+ *                            해당 요소를 클릭하거나 마우스를 올려도 아무 일이 일어나지 않게 한다.
+ */
