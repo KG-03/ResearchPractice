@@ -16,7 +16,7 @@
             <div class="app">
                 <button class="theme-toggle-btn">🌙</button>
                 <section class="input-area">입력: 
-                    <input class="amount-input" type="number" maxlength="9" step="1" min="1" placeholder="금액 입력">
+                    <input class="amount-input" type="number" inputmode="numeric" maxlength="9" step="1" min="1" placeholder="금액 입력">
 
                     <select class="type-select">
                         <option value="expense">지출</option>
@@ -31,7 +31,7 @@
                         <option value="etc">기타</option>
                     </select>
 
-                    <input class="description-input" maxlength="100" placeholder="메모">
+                    <input class="description-input" autocomplete="off" maxlength="100" placeholder="메모">
 
                     <button class="add-btn">추가</button>
                     <button class="cancel-edit-btn">수정 취소</button>
@@ -107,5 +107,18 @@
     <!--
         step="1"    : 1 단위만 입력 가능(정수)
         min="1"     : 1 이상만 입력 가능
+
+        <label for="amount">    : 사용자에게 해당 입력칸이 무엇을 입력하는 곳인지 알려주는 태그. input, textarea, select 등에 붙일 수 있다.
+                                  <lebel for="amount">금액</label> <input id="amount" type="number"> 등의 형식.
+                                  id가 amount인 요소와 연결한다는 의미로 for="amount"를 사용한다.
+                                  이렇게 연결되면 label을 눌러도 input에 커서가 간다는 장점이 있다.
+                                  브라우저, 스크린 리더도 해당 label을 읽어낼 수 있기 때문에 접근성도 좋아진다.
+                                  현재 구조의 가독성을 해치지 않기 위해 해당 기능은 사용하고 있지 않다.
+        autocomplete="off"      : 브라우저의 자동완성 기능을 끄는 속성.
+                                  브라우저에 대한 요청으로, 브라우저의 정책이나 입력 종류에 따라 해당 기능이 실행되지 않을 수 있다.
+        inputmode="numeric"     : 사용자가 입력하기 쉬운 키보드 형태를 브라우저에 알려주는 속성.
+                                  해당 코드의 경우, '이 입력칸에 숫자를 입력할 가능성이 높으니 숫자 키패드를 보여달라'는 요청이다.
+                                  '입력은 text지만 숫자 키패드를 보여달라'.
+                                  전화번호와 같은 경우에서 type="number" inputmode="numeric"으로 사용하기도 한다.
     -->
 </html>
