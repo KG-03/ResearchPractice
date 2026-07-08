@@ -187,7 +187,7 @@ themeToggleBtn.addEventListener("click", () => {
 });
 
 delAllBtn.addEventListener("click", () => {
-    const isConfirmed = confirm("정말 모두 삭제 하시겠습니까?");
+    const isConfirmed = confirm(`현재 거래 ${transactions.length}건을 모두 삭제 하시겠습니까?`);
     if (!isConfirmed) return;
 
     transactions = [];
@@ -220,6 +220,9 @@ importInput.addEventListener("change", () => {
         const csv = reader.result;
         const rows = csv.split("\n");
         rows.shift();
+
+        let importedCount = 0;
+
         rows.forEach(row => {
             if(row.trim() === "") return;
 
@@ -240,11 +243,12 @@ importInput.addEventListener("change", () => {
             };
 
             transactions.push(transaction);
+            importedCount++;
         });
 
         saveTransactions();
         renderTransactions();
-        showToast("불러오기가 완료되었습니다.");
+        showToast(`${importedCount}건의 거래를 불러왔습니다.`);
     };
 
     reader.readAsText(file, "utf-8");
@@ -966,4 +970,9 @@ function showToast(message) {
  * date 함수끼리 묶어두기,
  * 상수 정리,
  * 코드 분리.
+ */
+
+/* 29일차
+ * 삭제 확인창에 건수 표기
+ * import 성공 개수 표기
  */
