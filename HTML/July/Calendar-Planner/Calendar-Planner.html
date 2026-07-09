@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8">
+        <title>Calendar-Planner</title>
+        <link rel="stylesheet" href="Calendar-Planner.css">
+    </head>
+
+    <body>
+        <header>
+            <h1>일정 관리</h1>
+            <section class="today"></section>
+        </header>
+
+        <main>
+            <button class="theme-toggle-btn">🌙</button>
+            
+            <section class="calendar-area">
+                <div class="calendar-header">
+                    <button class="prev-month-btn">◀</button>
+
+                    <h2 class="current-date-text">
+                        2026년 7월
+                    </h2>
+
+                    <button class="next-month-btn">▶</button>
+                </div>
+
+                <div class="week-row"></div>
+                <div class="calendar-grid"></div>
+            </section>
+
+            <section class="input-area">
+                <p class="selected-date">선택 날짜:</p>
+
+                입력:
+                <input class="title-input" placeholder="일정 제목">
+                <select class="category-select">
+                    <option value="study">공부</option>
+                    <option value="work">업무</option>
+                    <option value="personal">개인</option>
+                    <option value="exercise">운동</option>
+                    <option value="etc">기타</option>
+                </select>
+                <select class="priority-select">
+                    <option value="high">높음</option>
+                    <option value="medium">보통</option>
+                    <option value="low">낮음</option>
+                </select>
+                <textarea class="description-input" placeholder="메모"></textarea>
+
+                <button class="add-btn">추가</button>
+                <button class="cancel-edit-btn">수정 취소</button>
+            </section>
+
+            <section class="filter-area">필터:
+                <input class="search-input" placeholder="검색">
+                
+                <select class="category-filter">
+                    <option value="all">전체</option>
+                    <option value="study">공부</option>
+                    <option value="work">업무</option>
+                    <option value="personal">개인</option>
+                    <option value="exercise">운동</option>
+                    <option value="etc">기타</option>                    
+                </select>
+
+                <select class="priority-filter">
+                    <option value="all">전체</option>
+                    <option value="high">높음</option>
+                    <option value="medium">보통</option>
+                    <option value="low">낮음</option>                    
+                </select>
+
+                <select class="completed-filter">
+                    <option value="all">전체</option>
+                </select>
+
+                <select class="sort-select">
+                    <option value="latest">최신순</option>
+                    <option value="oldest">오래된순</option>
+                </select>
+            </section>
+
+            <section class="schedule-area">
+                <h3>일정 목록</h3>
+                <div class="schedule-list"></div>
+            </section>
+
+            <section class="stats-area">
+                <h3>통계</h3>
+                <div class="stats-list"></div>
+            </section>
+
+            <section class="storage-area">
+                <button class="export-btn">CSV 내보내기</button>
+                <button class="import-btn">CSV 불러오기</button>
+
+                <input class="import-input" type="file" accept=".csv" hidden>
+            </section>
+
+            <div class="toast-container">
+                <div class="toast"></div>
+            </div>
+        </main>
+
+        <script src="Calendar-Planner.js"></script>
+    </body>
+</html>
