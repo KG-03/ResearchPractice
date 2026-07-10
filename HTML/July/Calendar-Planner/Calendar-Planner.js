@@ -4,6 +4,7 @@ const today = document.querySelector(".today");
 //===== Calendar =====
 const calendarGrid = document.querySelector(".calendar-grid");
 const currentDateText = document.querySelector(".current-date-text");
+const weekRow = document.querySelector(".week-row");
 
 //===== Input ======
 const titleInput = document.querySelector(".title-input");
@@ -85,7 +86,39 @@ function saveSchedules() {
 
 //===== Render ======
 function renderCalendar() {
+    calendarGrid.innerHTML = "";
+    weekRow.innerHTML = "";
 
+    const year = currentDateData.getFullYear();
+    const month = currentDateData.getMonth();
+    const day = currentDateData.getDate();
+    
+    currentDateText.textContent = `${year}년 ${String(month + 1).padStart(2, "0")}월`;
+    
+    const weekNames = ["일", "월", "화", "수", "목", "금", "토"];
+    weekNames.forEach(day => {
+        const cell = document.createElement("div");
+        cell.textContent = day;
+
+        weekRow.append(cell);
+    });
+
+    const lastDate = new Date(year, month + 1, 0).getDate();
+
+    const firstDay = new Date(year, month, 1);
+    const firstDayOfWeek = firstDay.getDay();
+
+    for(let i = 0; i < firstDayOfWeek; i++) {
+        const emptyCell = document.createElement("div");
+        emptyCell.classList.add("empty-cell");
+        calendarGrid.append(emptyCell);
+    }
+
+    for (let date = 1; date <= lastDate; date++) {
+        const dateCell = document.createElement("div");
+        dateCell.textContent = date;
+        calendarGrid.append(dateCell);
+    }
 }
 
 function renderSchedules() {
@@ -98,6 +131,13 @@ function renderCategoryOptions() {
 
 function renderPriorityOptions() {
 
+}
+
+function renderTodaysDate() {
+    const year = currentDateData.getFullYear();
+    const month = String(currentDateData.getMonth() + 1).padStart(2, "0");
+    const day = String(currentDateData.getDate()).padStart(2, "0");
+    today.innerHTML = `Today: ${year}년 ${month}월 ${day}일`;
 }
 
 //===== Filter =====
@@ -116,5 +156,6 @@ function renderCompletedFilter() {
 renderCategoryOptions();
 renderPriorityOptions();
 
+renderTodaysDate();
 renderCalendar();
 renderSchedules();
