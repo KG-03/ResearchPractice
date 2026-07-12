@@ -53,6 +53,16 @@ header {
     pointer-events: none;
 }
 
+.click-cell {
+    background: #fffdc9;
+}
+
+.today-cell {
+    background: orange;
+    color: white;
+    border-radius: 50%;
+}
+
 /*===== dark/light theme =====*/
 .theme-toggle-box {
     display: flex;
