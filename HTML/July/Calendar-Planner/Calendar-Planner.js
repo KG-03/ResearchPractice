@@ -5,6 +5,8 @@ const today = document.querySelector(".today");
 const calendarGrid = document.querySelector(".calendar-grid");
 const currentDateText = document.querySelector(".current-date-text");
 const weekRow = document.querySelector(".week-row");
+const prevMonthBtn = document.querySelector(".prev-month-btn");
+const nextMonthBtn = document.querySelector(".next-month-btn");
 
 //===== Input ======
 const titleInput = document.querySelector(".title-input");
@@ -13,6 +15,7 @@ const prioritySelect = document.querySelector(".priority-select");
 const descriptionInput = document.querySelector(".description-input");
 const addBtn = document.querySelector(".add-btn");
 const cancelEditBtn = document.querySelector(".cancel-edit-btn");
+const selectedDate = document.querySelector(".selected-date");
 
 //===== Filter =====
 const searchInput = document.querySelector(".search-input");
@@ -55,17 +58,33 @@ const PRIORITY_OPTIONS = [
 
 let schedules = JSON.parse(localStorage.getItem("schedules")) || [];
 
+const todayDate = new Date();
 let currentDateData = new Date();
-let selectedDate = null;
+let selectedDateData = null;
 
 let currentCategory = "all";
 let currentPriority = "all";
 let currentCompleted = "all";
 let currentSort = "latest";
 let currentKeyword = "";
+let currentCell = null;
 
 let isEditing = false;
 let editingId = null;
+
+prevMonthBtn.addEventListener("click", () => {
+    currentDateData.setMonth(currentDateData.getMonth() - 1);
+
+    if(currentCell) resetCell();
+    renderCalendar();
+});
+
+nextMonthBtn.addEventListener("click", () => {
+    currentDateData.setMonth(currentDateData.getMonth() + 1);
+
+    if(currentCell) resetCell();
+    renderCalendar();
+});
 
 
 function addSchedule() {
@@ -91,7 +110,6 @@ function renderCalendar() {
 
     const year = currentDateData.getFullYear();
     const month = currentDateData.getMonth();
-    const day = currentDateData.getDate();
     
     currentDateText.textContent = `${year}년 ${String(month + 1).padStart(2, "0")}월`;
     
@@ -117,7 +135,16 @@ function renderCalendar() {
     for (let date = 1; date <= lastDate; date++) {
         const dateCell = document.createElement("div");
         dateCell.textContent = date;
+        dateCell.addEventListener("click", () => {
+            selectCalendarCell(dateCell, year, month, date);
+        });
         calendarGrid.append(dateCell);
+
+        if(year === todayDate.getFullYear() &&
+        month === todayDate.getMonth() &&
+        date === todayDate.getDate()) {
+            dateCell.classList.add("today-cell");
+        }
     }
 }
 
@@ -134,10 +161,33 @@ function renderPriorityOptions() {
 }
 
 function renderTodaysDate() {
-    const year = currentDateData.getFullYear();
-    const month = String(currentDateData.getMonth() + 1).padStart(2, "0");
-    const day = String(currentDateData.getDate()).padStart(2, "0");
+    const year = todayDate.getFullYear();
+    const month = String(todayDate.getMonth() + 1).padStart(2, "0");
+    const day = String(todayDate.getDate()).padStart(2, "0");
     today.innerHTML = `Today: ${year}년 ${month}월 ${day}일`;
+}
+
+function selectCalendarCell(cell, year, month, date) {
+    if (currentCell) {
+        currentCell.classList.remove("click-cell");
+    }
+
+    currentCell = cell;
+    currentCell.classList.add("click-cell");
+
+    selectedDateData = new Date(year, month, date);
+    selectedDate.textContent = `선택 날짜: ${year}년 ${month + 1}월 ${date}일`;
+}
+
+function resetCell() {
+    if(!currentCell) return; 
+    
+    currentCell.classList.remove("click-cell");
+
+    selectedDateData = null;
+    currentCell = null;
+    
+    selectedDate.textContent = `선택 날짜:`
 }
 
 //===== Filter =====
