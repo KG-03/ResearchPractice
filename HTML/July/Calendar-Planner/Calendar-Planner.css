@@ -63,6 +63,18 @@ header {
     border-radius: 50%;
 }
 
+/*===== schedule =====*/
+.schedule-card {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    gap: 10px;
+
+    border: 1px solid #ddd;
+    border-radius: 10px;
+}
+
 /*===== dark/light theme =====*/
 .theme-toggle-box {
     display: flex;
