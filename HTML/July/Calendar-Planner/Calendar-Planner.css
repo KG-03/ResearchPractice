@@ -63,16 +63,86 @@ header {
     border-radius: 50%;
 }
 
-/*===== schedule =====*/
-.schedule-card {
+/*===== input =====*/
+.input-area {
     display: flex;
-    justify-content: center;
     align-items: center;
 
     gap: 10px;
+    margin-bottom: 10px;
+}
 
+.cancel-edit-btn {
+    display: none;
+}
+
+/*===== Filter =====*/
+.filter-area {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+/*===== schedule =====*/
+.schedule-area {
+    padding: 15px;
+    gap: 5px;
+    
     border: 1px solid #ddd;
     border-radius: 10px;
+}
+
+.schedule-area h3 {
+    margin-top: 5px;
+}
+
+.schedule-card {
+    padding: 15px;
+    gap: 5px;
+    margin-bottom: 15px;
+
+    border-radius: 10px;
+    background: #fff9eb;
+}
+
+.schedule-card h4 {
+    font-size: 25px;
+    margin-top: 10px;
+    margin-bottom: 5px;
+}
+
+.card-classification {
+    display: flex;
+    gap: 10px;
+}
+
+.card-classification p {
+    padding: 5px;
+
+    background: #ffe6b8;
+    border-radius: 5px;
+
+    font-size: 12px;
+}
+
+.card-date-text {
+    white-space: pre-wrap;
+    font-size: 12px;
+    color:#999999;
+}
+
+.schedule-card button {
+    cursor: pointer;
+    
+    padding: 10px;
+    margin-right: 5px;
+
+    border: none;
+    border-radius: 5px;
+
+    background: #ffdb99;
 }
 
 /*===== dark/light theme =====*/
