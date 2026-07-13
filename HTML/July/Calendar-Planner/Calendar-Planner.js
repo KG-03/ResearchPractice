@@ -41,19 +41,21 @@ const toast = document.querySelector(".toast");
 const themeToggleBtn = document.querySelector(".theme-toggle-btn");
 
 
-const CATEGORY_OPTIONS = [
-    { value: "study", label: "공부" },
-    { value: "work", label: "업무" },
-    { value: "personal", label: "개인" },
-    { value: "exercise", label: "운동" },
-    { value: "etc", label: "기타" }
-];
+const CATEGORY_OPTIONS = {
+    study: "공부",
+    work: "업무",
+    personal: "개인",
+    exercise: "운동",
+    etc: "기타"
+};
 
-const PRIORITY_OPTIONS = [
-    { value: "high", label: "높음" },
-    { value: "medium", label: "보통" },
-    { value: "low", label: "낮음" }
-];
+const PRIORITY_OPTIONS = {
+    high: "높음",
+    medium: "보통",
+    low: "낮음"
+};
+
+const WEEK_NAMES = [ "일", "월", "화", "수", "목", "금", "토" ];
 
 
 let schedules = JSON.parse(localStorage.getItem("schedules")) || [];
@@ -86,8 +88,43 @@ nextMonthBtn.addEventListener("click", () => {
     renderCalendar();
 });
 
+addBtn.addEventListener("click", () => {
+    addSchedule();
+});
+
 
 function addSchedule() {
+    if(!selectedDateData) return;
+
+    const title = titleInput.value.trim();
+
+    if(title === "") return;
+
+    const category = categorySelect.value;
+    const priority = prioritySelect.value;
+    const description = descriptionInput.value.trim();
+
+    const schedule = {
+        id: Date.now(),
+        title,
+        category,
+        priority,
+        description,
+        date: selectedDateData.getTime(),
+        completed: false,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+    };
+
+    schedules.push(schedule);
+    saveSchedules();
+    renderSchedules();
+
+    resetScheduleForm();
+    titleInput.focus();
+}
+
+function startEdit(id) {
 
 }
 
@@ -95,12 +132,49 @@ function updateSchedule() {
 
 }
 
-function deleteSchedule() {
+function deleteSchedule(id) {
 
 }
 
 function saveSchedules() {
+    localStorage.setItem("schedules", JSON.stringify(schedules));
+}
 
+function createScheduleCard(schedule) {
+    const card = document.createElement("div");
+    card.classList.add("schedule-card");
+
+    const title = document.createElement("p");
+    title.textContent = `제목: ${schedule.title}`;
+    card.append(title);
+
+    const category = document.createElement("p");
+    category.textContent = `카테고리: ${CATEGORY_OPTIONS[schedule.category]}`;
+    card.append(category);
+    
+    const priority = document.createElement("p");
+    priority.textContent = `우선순위: ${PRIORITY_OPTIONS[schedule.priority]}`;
+    card.append(priority);
+    
+    const description = document.createElement("p");
+    description.textContent = `메모: ${schedule.description}`;
+    card.append(description);
+   
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "삭제"
+    delBtn.addEventListener("click", () => {
+        deleteSchedule(schedule.id);
+    });
+    card.append(delBtn);
+   
+    const editBtn = document.createElement("button");
+    editBtn.textContent = "수정";
+    editBtn.addEventListener("click", () => {
+        startEdit(schedule.id);
+    })
+    card.append(editBtn);
+
+    return card;
 }
 
 //===== Render ======
@@ -113,8 +187,7 @@ function renderCalendar() {
     
     currentDateText.textContent = `${year}년 ${String(month + 1).padStart(2, "0")}월`;
     
-    const weekNames = ["일", "월", "화", "수", "목", "금", "토"];
-    weekNames.forEach(day => {
+    WEEK_NAMES.forEach(day => {
         const cell = document.createElement("div");
         cell.textContent = day;
 
@@ -149,15 +222,29 @@ function renderCalendar() {
 }
 
 function renderSchedules() {
+    scheduleList.innerHTML = "";
 
-}
+    if(!selectedDateData) {
+        scheduleList.textContent = "날짜를 선택해 주세요.";
+        return;
+    }
 
-function renderCategoryOptions() {
+    let filteredSchedule = [...schedules];
 
-}
+    if(filteredSchedule.length === 0) return;
 
-function renderPriorityOptions() {
+    let hasSchedule = false;
 
+    filteredSchedule.forEach(schedule => {
+        if(schedule.date !== selectedDateData.getTime()) return;
+
+        hasSchedule = true;
+        scheduleList.append(createScheduleCard(schedule));
+    });
+
+    if(!hasSchedule) {
+        scheduleList.textContent = "등록된 일정이 없습니다."
+    }
 }
 
 function renderTodaysDate() {
@@ -177,8 +264,11 @@ function selectCalendarCell(cell, year, month, date) {
 
     selectedDateData = new Date(year, month, date);
     selectedDate.textContent = `선택 날짜: ${year}년 ${month + 1}월 ${date}일`;
+
+    renderSchedules();
 }
 
+//===== Reset =====
 function resetCell() {
     if(!currentCell) return; 
     
@@ -188,6 +278,16 @@ function resetCell() {
     currentCell = null;
     
     selectedDate.textContent = `선택 날짜:`
+
+    renderSchedules();
+}
+
+function resetScheduleForm() {
+    titleInput.value = "";
+    descriptionInput.value = "";
+
+    categorySelect.value = "study";
+    prioritySelect.value = "high";
 }
 
 //===== Filter =====
@@ -203,9 +303,12 @@ function renderCompletedFilter() {
 
 }
 
-renderCategoryOptions();
-renderPriorityOptions();
-
 renderTodaysDate();
 renderCalendar();
 renderSchedules();
+
+/* 5일차
+ * getTime()    : 해당 날짜와 시간을 n년 n월 n일 00:00:00 UTC부터 지난 시간을 밀리초로 반환하는 함수.
+ *                Date 객체를 저장해도 JSON으로 저장하면 문자열이 된다.
+ *                따라서 해당 방식으로 저장하여 차후 new Date(schedule.date)처럼 쓸 수 있도록 한다. (새 Date 객체를 만들기 위해)
+ */
