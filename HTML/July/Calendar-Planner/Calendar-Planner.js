@@ -89,8 +89,19 @@ nextMonthBtn.addEventListener("click", () => {
 });
 
 addBtn.addEventListener("click", () => {
-    addSchedule();
+    if(!selectedDateData) {
+        alert("날짜를 선택해 주십시오.");
+        return;
+    }
+
+    if (isEditing) {
+        updateSchedule();
+    } else {
+        addSchedule();
+    }
 });
+
+cancelEditBtn.addEventListener("click", cancelEdit);
 
 
 function addSchedule() {
@@ -98,7 +109,10 @@ function addSchedule() {
 
     const title = titleInput.value.trim();
 
-    if(title === "") return;
+    if(title === "") {
+        alert("제목을 입력해 주십시오.");
+        return;
+    }
 
     const category = categorySelect.value;
     const priority = prioritySelect.value;
@@ -125,15 +139,69 @@ function addSchedule() {
 }
 
 function startEdit(id) {
+    const editSchedule = schedules.find(schedule => schedule.id === id);
 
+    if(!editSchedule) return;
+
+    isEditing = true;
+    editingId = id;
+
+    titleInput.value = editSchedule.title;
+    categorySelect.value = editSchedule.category;
+    prioritySelect.value = editSchedule.priority;
+    descriptionInput.value = editSchedule.description;
+
+    addBtn.textContent = "수정 완료";
+    cancelEditBtn.style.display = "inline-block";
+
+    titleInput.focus();
 }
 
 function updateSchedule() {
+    const editSchedule = schedules.find(schedule => schedule.id === editingId);
 
+    if(!editSchedule) return;
+
+    editSchedule.title = titleInput.value.trim();
+
+    if(editSchedule.title === "") {
+        alert("제목을 입력해 주십시오.");
+        return;
+    }
+
+    editSchedule.category = categorySelect.value;
+    editSchedule.priority = prioritySelect.value;
+    editSchedule.description = descriptionInput.value;
+    editSchedule.date = selectedDateData.getTime();
+    editSchedule.updatedAt = Date.now();
+
+    saveSchedules();
+
+    isEditing = false;
+    editingId = null;
+
+    resetScheduleForm();
+    renderSchedules();
+
+    titleInput.focus();
+}
+
+function cancelEdit() {
+    isEditing = false;
+    editingId = null;
+
+    resetScheduleForm();
+
+    titleInput.focus();
 }
 
 function deleteSchedule(id) {
+    confirmMessage("정말 삭제하시겠습니까?");
 
+    schedules = schedules.filter(schedule => schedule.id !== id);
+
+    saveSchedules();
+    renderSchedules();
 }
 
 function saveSchedules() {
@@ -144,21 +212,36 @@ function createScheduleCard(schedule) {
     const card = document.createElement("div");
     card.classList.add("schedule-card");
 
-    const title = document.createElement("p");
-    title.textContent = `제목: ${schedule.title}`;
+    const title = document.createElement("h4");
+    title.textContent = `${schedule.title}`;
     card.append(title);
 
-    const category = document.createElement("p");
-    category.textContent = `카테고리: ${CATEGORY_OPTIONS[schedule.category]}`;
-    card.append(category);
-    
-    const priority = document.createElement("p");
-    priority.textContent = `우선순위: ${PRIORITY_OPTIONS[schedule.priority]}`;
-    card.append(priority);
-    
-    const description = document.createElement("p");
-    description.textContent = `메모: ${schedule.description}`;
-    card.append(description);
+    const classification = document.createElement("div");
+    classification.classList.add("card-classification");
+
+        const category = document.createElement("p");
+        category.textContent = `카테고리: ${CATEGORY_OPTIONS[schedule.category]}`;
+        classification.append(category);
+        
+        const priority = document.createElement("p");
+        priority.textContent = `우선순위: ${PRIORITY_OPTIONS[schedule.priority]}`;
+        classification.append(priority);
+
+    card.append(classification);
+
+    if(schedule.description) {
+        const description = document.createElement("p");
+        description.textContent = `${schedule.description}`;
+        card.append(description);
+    }
+
+    const date = document.createElement("p");
+    date.classList.add("card-date-text");
+    date.textContent = `생성일: ${formatDate(schedule.createdAt)}`;
+    if(schedule.createdAt !== schedule.updatedAt) {
+        date.textContent += `\n수정일: ${formatDate(schedule.updatedAt)}`;
+    }
+    card.append(date);
    
     const delBtn = document.createElement("button");
     delBtn.textContent = "삭제"
@@ -285,9 +368,11 @@ function resetCell() {
 function resetScheduleForm() {
     titleInput.value = "";
     descriptionInput.value = "";
-
     categorySelect.value = "study";
     prioritySelect.value = "high";
+
+    addBtn.textContent = "추가";
+    cancelEditBtn.style.display = "none";
 }
 
 //===== Filter =====
@@ -301,6 +386,20 @@ function renderPriorityFilter() {
 
 function renderCompletedFilter() {
 
+}
+
+//===== ETC =====
+function formatDate(timestamp) {
+    if(!timestamp) return "";
+
+    const date = new Date(timestamp);
+
+    return date.toLocaleString("ko-KR");
+}
+
+function confirmMessage(message) {
+    const confirmed = confirm(message);
+    if(!confirmed) return;
 }
 
 renderTodaysDate();
