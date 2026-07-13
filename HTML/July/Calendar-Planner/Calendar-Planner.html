@@ -9,7 +9,7 @@
     <body>
         <header>
             <h1>일정 관리</h1>
-            <section class="today"></section>
+            <section class="today">오늘 날짜</section>
         </header>
 
         <main>
@@ -22,7 +22,7 @@
                     <button class="prev-month-btn">◀</button>
 
                     <h2 class="current-date-text">
-                        2026년 7월
+                        이번년 이번달
                     </h2>
 
                     <button class="next-month-btn">▶</button>
@@ -34,9 +34,9 @@
                 </div>
             </section>
 
-            <section class="input-area">
-                <p class="selected-date">선택 날짜:</p>
+            <p class="selected-date">선택 날짜:</p>
 
+            <section class="input-area">
                 입력:
                 <input class="title-input" placeholder="일정 제목">
                 <select class="category-select">
@@ -51,7 +51,7 @@
                     <option value="medium">보통</option>
                     <option value="low">낮음</option>
                 </select>
-                <textarea class="description-input" placeholder="메모"></textarea>
+                <textarea class="description-input" placeholder="메모" maxlength="500"></textarea>
 
                 <button class="add-btn">추가</button>
                 <button class="cancel-edit-btn">수정 취소</button>
