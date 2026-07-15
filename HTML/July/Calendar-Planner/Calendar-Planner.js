@@ -103,6 +103,26 @@ addBtn.addEventListener("click", () => {
 
 cancelEditBtn.addEventListener("click", cancelEdit);
 
+categoryFilter.addEventListener("change", () => {
+    currentCategory = categoryFilter.value;
+    renderSchedules();
+});
+
+priorityFilter.addEventListener("change", () => {
+    currentPriority = priorityFilter.value;
+    renderSchedules();
+});
+
+completedFilter.addEventListener("change", () => {
+    currentCompleted = completedFilter.value;
+    renderSchedules();
+});
+
+searchInput.addEventListener("input", () => {
+    currentKeyword = searchInput.value.trim().toLowerCase();
+    renderSchedules();
+})
+
 
 function addSchedule() {
     if(!selectedDateData) return;
@@ -171,7 +191,7 @@ function updateSchedule() {
 
     editSchedule.category = categorySelect.value;
     editSchedule.priority = prioritySelect.value;
-    editSchedule.description = descriptionInput.value;
+    editSchedule.description = descriptionInput.value.trim();
     editSchedule.date = selectedDateData.getTime();
     editSchedule.updatedAt = Date.now();
 
@@ -196,7 +216,7 @@ function cancelEdit() {
 }
 
 function deleteSchedule(id) {
-    confirmMessage("정말 삭제하시겠습니까?");
+    if(!confirmMessage("정말 삭제하시겠습니까?")) return;
 
     schedules = schedules.filter(schedule => schedule.id !== id);
 
@@ -314,20 +334,29 @@ function renderSchedules() {
 
     let filteredSchedule = [...schedules];
 
-    if(filteredSchedule.length === 0) return;
+    if(filteredSchedule.length === 0) {
+        scheduleList.textContent = "등록된 일정이 없습니다.";
+        return;
+    }
 
-    let hasSchedule = false;
+    filteredSchedule = filterByDate(filteredSchedule);
+
+    filteredSchedule = filterByCategory(filteredSchedule);
+
+    filteredSchedule = filterByPriority(filteredSchedule);
+
+    filteredSchedule = filterByCompleted(filteredSchedule);
+
+    filteredSchedule = filterByKeyword(filteredSchedule);
+
+    if(filteredSchedule.length === 0) {
+        scheduleList.textContent = "등록된 일정이 없습니다.";
+        return;
+    }
 
     filteredSchedule.forEach(schedule => {
-        if(schedule.date !== selectedDateData.getTime()) return;
-
-        hasSchedule = true;
         scheduleList.append(createScheduleCard(schedule));
     });
-
-    if(!hasSchedule) {
-        scheduleList.textContent = "등록된 일정이 없습니다."
-    }
 }
 
 function renderTodaysDate() {
@@ -376,16 +405,44 @@ function resetScheduleForm() {
 }
 
 //===== Filter =====
-function renderCategoryFilter() {
-
+function filterByDate(filteredSchedule) {
+    return filteredSchedule.filter(schedule => schedule.date === selectedDateData.getTime());
 }
 
-function renderPriorityFilter() {
+function filterByCategory(filteredSchedule) {
+    if(currentCategory !== "all") {
+        filteredSchedule = filteredSchedule.filter(schedule => schedule.category === currentCategory);
+    }
 
+    return filteredSchedule;
 }
 
-function renderCompletedFilter() {
+function filterByPriority(filteredSchedule) {
+    if(currentPriority !== "all") {
+        filteredSchedule = filteredSchedule.filter(schedule => schedule.priority === currentPriority);
+    }
+    return filteredSchedule;
+}
 
+function filterByCompleted(filteredSchedule) {
+    if(currentCompleted === "true") {
+        filteredSchedule = filteredSchedule.filter(schedule => schedule.completed);
+    } else if (currentCompleted === "false") {
+        filteredSchedule = filteredSchedule.filter(schedule => !schedule.completed);
+    }
+
+    return filteredSchedule;
+}
+
+function filterByKeyword(filteredSchedule) {
+    if(currentKeyword === "") return filteredSchedule;
+
+    return filteredSchedule.filter(schedule => {
+        const titleMatch = (schedule.title || "").toLowerCase().includes(currentKeyword);
+        const descriptionMatch = (schedule.description || "").toLowerCase().includes(currentKeyword);
+
+        return titleMatch || descriptionMatch;
+    });
 }
 
 //===== ETC =====
@@ -398,8 +455,7 @@ function formatDate(timestamp) {
 }
 
 function confirmMessage(message) {
-    const confirmed = confirm(message);
-    if(!confirmed) return;
+    return confirm(message);
 }
 
 renderTodaysDate();
@@ -410,4 +466,9 @@ renderSchedules();
  * getTime()    : 해당 날짜와 시간을 n년 n월 n일 00:00:00 UTC부터 지난 시간을 밀리초로 반환하는 함수.
  *                Date 객체를 저장해도 JSON으로 저장하면 문자열이 된다.
  *                따라서 해당 방식으로 저장하여 차후 new Date(schedule.date)처럼 쓸 수 있도록 한다. (새 Date 객체를 만들기 위해)
+ */
+
+/* 7일차
+ * forEach()    : 반환값이 없다는 것을 기억할 것.
+ *                따라서 a = a.forEach(...)를 사용하면 a에 무슨 값이 있었든 undefine이 된다.
  */
