@@ -22,7 +22,7 @@ const searchInput = document.querySelector(".search-input");
 const categoryFilter = document.querySelector(".category-filter");
 const priorityFilter = document.querySelector(".priority-filter");
 const completedFilter = document.querySelector(".completed-filter");
-const sortSelect = document.querySelector(".sort-select");
+const sortFilter = document.querySelector(".sort-filter");
 
 //===== List =====
 const scheduleList = document.querySelector(".schedule-list");
@@ -56,6 +56,12 @@ const PRIORITY_OPTIONS = {
 };
 
 const WEEK_NAMES = [ "일", "월", "화", "수", "목", "금", "토" ];
+
+const PRIORITY_VALUE = {
+    high: 3,
+    medium: 2,
+    low: 1
+};
 
 
 let schedules = JSON.parse(localStorage.getItem("schedules")) || [];
@@ -121,7 +127,12 @@ completedFilter.addEventListener("change", () => {
 searchInput.addEventListener("input", () => {
     currentKeyword = searchInput.value.trim().toLowerCase();
     renderSchedules();
-})
+});
+
+sortFilter.addEventListener("change", () => {
+    currentSort = sortFilter.value;
+    renderSchedules();
+});
 
 
 function addSchedule() {
@@ -202,6 +213,7 @@ function updateSchedule() {
     editingId = null;
 
     resetScheduleForm();
+    renderCalendar();
     renderSchedules();
 
     titleInput.focus();
@@ -290,19 +302,19 @@ function createScheduleCard(schedule) {
     }
     card.append(date);
    
-    const delBtn = document.createElement("button");
-    delBtn.textContent = "삭제"
-    delBtn.addEventListener("click", () => {
-        deleteSchedule(schedule.id);
-    });
-    card.append(delBtn);
-   
     const editBtn = document.createElement("button");
     editBtn.textContent = "수정";
     editBtn.addEventListener("click", () => {
         startEdit(schedule.id);
     })
     card.append(editBtn);
+
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "삭제"
+    delBtn.addEventListener("click", () => {
+        deleteSchedule(schedule.id);
+    });
+    card.append(delBtn);
 
     return card;
 }
@@ -378,6 +390,7 @@ function renderCalendar() {
 
 function renderSchedules() {
     scheduleList.innerHTML = "";
+    statsList.innerHTML = "";
 
     if(!selectedDateData) {
         scheduleList.textContent = "날짜를 선택해 주세요.";
@@ -401,6 +414,8 @@ function renderSchedules() {
 
     filteredSchedule = filterByKeyword(filteredSchedule);
 
+    filteredSchedule = sortSchedules(filteredSchedule);
+
     if(filteredSchedule.length === 0) {
         scheduleList.textContent = "등록된 일정이 없습니다.";
         return;
@@ -409,6 +424,8 @@ function renderSchedules() {
     filteredSchedule.forEach(schedule => {
         scheduleList.append(createScheduleCard(schedule));
     });
+
+    renderStatistics(filteredSchedule);
 }
 
 function renderTodaysDate() {
@@ -416,6 +433,61 @@ function renderTodaysDate() {
     const month = String(todayDate.getMonth() + 1).padStart(2, "0");
     const day = String(todayDate.getDate()).padStart(2, "0");
     today.innerHTML = `Today: ${year}년 ${month}월 ${day}일`;
+}
+
+function renderStatistics(schedule) {
+    let completeStats = 0;
+    let uncompleteStats = 0;
+
+    let studyStats = 0;
+    let workStats = 0;
+    let personalStats = 0;
+    let exerciseStats = 0;
+    let etcStats = 0;
+
+    schedule.forEach(scheduleStats => {
+        if(scheduleStats.completed === true) {
+            completeStats++;
+        } else {
+            uncompleteStats++;
+        }
+
+        switch(scheduleStats.category) {
+            case "study":
+                studyStats++;
+                break;
+            case "work":
+                workStats++;
+                break;
+            case "personal":
+                personalStats++;
+                break;
+            case "exercise":
+                exerciseStats++;
+                break;
+            case "etc":
+                etcStats++;
+                break;
+        }
+    });
+
+    statsList.innerHTML = "";
+
+    renderStatisticsSection("전체 일정", completeStats + uncompleteStats);
+    renderStatisticsSection("완료", completeStats);
+    renderStatisticsSection("미완료", uncompleteStats);
+    renderStatisticsSection("공부", studyStats);
+    renderStatisticsSection("업무", workStats);
+    renderStatisticsSection("개인", personalStats);
+    renderStatisticsSection("운동", exerciseStats);
+    renderStatisticsSection("기타", etcStats);
+    
+}
+
+function renderStatisticsSection(title, count) {
+    const stats = document.createElement("p");
+    stats.textContent = `${title} : ${count}`;
+    statsList.append(stats);
 }
 
 function selectCalendarCell(cell, year, month, date) {
@@ -495,6 +567,34 @@ function filterByKeyword(filteredSchedule) {
 
         return titleMatch || descriptionMatch;
     });
+}
+
+function sortSchedules(filteredSchedule) {
+    return [...filteredSchedule].sort((a,b) => {
+        if(b.completed !== a.completed) {
+            return a.completed - b.completed;
+        }
+
+        switch(currentSort) {
+            case "latest":
+                return b.createdAt - a.createdAt;
+                break;
+
+            case "oldest":
+                return a.createdAt - b.createdAt;
+                break;
+
+            case "priority-desc":
+                return PRIORITY_VALUE[b.priority] - PRIORITY_VALUE[a.priority];
+                break;
+
+            case "priority-asc":
+                return PRIORITY_VALUE[a.priority] - PRIORITY_VALUE[b.priority];
+                break;
+        }
+
+        return 0;
+    })
 }
 
 //===== ETC =====
