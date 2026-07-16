@@ -152,6 +152,7 @@ function addSchedule() {
 
     schedules.push(schedule);
     saveSchedules();
+    renderCalendar();
     renderSchedules();
 
     resetScheduleForm();
@@ -221,6 +222,7 @@ function deleteSchedule(id) {
     schedules = schedules.filter(schedule => schedule.id !== id);
 
     saveSchedules();
+    renderCalendar();
     renderSchedules();
 }
 
@@ -232,9 +234,34 @@ function createScheduleCard(schedule) {
     const card = document.createElement("div");
     card.classList.add("schedule-card");
 
-    const title = document.createElement("h4");
-    title.textContent = `${schedule.title}`;
-    card.append(title);
+    if(schedule.completed) {
+        card.classList.add("completed");
+    }
+
+    const header = document.createElement("div");
+    header.classList.add("card-header");
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = schedule.completed;
+        checkbox.addEventListener("change", () => {
+            checkboxToggle(schedule, checkbox);
+
+            if(schedule.completed) {
+                card.classList.add("completed");
+            } else {
+                card.classList.remove("completed");
+            }
+
+            renderSchedules();
+        });
+        header.append(checkbox);    
+    
+        const title = document.createElement("h4");
+        title.textContent = `${schedule.title}`;
+        header.append(title);
+
+    card.append(header);
 
     const classification = document.createElement("div");
     classification.classList.add("card-classification");
@@ -280,6 +307,11 @@ function createScheduleCard(schedule) {
     return card;
 }
 
+function checkboxToggle(schedule, checkbox) {
+    schedule.completed = checkbox.checked;
+    saveSchedules();
+}
+
 //===== Render ======
 function renderCalendar() {
     calendarGrid.innerHTML = "";
@@ -310,7 +342,27 @@ function renderCalendar() {
 
     for (let date = 1; date <= lastDate; date++) {
         const dateCell = document.createElement("div");
-        dateCell.textContent = date;
+        dateCell.classList.add("date-cell");
+
+            const dateNumber = document.createElement("span");
+            dateNumber.textContent = date;
+            dateCell.append(dateNumber);
+
+            const countSchedule = schedules.filter(schedule => {
+                const scheduleDate = new Date(schedule.date);
+
+                return scheduleDate.getFullYear() === year &&
+                    scheduleDate.getMonth() === month &&
+                    scheduleDate.getDate() === date;
+            }).length;
+
+            if (countSchedule > 0) {
+                const badge = document.createElement("span");
+                badge.classList.add("count-schedule");
+                badge.textContent = countSchedule;
+                dateCell.append(badge);
+            }
+
         dateCell.addEventListener("click", () => {
             selectCalendarCell(dateCell, year, month, date);
         });
@@ -425,9 +477,9 @@ function filterByPriority(filteredSchedule) {
 }
 
 function filterByCompleted(filteredSchedule) {
-    if(currentCompleted === "true") {
+    if(currentCompleted === "completed") {
         filteredSchedule = filteredSchedule.filter(schedule => schedule.completed);
-    } else if (currentCompleted === "false") {
+    } else if (currentCompleted === "uncompleted") {
         filteredSchedule = filteredSchedule.filter(schedule => !schedule.completed);
     }
 
