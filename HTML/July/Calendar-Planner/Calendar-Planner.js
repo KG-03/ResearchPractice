@@ -134,6 +134,8 @@ sortFilter.addEventListener("change", () => {
     renderSchedules();
 });
 
+exportBtn.addEventListener("click", exportCSV);
+
 
 function addSchedule() {
     if(!selectedDateData) return;
@@ -597,6 +599,57 @@ function sortSchedules(filteredSchedule) {
     })
 }
 
+function exportCSV() {
+    if(!schedules.length) {
+        alert("내보낼 일정이 없습니다.");
+        return;
+    }
+
+    const rows = [
+        [
+            "id",
+            "title",
+            "category",
+            "priority",
+            "description",
+            "date",
+            "completed",
+            "createdAt",
+            "updatedAt"
+        ]
+    ];
+
+    schedules.forEach(schedule => {
+        rows.push([
+            schedule.id,
+            escapeCSV(schedule.title),
+            escapeCSV(schedule.category),
+            escapeCSV(schedule.priority),
+            escapeCSV(schedule.description),
+            schedule.date,
+            schedule.completed,
+            schedule.createdAt,
+            schedule.updatedAt
+        ])
+    });
+
+    const csv = "\uFEFF" + rows.map(row => row.join(",")).join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `schedule-${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, "0")}-${String(todayDate.getDate()).padStart(2, "0")}.csv`;
+    a.click();
+
+    URL.revokeObjectURL(url);
+}
+
+function escapeCSV(value) {
+    return `"${String(value).replace(/"/g, '""')}"`
+}
+
 //===== ETC =====
 function formatDate(timestamp) {
     if(!timestamp) return "";
@@ -623,4 +676,23 @@ renderSchedules();
 /* 7일차
  * forEach()    : 반환값이 없다는 것을 기억할 것.
  *                따라서 a = a.forEach(...)를 사용하면 a에 무슨 값이 있었든 undefine이 된다.
+ */
+
+/* 12일차
+ * \uFEFF       : \u는 유니코드 문자라는 의미. FEFF는 16진수 4자리 코드로, BOM(Byte Order Mark), UTF-8 파일 앞에 붙이는 경우가 많다.
+ *                  BOM     : 이 파일이 어떤 문자 인코딩으로 저장되어 있는지를 알려주는 표시.
+ *                            CSV에서 엑셀이 한글을 올바르게 읽도록 할 때 자주 사용한다.
+ * 
+ * join()       : 배열의 메서드. 배열의 모든 요소를 하나의 문자열로 합치는 함수.
+ *                '배열.join("구분자")'와 같은 형태.
+ *                const arr = ["A", "B", "C"]; 일 때, arr.join(",")으로 하면 "A,B,C"가 된다.
+ *                중첩되어 사용하는 지금의 경우, "이름,나이",\n"김철수,20",\n"이영희,25"와 같은 형식이 된다.
+ * 
+ * `"${String(value).replace(/"/g, '""')}"`     : replace()는 문자열의 일부를 다른 문자열로 바꾸는 함수.
+ *                                                '/"/g'의 경우, '/찾을내용/옵션'의 형식. g는 globel으로, 
+ *                                                  해당 수식은 문자열 안의 "를 찾는데, 모든 따옴표를 대상으로 한다는 의미.
+ *                                                '""'는 큰따옴표 두 개짜리 문자열을 의미.
+ *                                                replace(/"/g, '""')는 모든 문자열의 "를 대상으로 "를 ""으로 바꾼단 의미다.
+ *                                                저장될 때 "a" 형식으로 저장되는데, "안녕하세요 "저"입니다"와 같이 저장되면 문자열이 끝난 것으로 오해할 수 있기 때문.
+ *                                                  따라서 "안녕하세요 ""저""입니다"로 저장하는 것.
  */
