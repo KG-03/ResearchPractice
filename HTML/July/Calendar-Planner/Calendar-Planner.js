@@ -136,6 +136,18 @@ sortFilter.addEventListener("change", () => {
 
 exportBtn.addEventListener("click", exportCSV);
 
+importBtn.addEventListener("click", () => {
+    importInput.click();
+});
+
+importInput.addEventListener("change", importCSV);
+
+descriptionInput.addEventListener("keydown", (e) => {
+    if(e.key === "Enter") {
+        e.preventDefault();
+    }
+});
+
 
 function addSchedule() {
     if(!selectedDateData) return;
@@ -599,6 +611,7 @@ function sortSchedules(filteredSchedule) {
     })
 }
 
+//===== Storage(CSV) =====
 function exportCSV() {
     if(!schedules.length) {
         alert("내보낼 일정이 없습니다.");
@@ -647,7 +660,68 @@ function exportCSV() {
 }
 
 function escapeCSV(value) {
-    return `"${String(value).replace(/"/g, '""')}"`
+    return `"${String(value ?? "")
+        .replace(/\r\n/g, "\\n")
+        .replace(/\n/g, "\\n")
+        .replace(/"/g, '""')}"`
+}
+
+function importCSV(event) {
+    const file = event.target.files[0];
+
+    if(!file) {
+        alert("파일이 선택되지 않았습니다.");
+        return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+        const csv = e.target.result;
+
+        const lines = csv.split("\n");
+        lines.shift();
+
+        const importedSchedules = [];
+
+        lines.forEach(line => {
+            if(!line.trim()) return;
+
+            const values = line.split(",");
+
+            importedSchedules.push({
+                id: Number(values[0]),
+                title: unescapeCSV(values[1]),
+                category: unescapeCSV(values[2]),
+                priority: unescapeCSV(values[3]),
+                description: unescapeCSV(values[4]),
+                date: Number(values[5]),
+                completed: values[6] === "true",
+                createdAt: Number(values[7]),
+                updatedAt: Number(values[8])
+            });
+        });
+
+        schedules = importedSchedules;
+
+        saveSchedules();
+        renderCalendar();
+        renderSchedules();
+    };
+
+    reader.readAsText(file, "utf-8");
+}
+
+function unescapeCSV(value) {
+    value = value.trim();
+
+    if (value.startsWith('"') && value.endsWith('"')) {
+        value = value.slice(1, -1);
+    }
+
+    return value
+        .replace(/""/g, '"')
+        .replace(/\\n/g, "\n");
 }
 
 //===== ETC =====
@@ -695,4 +769,21 @@ renderSchedules();
  *                                                replace(/"/g, '""')는 모든 문자열의 "를 대상으로 "를 ""으로 바꾼단 의미다.
  *                                                저장될 때 "a" 형식으로 저장되는데, "안녕하세요 "저"입니다"와 같이 저장되면 문자열이 끝난 것으로 오해할 수 있기 때문.
  *                                                  따라서 "안녕하세요 ""저""입니다"로 저장하는 것.
+ */
+
+/* 13일차
+ * .replace(/\r\n/g, "\\n")     : Windows 줄바꿈. /\r\n/g는 'Windows의 줄바꿈을 모두 찾는다'라는 의미. 찾아서 문자 "\n"으로 변환.
+ * .replace(/\n/g, "\\n")       : Unix 줄바꿈. /\n/g는 'Unix, Liunx, MacOS의 줄바꿈을 모두 찾는다'라는 의미. 찾아서 문자 "\n"으로 변환.
+ * 
+ * .replace(/""/g, '"')         : 큰 따옴표 두 개를 큰 따옴표 하나로 바꾼다는 의미.
+ *                                저장할 때 "이것"을 ""이것""으로 저장했다가, 다시 불러올 때 "이것"으로 불러내기 위해서 사용.
+ * .replace(/\\n/g, "\n");      : 문자 두 개 \와 n을 실제 줄바꿈 문자로 바꾼다는 의미. \\n와 \n은 다르기 때문.
+ *                                \n은 줄바꿈이 이루어지지만, \\n은 줄바꿈이 이루어지지 않는다.
+ * 
+ * if (value.startsWith('"') && value.endsWith('"')) {
+ *      value = value.slice(1, -1);
+ *  }
+ *      : startsWith()  : 문자열이 특정 문자열로 시작하는지 확인.
+ *        endsWith()    : 문자열이 특정 문자열로 끝나는지 확인.
+ *        slice(1, -1)  : 문자열의 앞과 뒤의 문자를 잘라낸다. slice(인덱스의 1부터 시작해서, 마지막 글자는 제외)한다는 의미.
  */
