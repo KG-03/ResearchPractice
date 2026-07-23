@@ -80,6 +80,9 @@ let currentCell = null;
 let isEditing = false;
 let editingId = null;
 
+let toastTimer = null;
+
+
 prevMonthBtn.addEventListener("click", () => {
     currentDateData.setMonth(currentDateData.getMonth() - 1);
 
@@ -146,6 +149,7 @@ descriptionInput.addEventListener("keydown", (e) => {
     if(e.key === "Enter") {
         e.preventDefault();
     }
+
 });
 
 
@@ -176,12 +180,12 @@ function addSchedule() {
     };
 
     schedules.push(schedule);
-    saveSchedules();
-    renderCalendar();
-    renderSchedules();
 
+    refreshSchedules();
     resetScheduleForm();
     titleInput.focus();
+
+    showToast("일정이 추가되었습니다.");
 }
 
 function startEdit(id) {
@@ -221,16 +225,15 @@ function updateSchedule() {
     editSchedule.date = selectedDateData.getTime();
     editSchedule.updatedAt = Date.now();
 
-    saveSchedules();
-
     isEditing = false;
     editingId = null;
 
+    refreshSchedules();
     resetScheduleForm();
-    renderCalendar();
-    renderSchedules();
 
     titleInput.focus();
+
+    showToast("일정이 수정되었습니다.");
 }
 
 function cancelEdit() {
@@ -238,8 +241,9 @@ function cancelEdit() {
     editingId = null;
 
     resetScheduleForm();
-
     titleInput.focus();
+
+    showToast("수정이 취소되었습니다.");
 }
 
 function deleteSchedule(id) {
@@ -247,9 +251,9 @@ function deleteSchedule(id) {
 
     schedules = schedules.filter(schedule => schedule.id !== id);
 
-    saveSchedules();
-    renderCalendar();
-    renderSchedules();
+    refreshSchedules();
+
+    showToast("일정이 삭제되었습니다.");
 }
 
 function saveSchedules() {
@@ -317,14 +321,14 @@ function createScheduleCard(schedule) {
     card.append(date);
    
     const editBtn = document.createElement("button");
-    editBtn.textContent = "수정";
+    editBtn.textContent = "✎ 수정";
     editBtn.addEventListener("click", () => {
         startEdit(schedule.id);
     })
     card.append(editBtn);
 
     const delBtn = document.createElement("button");
-    delBtn.textContent = "삭제"
+    delBtn.textContent = "🗑 삭제"
     delBtn.addEventListener("click", () => {
         deleteSchedule(schedule.id);
     });
@@ -413,8 +417,9 @@ function renderSchedules() {
 
     let filteredSchedule = [...schedules];
 
-    if(filteredSchedule.length === 0) {
-        scheduleList.textContent = "등록된 일정이 없습니다.";
+    if(!schedules.length) {
+        scheduleList.textContent = `📅 등록된 일정이 아무 것도 없습니다.
+            달력에서 날짜를 선택해서 새 일정을 등록해 보세요.`;
         return;
     }
 
@@ -430,11 +435,30 @@ function renderSchedules() {
 
     filteredSchedule = sortSchedules(filteredSchedule);
 
-    if(filteredSchedule.length === 0) {
-        scheduleList.textContent = "등록된 일정이 없습니다.";
+    if(filteredSchedule.length === 0 &&
+        currentCategory === "all" &&
+        currentPriority === "all" &&
+        currentCompleted === "all" &&
+        currentKeyword === "") {
+        scheduleList.textContent = `📅 오늘 날짜에 등록된 일정이 없습니다. 새 일정을 등록해 보세요.`;
+        return;
+    } else if (filteredSchedule.length === 0 && currentCategory !== "all") {
+        scheduleList.textContent = `📅 해당 카테고리에 해당하는 일정이 없습니다.`;
+        return;
+    } else if (filteredSchedule.length === 0 && currentPriority !== "all") {
+        scheduleList.textContent = `📅 해당 우선순위에 해당하는 일정이 없습니다.`;
+        return;
+    } else if (filteredSchedule.length === 0 && currentCompleted !== "all") {
+        scheduleList.textContent = `📅 해당 완료 상황에 해당하는 일정이 없습니다.`;
+        return;
+    } else if (filteredSchedule.length === 0 && currentCompleted !== "all") {
+        scheduleList.textContent = `📅 해당 완료 상황에 해당하는 일정이 없습니다.`;
+        return;
+    } else if (filteredSchedule.length === 0 &&  currentKeyword !== "") {
+        scheduleList.textContent = `📅 해당 키워드에 해당하는 일정이 없습니다.`;
         return;
     }
-
+    
     filteredSchedule.forEach(schedule => {
         scheduleList.append(createScheduleCard(schedule));
     });
@@ -486,6 +510,7 @@ function renderStatistics(schedule) {
     });
 
     statsList.innerHTML = "";
+    statsList.classList.add("statistics-area");
 
     renderStatisticsSection("전체 일정", completeStats + uncompleteStats);
     renderStatisticsSection("완료", completeStats);
@@ -501,6 +526,7 @@ function renderStatistics(schedule) {
 function renderStatisticsSection(title, count) {
     const stats = document.createElement("p");
     stats.textContent = `${title} : ${count}`;
+    stats.classList.add("statistics-box");
     statsList.append(stats);
 }
 
@@ -538,7 +564,7 @@ function resetScheduleForm() {
     categorySelect.value = "study";
     prioritySelect.value = "high";
 
-    addBtn.textContent = "추가";
+    addBtn.textContent = "✓ 추가";
     cancelEditBtn.style.display = "none";
 }
 
@@ -657,6 +683,8 @@ function exportCSV() {
     a.click();
 
     URL.revokeObjectURL(url);
+
+    showToast("CSV를 내보냈습니다.")
 }
 
 function escapeCSV(value) {
@@ -682,6 +710,10 @@ function importCSV(event) {
         const lines = csv.split("\n");
         lines.shift();
 
+        if (!validateCSV(lines)) {
+            return;
+        }
+
         const importedSchedules = [];
 
         lines.forEach(line => {
@@ -704,12 +736,12 @@ function importCSV(event) {
 
         schedules = importedSchedules;
 
-        saveSchedules();
-        renderCalendar();
-        renderSchedules();
+        refreshSchedules();
     };
 
     reader.readAsText(file, "utf-8");
+
+    showToast("CSV를 불러왔습니다.")
 }
 
 function unescapeCSV(value) {
@@ -724,6 +756,67 @@ function unescapeCSV(value) {
         .replace(/\\n/g, "\n");
 }
 
+function validateCSV(lines) {
+    for (const line of lines) {
+        if (!line.trim()) continue;
+
+        const values = line.split(",");
+
+        if (values.length !== 9) {
+            alert("CSV 형식이 올바르지 않습니다.");
+            return false;
+        }
+
+        if (!values[0].trim()) {
+            alert("ID가 비어 있습니다.");
+            return false;
+        }
+
+        if (isNaN(Number(values[0]))) {
+            alert("ID 형식이 잘못되었습니다.");
+            return false;
+        }
+
+        if (!values[1].trim()) {
+            alert("제목이 비어 있습니다.");
+            return false;
+        }
+
+        if (!(unescapeCSV(values[2]) in CATEGORY_OPTIONS)) {
+            alert("카테고리 값이 올바르지 않습니다.");
+            return false;
+        }
+
+        if (!(unescapeCSV(values[3]) in PRIORITY_OPTIONS)) {
+            alert("우선순위 값이 올바르지 않습니다.");
+            return false;
+        }
+
+        if (isNaN(Number(values[5]))) {
+            alert("날짜 형식이 올바르지 않습니다.");
+            return false;
+        }
+
+        const completed = values[6].trim().toLowerCase();
+        if (completed !== "true" && completed !== "false") {
+            alert("완료 여부 값이 올바르지 않습니다.");
+            return false;
+        }
+
+        if (isNaN(Number(values[7]))) {
+            alert("createdAt 값이 올바르지 않습니다.");
+            return false;
+        }
+
+        if (isNaN(Number(values[8]))) {
+            alert("updatedAt 값이 올바르지 않습니다.");
+            return false;
+        }
+    }
+
+    return true;
+}
+
 //===== ETC =====
 function formatDate(timestamp) {
     if(!timestamp) return "";
@@ -736,6 +829,41 @@ function formatDate(timestamp) {
 function confirmMessage(message) {
     return confirm(message);
 }
+
+function preventComma(input) {
+    input.addEventListener("keydown", (e) => {
+        if(e.key === ",") {
+            alert("쉼표(,)는 사용할 수 없습니다.");
+            e.preventDefault();
+        }
+    });
+
+    input.addEventListener("input", () => {
+        input.value = input.value.replace(/,/g, "");
+    });
+}
+
+function refreshSchedules() {
+    saveSchedules();
+    renderCalendar();
+    renderSchedules();
+}
+
+function showToast(message) {
+    clearTimeout(toastTimer);
+
+    toast.innerHTML = message;
+    toast.classList.add("show");
+
+    toastTimer = setTimeout(() => {
+        toast.classList.remove("show");
+        setTimeout(() => { toast.innerHTML = ""; }, 2000);
+    }, 3000);
+}
+
+
+preventComma(titleInput);
+preventComma(descriptionInput);
 
 renderTodaysDate();
 renderCalendar();
@@ -786,4 +914,10 @@ renderSchedules();
  *      : startsWith()  : 문자열이 특정 문자열로 시작하는지 확인.
  *        endsWith()    : 문자열이 특정 문자열로 끝나는지 확인.
  *        slice(1, -1)  : 문자열의 앞과 뒤의 문자를 잘라낸다. slice(인덱스의 1부터 시작해서, 마지막 글자는 제외)한다는 의미.
+ */
+
+/* 14일차
+ * for (const line of lines)    : lines 배열의 첫 번째 줄을 가져와서 검사 후, 검사가 끝나면 두 번째 줄을 가져와서 검사.
+ *                                lines 배열의 요소를 하나씩 꺼내어 line에 넣고, 처음부터 끝까지 반복하는 문법.
+ *                                for...of는 배열을 처음부터 끝까지 순회하면서 각 요소를 하나씩 꺼내서 처리하는 반복문.
  */
