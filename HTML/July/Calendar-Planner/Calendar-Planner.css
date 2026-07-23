@@ -87,6 +87,12 @@ header {
     font-weight: bold;
 }
 
+.selected-date {
+    background: #fffdc9;
+    border-radius: 5px;
+    padding: 5px;
+}
+
 /*===== input =====*/
 .input-area {
     display: flex;
@@ -180,11 +186,51 @@ header {
     background: rgb(190, 190, 190);
 }
 
+/*===== statistics =====*/
+.statistics-area {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.statistics-box {
+    border: none;
+    border-radius: 5px;
+    padding: 10px;
+
+    background: #fff1d5;
+}
+
 /*===== dark/light theme =====*/
 .theme-toggle-box {
     display: flex;
     justify-content: flex-end;
     align-items: center;
+}
+
+/* ===== toast =====*/
+.toast-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+
+    height: 40px;
+    margin-bottom: 10px;
+}
+
+.toast {
+    pointer-events: none;
+    opacity: 0;
+
+    transition: 
+        opacity .3s,
+        background-color .3s,
+        color .3s;
+}
+
+.toast.show {
+    opacity: 1;
 }
 
 /* 2일차
