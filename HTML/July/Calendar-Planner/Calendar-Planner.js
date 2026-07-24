@@ -76,6 +76,7 @@ let currentCompleted = "all";
 let currentSort = "latest";
 let currentKeyword = "";
 let currentCell = null;
+let currentTheme = localStorage.getItem("theme") || "light";
 
 let isEditing = false;
 let editingId = null;
@@ -151,6 +152,15 @@ descriptionInput.addEventListener("keydown", (e) => {
     }
 
 });
+
+themeToggleBtn.addEventListener("click", () => {
+    currentTheme = currentTheme === "light" ? "dark" : "light";
+
+    localStorage.setItem("theme", currentTheme);
+
+    applyTheme(currentTheme);
+    updateThemeButton();
+})
 
 
 function addSchedule() {
@@ -230,7 +240,6 @@ function updateSchedule() {
 
     refreshSchedules();
     resetScheduleForm();
-
     titleInput.focus();
 
     showToast("일정이 수정되었습니다.");
@@ -473,7 +482,7 @@ function renderTodaysDate() {
     today.innerHTML = `Today: ${year}년 ${month}월 ${day}일`;
 }
 
-function renderStatistics(schedule) {
+function renderStatistics(schedules) {
     let completeStats = 0;
     let uncompleteStats = 0;
 
@@ -483,7 +492,7 @@ function renderStatistics(schedule) {
     let exerciseStats = 0;
     let etcStats = 0;
 
-    schedule.forEach(scheduleStats => {
+    schedules.forEach(scheduleStats => {
         if(scheduleStats.completed === true) {
             completeStats++;
         } else {
@@ -687,13 +696,6 @@ function exportCSV() {
     showToast("CSV를 내보냈습니다.")
 }
 
-function escapeCSV(value) {
-    return `"${String(value ?? "")
-        .replace(/\r\n/g, "\\n")
-        .replace(/\n/g, "\\n")
-        .replace(/"/g, '""')}"`
-}
-
 function importCSV(event) {
     const file = event.target.files[0];
 
@@ -742,6 +744,36 @@ function importCSV(event) {
     reader.readAsText(file, "utf-8");
 
     showToast("CSV를 불러왔습니다.")
+}
+
+//===== Theme =====
+function applyTheme(theme) {
+    document.body.classList.remove("light-theme", "dark-theme");
+    document.body.classList.add(`${theme}-theme`);
+}
+
+function updateThemeButton() {
+    themeToggleBtn.textContent = currentTheme === "light" ? "🌙" : "☀️";
+}
+
+//===== Utils =====
+function formatDate(timestamp) {
+    if(!timestamp) return "";
+
+    const date = new Date(timestamp);
+
+    return date.toLocaleString("ko-KR");
+}
+
+function confirmMessage(message) {
+    return confirm(message);
+}
+
+function escapeCSV(value) {
+    return `"${String(value ?? "")
+        .replace(/\r\n/g, "\\n")
+        .replace(/\n/g, "\\n")
+        .replace(/"/g, '""')}"`
 }
 
 function unescapeCSV(value) {
@@ -818,18 +850,6 @@ function validateCSV(lines) {
 }
 
 //===== ETC =====
-function formatDate(timestamp) {
-    if(!timestamp) return "";
-
-    const date = new Date(timestamp);
-
-    return date.toLocaleString("ko-KR");
-}
-
-function confirmMessage(message) {
-    return confirm(message);
-}
-
 function preventComma(input) {
     input.addEventListener("keydown", (e) => {
         if(e.key === ",") {
@@ -868,6 +888,10 @@ preventComma(descriptionInput);
 renderTodaysDate();
 renderCalendar();
 renderSchedules();
+
+applyTheme(currentTheme);
+updateThemeButton();
+
 
 /* 5일차
  * getTime()    : 해당 날짜와 시간을 n년 n월 n일 00:00:00 UTC부터 지난 시간을 밀리초로 반환하는 함수.
