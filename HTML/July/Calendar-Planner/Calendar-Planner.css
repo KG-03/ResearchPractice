@@ -69,6 +69,7 @@ header {
 
 .click-cell {
     background: #fffdc9;
+    color: black;
 }
 
 .today-cell {
@@ -96,6 +97,7 @@ header {
 
 .selected-date {
     background: #fffdc9;
+    
     border-radius: 5px;
     padding: 5px;
 }
@@ -261,6 +263,7 @@ body.dark-theme .week-row div {
 
 body.light-theme .click-cell {
     background: #fffdc9;
+    color: black;
 }
 
 body.dark-theme .click-cell {
