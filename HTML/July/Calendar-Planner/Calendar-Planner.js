@@ -10,6 +10,7 @@ const nextMonthBtn = document.querySelector(".next-month-btn");
 
 //===== Input ======
 const titleInput = document.querySelector(".title-input");
+const timeInput = document.querySelector(".time-input");
 const categorySelect = document.querySelector(".category-select");
 const prioritySelect = document.querySelector(".priority-select");
 const descriptionInput = document.querySelector(".description-input");
@@ -183,7 +184,10 @@ function addSchedule() {
         category,
         priority,
         description,
+
         date: selectedDateData.getTime(),
+        time: timeInput.value,
+
         completed: false,
         createdAt: Date.now(),
         updatedAt: Date.now()
@@ -210,6 +214,7 @@ function startEdit(id) {
     categorySelect.value = editSchedule.category;
     prioritySelect.value = editSchedule.priority;
     descriptionInput.value = editSchedule.description;
+    timeInput.value = editSchedule.time;
 
     addBtn.textContent = "수정 완료";
     cancelEditBtn.style.display = "inline-block";
@@ -233,6 +238,7 @@ function updateSchedule() {
     editSchedule.priority = prioritySelect.value;
     editSchedule.description = descriptionInput.value.trim();
     editSchedule.date = selectedDateData.getTime();
+    editSchedule.time = timeInput.value;
     editSchedule.updatedAt = Date.now();
 
     isEditing = false;
@@ -301,6 +307,12 @@ function createScheduleCard(schedule) {
         header.append(title);
 
     card.append(header);
+
+    if(schedule.time) {
+        const time = document.createElement("p");
+        time.textContent = `🕒 ${schedule.time}`;
+        card.append(time);
+    }
 
     const classification = document.createElement("div");
     classification.classList.add("card-classification");
@@ -572,6 +584,7 @@ function resetScheduleForm() {
     descriptionInput.value = "";
     categorySelect.value = "study";
     prioritySelect.value = "high";
+    timeInput.value = "";
 
     addBtn.textContent = "✓ 추가";
     cancelEditBtn.style.display = "none";
@@ -642,6 +655,10 @@ function sortSchedules(filteredSchedule) {
                 break;
         }
 
+        if(b.time !== a.time) {
+            return a.time.localeCompare(b.time);
+        }
+
         return 0;
     })
 }
@@ -661,6 +678,7 @@ function exportCSV() {
             "priority",
             "description",
             "date",
+            "time",
             "completed",
             "createdAt",
             "updatedAt"
@@ -675,6 +693,7 @@ function exportCSV() {
             escapeCSV(schedule.priority),
             escapeCSV(schedule.description),
             schedule.date,
+            escapeCSV(schedule.time),
             schedule.completed,
             schedule.createdAt,
             schedule.updatedAt
@@ -730,9 +749,10 @@ function importCSV(event) {
                 priority: unescapeCSV(values[3]),
                 description: unescapeCSV(values[4]),
                 date: Number(values[5]),
-                completed: values[6] === "true",
-                createdAt: Number(values[7]),
-                updatedAt: Number(values[8])
+                time: unescapeCSV(values[6]) === "0" ? null : unescapeCSV(values[6]),
+                completed: values[7] === "true",
+                createdAt: Number(values[8]),
+                updatedAt: Number(values[9])
             });
         });
 
@@ -794,7 +814,7 @@ function validateCSV(lines) {
 
         const values = line.split(",");
 
-        if (values.length !== 9) {
+        if (values.length !== 10) {
             alert("CSV 형식이 올바르지 않습니다.");
             return false;
         }
@@ -829,18 +849,18 @@ function validateCSV(lines) {
             return false;
         }
 
-        const completed = values[6].trim().toLowerCase();
+        const completed = values[7].trim().toLowerCase();
         if (completed !== "true" && completed !== "false") {
             alert("완료 여부 값이 올바르지 않습니다.");
             return false;
         }
 
-        if (isNaN(Number(values[7]))) {
+        if (isNaN(Number(values[8]))) {
             alert("createdAt 값이 올바르지 않습니다.");
             return false;
         }
 
-        if (isNaN(Number(values[8]))) {
+        if (isNaN(Number(values[9]))) {
             alert("updatedAt 값이 올바르지 않습니다.");
             return false;
         }
@@ -944,4 +964,9 @@ updateThemeButton();
  * for (const line of lines)    : lines 배열의 첫 번째 줄을 가져와서 검사 후, 검사가 끝나면 두 번째 줄을 가져와서 검사.
  *                                lines 배열의 요소를 하나씩 꺼내어 line에 넣고, 처음부터 끝까지 반복하는 문법.
  *                                for...of는 배열을 처음부터 끝까지 순회하면서 각 요소를 하나씩 꺼내서 처리하는 반복문.
+ */
+
+/* 18일차
+ * a.time.localeCompare(b.time) : 문자열을 사전 순서로 비교하는 함수.
+ *                                언어(Locale)의 정렬 규칙을 고려하여 두 문자열의 순서를 비교.
  */
