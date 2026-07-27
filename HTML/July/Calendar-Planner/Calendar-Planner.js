@@ -312,6 +312,10 @@ function createScheduleCard(schedule) {
         const time = document.createElement("p");
         time.textContent = `🕒 ${schedule.time}`;
         card.append(time);
+
+        if(isExpiredSchedule(schedule)) {
+            card.classList.add("expired-schedule");
+        }
     }
 
     const classification = document.createElement("div");
@@ -361,6 +365,23 @@ function createScheduleCard(schedule) {
 function checkboxToggle(schedule, checkbox) {
     schedule.completed = checkbox.checked;
     saveSchedules();
+}
+
+function isExpiredSchedule(schedule) {
+    if (!schedule.time) return false;
+
+    const now = new Date();
+
+    const [hour, minute] = schedule.time.split(":");
+    
+    const scheduleCardDate = new Date(schedule.date);
+
+    scheduleCardDate.setHours(hour);
+    scheduleCardDate.setMinutes(minute);
+    scheduleCardDate.setSeconds(0);
+    scheduleCardDate.setMilliseconds(0);
+
+    return scheduleCardDate < now && !schedule.completed;
 }
 
 //===== Render ======
@@ -638,25 +659,31 @@ function sortSchedules(filteredSchedule) {
         }
 
         switch(currentSort) {
+            case "time-desc":
+                if(!a.time && !b.time) return 0;
+                if(!a.time) return 1;
+                if(!b.time) return -1;
+
+                return a.time.localeCompare(b.time);
+
+            case "time-asc":
+                if(!a.time && !b.time) return 0;
+                if(!a.time) return 1;
+                if(!b.time) return -1;
+
+                return b.time.localeCompare(a.time);
+
             case "latest":
                 return b.createdAt - a.createdAt;
-                break;
 
             case "oldest":
                 return a.createdAt - b.createdAt;
-                break;
 
             case "priority-desc":
                 return PRIORITY_VALUE[b.priority] - PRIORITY_VALUE[a.priority];
-                break;
 
             case "priority-asc":
                 return PRIORITY_VALUE[a.priority] - PRIORITY_VALUE[b.priority];
-                break;
-        }
-
-        if(b.time !== a.time) {
-            return a.time.localeCompare(b.time);
         }
 
         return 0;
@@ -969,4 +996,16 @@ updateThemeButton();
 /* 18일차
  * a.time.localeCompare(b.time) : 문자열을 사전 순서로 비교하는 함수.
  *                                언어(Locale)의 정렬 규칙을 고려하여 두 문자열의 순서를 비교.
+ */
+
+/* 19일차
+ * const now = new Date();
+ *
+ * const [hour, minute] = schedule.time.split(":");
+ *
+ * const scheduleDate = new Date(schedule.date);
+ * scheduleDate.setHours(hour);
+ * scheduleDate.setMinutes(minute);
+ *          이 코드에서 const [hour, minute] = schedule.time.split(":");가 필요한 이유는
+ *          shedule.date에 time이 설정되지 않았기(ex: 2026-07-27 00:00으로 저장되어 있는 등) 때문.
  */
