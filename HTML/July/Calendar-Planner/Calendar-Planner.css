@@ -189,6 +189,14 @@ header {
     background: #ffdb99;
 }
 
+.expired-schedule {
+    opacity: 0.7;
+}
+
+.expired-schedule h4 {
+    color: red;
+}
+
 .completed {
     opacity: 0.5;
     text-decoration: line-through;
