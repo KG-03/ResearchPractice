@@ -7,6 +7,7 @@ const currentDateText = document.querySelector(".current-date-text");
 const weekRow = document.querySelector(".week-row");
 const prevMonthBtn = document.querySelector(".prev-month-btn");
 const nextMonthBtn = document.querySelector(".next-month-btn");
+const calendarTooltip = document.querySelector(".calendar-tooltip");
 
 //===== Input ======
 const titleInput = document.querySelector(".title-input");
@@ -435,6 +436,14 @@ function renderCalendar() {
                 dateCell.append(badge);
             }
 
+        dateCell.addEventListener("mouseenter", () => {
+            showTooltip(dateCell, year, month, date);
+        });
+
+        dateCell.addEventListener("mouseleave", () => {
+            hideTooltip();
+        });            
+
         dateCell.addEventListener("click", () => {
             selectCalendarCell(dateCell, year, month, date);
         });
@@ -584,6 +593,57 @@ function selectCalendarCell(cell, year, month, date) {
     selectedDate.textContent = `선택 날짜: ${year}년 ${month + 1}월 ${date}일`;
 
     renderSchedules();
+}
+
+function showTooltip(dateCell, year, month, date) {
+    const daySchedules = schedules.filter(schedule => {
+        const scheduleCellDate = new Date(schedule.date);
+
+        return scheduleCellDate.getFullYear() === year &&
+                scheduleCellDate.getMonth() === month &&
+                scheduleCellDate.getDate() === date;
+    });
+
+    if(daySchedules.length === 0) return;
+
+    daySchedules.sort((a,b) => {
+        if(!a.time && !b.time) return 0;
+        if(!a.time) return 1;
+        if(!b.time) return -1;
+
+        return a.time.localeCompare(b.time);
+    });
+
+    calendarTooltip.innerHTML = "";
+
+    const title = document.createElement("storng");
+    title.textContent = `${month + 1}월 ${date}일`;
+    calendarTooltip.append(title);
+
+    const previewSchedules = daySchedules.slice(0, 4);
+
+    previewSchedules.forEach(schedule => {
+        const p = document.createElement("p");
+        p.textContent = `[${schedule.time || "--:--"}] ${schedule.title}`;
+        calendarTooltip.append(p);
+    });
+
+    const remainCount = daySchedules.length - previewSchedules.length;
+    if(remainCount > 0) {
+        const p = document.createElement("p");
+        p.textContent = `+${remainCount}개의 일정`;
+        calendarTooltip.append(p);
+    }
+
+    const rect = dateCell.getBoundingClientRect();
+    calendarTooltip.style.left = rect.left + window.scrollX + "px";
+    calendarTooltip.style.top - rect.bottom + window.scrollY + 5 + "px";
+
+    calendarTooltip.style.display = "block";
+}
+
+function hideTooltip() {
+    calendarTooltip.style.display = "none";
 }
 
 //===== Reset =====
@@ -1008,4 +1068,18 @@ updateThemeButton();
  * scheduleDate.setMinutes(minute);
  *          이 코드에서 const [hour, minute] = schedule.time.split(":");가 필요한 이유는
  *          shedule.date에 time이 설정되지 않았기(ex: 2026-07-27 00:00으로 저장되어 있는 등) 때문.
+ */
+
+/* 20일차
+ * getBoundingClientRect()  : HTML의 요소의 위치, 크기를 알려주는 함수.
+ *                            해당 요소가 현재 화면(Viewport)에서 어디에 있고, 얼마나 큰지 알려준다.
+ *                            HTML 요소의 현재 화면 기준 위치와 크기를 나타내는 객체를 반환하는 함수.
+ *                            스크롤 애니메이션, 드래그 앤 드롭, 툴팁 및 Toast 위치 계산 등에서 자주 사용.
+ *                            const rect = box.getBoundingClientRect(); 일 때,
+ *                              rect.top    : 화면 위에서 요소까지의 거리
+ *                              rect.left   : 화면 왼쪽에서 요소까지의 거리
+ *                              rect.width  : 요소의 너비
+ *                              rect.height : 요소의 높이
+ *                              rect.right  : 요소의 오른쪽 좌표
+ *                              rect.bottom : 요소의 아래쪽 좌표
  */
