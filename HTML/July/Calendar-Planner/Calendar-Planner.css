@@ -102,6 +102,23 @@ header {
     padding: 5px;
 }
 
+.calendar-tooltip {
+    position: absolute;
+
+    display: none;
+
+    padding: 10px;
+
+    background: white;
+
+    border: 1px solid #ccc;
+    border-radius: 8px;
+
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+
+    z-index: 1000;
+}
+
 /*===== input =====*/
 .input-area {
     display: flex;
