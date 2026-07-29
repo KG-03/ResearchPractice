@@ -51,6 +51,14 @@ const CATEGORY_OPTIONS = {
     etc: "기타"
 };
 
+const CATEGORY_ICON = {
+    study: "📚",
+    work: "💼",
+    personal: "👤",
+    exercise: "⚽",
+    etc: "📂"    
+};
+
 const PRIORITY_OPTIONS = {
     high: "높음",
     medium: "보통",
@@ -84,6 +92,7 @@ let isEditing = false;
 let editingId = null;
 
 let toastTimer = null;
+let toastRemoveTimer = null;
 
 
 prevMonthBtn.addEventListener("click", () => {
@@ -162,7 +171,22 @@ themeToggleBtn.addEventListener("click", () => {
 
     applyTheme(currentTheme);
     updateThemeButton();
-})
+});
+
+document.addEventListener("keydown", function(e) {
+    if(e.ctrlKey && e.key === "Enter") {
+        if(!isEditing) addTransaction();
+        else updateTransaction();
+    }
+
+    if(e.key === "Escape" && (titleInput.value !== "" ||
+                                timeInput.value !== "" ||
+                                categorySelect.value !== "study" ||
+                                prioritySelect.value !== "high" ||
+                                descriptionInput.value !== "")) {
+        cancelEdit();
+    }
+});
 
 
 function addSchedule() {
@@ -228,6 +252,22 @@ function updateSchedule() {
 
     if(!editSchedule) return;
 
+    const isChanged = editSchedule.title !== titleInput.value.trim() ||
+                      editSchedule.category !== categorySelect.value ||
+                      editSchedule.priority !== prioritySelect.value ||
+                      editSchedule.description !== descriptionInput.value.trim() ||
+                      editSchedule.date !== selectedDateData.getTime() ||
+                      editSchedule.time !== timeInput.value;
+
+    if(!isChanged) {
+        refreshSchedules();
+        resetScheduleForm();
+        titleInput.focus();
+
+        showToast("수정된 일정이 없습니다.");
+        return;
+    }
+
     editSchedule.title = titleInput.value.trim();
 
     if(editSchedule.title === "") {
@@ -259,7 +299,7 @@ function cancelEdit() {
     resetScheduleForm();
     titleInput.focus();
 
-    showToast("수정이 취소되었습니다.");
+    showToast("취소되었습니다.");
 }
 
 function deleteSchedule(id) {
@@ -624,7 +664,7 @@ function showTooltip(dateCell, year, month, date) {
 
     previewSchedules.forEach(schedule => {
         const p = document.createElement("p");
-        p.textContent = `[${schedule.time || "--:--"}] ${schedule.title}`;
+        p.textContent = `🕒${schedule.time || "--:--"} ${CATEGORY_ICON[schedule.category]}${schedule.title.length > 10 ? schedule.title.slice(0,10) + "..." : schedule.title} ${schedule.completed === true ? "✔️" : ""} `;
         calendarTooltip.append(p);
     });
 
@@ -978,13 +1018,21 @@ function refreshSchedules() {
 
 function showToast(message) {
     clearTimeout(toastTimer);
+    clearTimeout(toastRemoveTimer);
 
-    toast.innerHTML = message;
+    toast.classList.remove("show");
+
+    void toast.offsetWidth;
+
+    toast.textContent = message;
     toast.classList.add("show");
 
     toastTimer = setTimeout(() => {
         toast.classList.remove("show");
-        setTimeout(() => { toast.innerHTML = ""; }, 2000);
+
+        toastRemoveTimer = setTimeout(() => {
+            toast.textContent = "";
+        }, 300);
     }, 3000);
 }
 
@@ -1082,4 +1130,16 @@ updateThemeButton();
  *                              rect.height : 요소의 높이
  *                              rect.right  : 요소의 오른쪽 좌표
  *                              rect.bottom : 요소의 아래쪽 좌표
+ */
+
+/* 21일차
+ * void toast.offsetWidth;  : offsetWidth는 요소의 현재 너비를 반환하는 속성.
+ *                            offsetWidth를 알려면 현재 레이아웃이 정확해야 하기 때문에 Reflow를 강제로 수행.
+ *                            요소의 크기 계산, 위치 계산, 스타일 적용 등을 끝낸 뒤, 값을 반환.
+ * 
+ *                            void는 표현식을 실행하지만 결과값을 버린다는 의미.
+ *                            따라서 void toast.offsetWidth는 toast.offsetWidth를 읽고, 브라우저가 레이아웃을 계산한 뒤, 반환된 너비는 버린다는 의미가 된다.
+ *                            toast.classList.remove("show") > void toast.offsetWidth > toast.classList.add("show"); 순서대로 하면
+ *                              'show 제거 > 레이아웃 다시 계산 > show 다시 추가'를 각각 다른 단계로 인식.
+ *                              show 클래스 제거를 브라우저가 확실하게 반영한 뒤, 다시 show 클래스를 추가하여 애니메이션을 처음부터 실행한다.
  */
