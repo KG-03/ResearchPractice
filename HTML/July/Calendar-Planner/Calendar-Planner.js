@@ -14,6 +14,7 @@ const titleInput = document.querySelector(".title-input");
 const timeInput = document.querySelector(".time-input");
 const categorySelect = document.querySelector(".category-select");
 const prioritySelect = document.querySelector(".priority-select");
+const repeatSelect = document.querySelector(".repeat-select");
 const descriptionInput = document.querySelector(".description-input");
 const addBtn = document.querySelector(".add-btn");
 const cancelEditBtn = document.querySelector(".cancel-edit-btn");
@@ -43,6 +44,8 @@ const toast = document.querySelector(".toast");
 const themeToggleBtn = document.querySelector(".theme-toggle-btn");
 
 
+const WEEK_NAMES = [ "일", "월", "화", "수", "목", "금", "토" ];
+
 const CATEGORY_OPTIONS = {
     study: "공부",
     work: "업무",
@@ -65,16 +68,27 @@ const PRIORITY_OPTIONS = {
     low: "낮음"
 };
 
-const WEEK_NAMES = [ "일", "월", "화", "수", "목", "금", "토" ];
-
 const PRIORITY_VALUE = {
     high: 3,
     medium: 2,
     low: 1
 };
 
+const REPEAT_OPTIONS = {
+    none: "반복 안 함",
+    daily: "매일",
+    weekly: "매주",
+    monthly: "매월",
+    yearly: "매년"
+};
+
 
 let schedules = JSON.parse(localStorage.getItem("schedules")) || [];
+
+schedules = schedules.map(schedule => ({
+    ...schedule,
+    repeat: schedule.repeat ?? "none"
+}));
 
 const todayDate = new Date();
 let currentDateData = new Date();
@@ -213,6 +227,8 @@ function addSchedule() {
         date: selectedDateData.getTime(),
         time: timeInput.value,
 
+        repeat: repeatSelect.value,
+
         completed: false,
         createdAt: Date.now(),
         updatedAt: Date.now()
@@ -238,6 +254,7 @@ function startEdit(id) {
     titleInput.value = editSchedule.title;
     categorySelect.value = editSchedule.category;
     prioritySelect.value = editSchedule.priority;
+    repeatSelect.value = editSchedule.repeat;
     descriptionInput.value = editSchedule.description;
     timeInput.value = editSchedule.time;
 
@@ -255,6 +272,7 @@ function updateSchedule() {
     const isChanged = editSchedule.title !== titleInput.value.trim() ||
                       editSchedule.category !== categorySelect.value ||
                       editSchedule.priority !== prioritySelect.value ||
+                      editSchedule.repeat !== repeatSelect.value ||
                       editSchedule.description !== descriptionInput.value.trim() ||
                       editSchedule.date !== selectedDateData.getTime() ||
                       editSchedule.time !== timeInput.value;
@@ -277,6 +295,7 @@ function updateSchedule() {
 
     editSchedule.category = categorySelect.value;
     editSchedule.priority = prioritySelect.value;
+    editSchedule.repeat = repeatSelect.value;
     editSchedule.description = descriptionInput.value.trim();
     editSchedule.date = selectedDateData.getTime();
     editSchedule.time = timeInput.value;
@@ -300,6 +319,29 @@ function cancelEdit() {
     titleInput.focus();
 
     showToast("취소되었습니다.");
+}
+
+function copySchedule(id) {
+    const copySchedule = schedules.find(schedule => schedule.id === id);
+
+    if(!copySchedule) return;
+
+    const newSchedule = {
+        ...copySchedule,
+
+        id: Date.now(),
+        title: copySchedule.title + " (복사)",
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+    };
+
+    schedules.push(newSchedule);
+
+    refreshSchedules();
+    resetScheduleForm();
+    titleInput.focus();
+
+    showToast("일정이 복제되었습니다.");
 }
 
 function deleteSchedule(id) {
@@ -370,6 +412,10 @@ function createScheduleCard(schedule) {
         priority.textContent = `우선순위: ${PRIORITY_OPTIONS[schedule.priority]}`;
         classification.append(priority);
 
+        const repeat = document.createElement("p");
+        repeat.textContent = `🔁 ${REPEAT_OPTIONS[schedule.repeat]}`;
+        classification.append(repeat);
+
     card.append(classification);
 
     if(schedule.description) {
@@ -387,14 +433,21 @@ function createScheduleCard(schedule) {
     card.append(date);
    
     const editBtn = document.createElement("button");
-    editBtn.textContent = "✎ 수정";
+    editBtn.textContent = "✏️ 수정";
     editBtn.addEventListener("click", () => {
         startEdit(schedule.id);
     })
     card.append(editBtn);
 
+    const copyBtn = document.createElement("button");
+    copyBtn.textContent = "📋 복제";
+    copyBtn.addEventListener("click", () => {
+        copySchedule(schedule.id);
+    });
+    card.append(copyBtn);
+
     const delBtn = document.createElement("button");
-    delBtn.textContent = "🗑 삭제"
+    delBtn.textContent = "🗑️ 삭제"
     delBtn.addEventListener("click", () => {
         deleteSchedule(schedule.id);
     });
@@ -462,11 +515,7 @@ function renderCalendar() {
             dateCell.append(dateNumber);
 
             const countSchedule = schedules.filter(schedule => {
-                const scheduleDate = new Date(schedule.date);
-
-                return scheduleDate.getFullYear() === year &&
-                    scheduleDate.getMonth() === month &&
-                    scheduleDate.getDate() === date;
+                return isRepeatSchedule(schedule, new Date(year, month, date));
             }).length;
 
             if (countSchedule > 0) {
@@ -637,11 +686,7 @@ function selectCalendarCell(cell, year, month, date) {
 
 function showTooltip(dateCell, year, month, date) {
     const daySchedules = schedules.filter(schedule => {
-        const scheduleCellDate = new Date(schedule.date);
-
-        return scheduleCellDate.getFullYear() === year &&
-                scheduleCellDate.getMonth() === month &&
-                scheduleCellDate.getDate() === date;
+        return isRepeatSchedule(schedule, new Date(year, month, date));
     });
 
     if(daySchedules.length === 0) return;
@@ -677,7 +722,7 @@ function showTooltip(dateCell, year, month, date) {
 
     const rect = dateCell.getBoundingClientRect();
     calendarTooltip.style.left = rect.left + window.scrollX + "px";
-    calendarTooltip.style.top - rect.bottom + window.scrollY + 5 + "px";
+    calendarTooltip.style.top = rect.bottom + window.scrollY + 5 + "px";
 
     calendarTooltip.style.display = "block";
 }
@@ -705,6 +750,7 @@ function resetScheduleForm() {
     descriptionInput.value = "";
     categorySelect.value = "study";
     prioritySelect.value = "high";
+    repeatSelect.value = "none";
     timeInput.value = "";
 
     addBtn.textContent = "✓ 추가";
@@ -713,7 +759,43 @@ function resetScheduleForm() {
 
 //===== Filter =====
 function filterByDate(filteredSchedule) {
-    return filteredSchedule.filter(schedule => schedule.date === selectedDateData.getTime());
+    return filteredSchedule.filter(schedule => isRepeatSchedule(schedule, selectedDateData));
+}
+
+function isRepeatSchedule(schedule, targetDate) {
+    const scheduleDate = new Date(schedule.date);
+
+    switch(schedule.repeat) {
+        case "none":
+            return schedule.date === targetDate.getTime();
+
+        case "daily":
+            return targetDate >= scheduleDate;
+
+        case "weekly":
+            return (
+                targetDate >= scheduleDate &&
+                targetDate.getDay() === scheduleDate.getDay()
+            );
+
+        case "monthly":
+            return (
+                targetDate >= scheduleDate &&
+                targetDate.getDate() === scheduleDate.getDate()
+            );
+
+        case "yearly":
+            return (
+                targetDate >= scheduleDate &&
+                targetDate.getMonth() === scheduleDate.getMonth() &&
+                targetDate.getDate() === scheduleDate.getDate()
+            );
+
+        default:
+            return false;
+    }
+
+    return false;
 }
 
 function filterByCategory(filteredSchedule) {
