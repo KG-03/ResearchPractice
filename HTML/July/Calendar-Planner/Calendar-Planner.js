@@ -82,12 +82,27 @@ const REPEAT_OPTIONS = {
     yearly: "매년"
 };
 
+const CSV = {
+    ID: 0,
+    TITLE: 1,
+    CATEGORY: 2,
+    PRIORITY: 3,
+    DESCRIPTION: 4,
+    DATE: 5,
+    TIME: 6,
+    REPEAT: 7,
+    COMPLETED_DATES: 8,
+    CREATED_AT: 9,
+    UPDATED_AT: 10
+}
+
 
 let schedules = JSON.parse(localStorage.getItem("schedules")) || [];
 
 schedules = schedules.map(schedule => ({
     ...schedule,
-    repeat: schedule.repeat ?? "none"
+    repeat: schedule.repeat ?? "none",
+    completedDates: schedule.completedDates ?? []
 }));
 
 const todayDate = new Date();
@@ -229,7 +244,9 @@ function addSchedule() {
 
         repeat: repeatSelect.value,
 
-        completed: false,
+        completedDates: [],
+        exceptions: [],
+
         createdAt: Date.now(),
         updatedAt: Date.now()
     };
@@ -362,7 +379,7 @@ function createScheduleCard(schedule) {
     const card = document.createElement("div");
     card.classList.add("schedule-card");
 
-    if(schedule.completed) {
+    if(isCompleted(schedule, selectedDateData)) {
         card.classList.add("completed");
     }
 
@@ -371,11 +388,11 @@ function createScheduleCard(schedule) {
 
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
-        checkbox.checked = schedule.completed;
+        checkbox.checked = isCompleted(schedule, selectedDateData);
         checkbox.addEventListener("change", () => {
             checkboxToggle(schedule, checkbox);
 
-            if(schedule.completed) {
+            if(isCompleted(schedule, selectedDateData)) {
                 card.classList.add("completed");
             } else {
                 card.classList.remove("completed");
@@ -457,7 +474,16 @@ function createScheduleCard(schedule) {
 }
 
 function checkboxToggle(schedule, checkbox) {
-    schedule.completed = checkbox.checked;
+    const key = getDateKey(selectedDateData);
+
+    if(checkbox.checked) {
+        if(!schedule.completedDates.includes(key)) {
+            schedule.completedDates.push(key);
+        }
+    } else {
+        schedule.completedDates = schedule.completedDates.filter(date => date !== key);
+    }
+
     saveSchedules();
 }
 
@@ -475,7 +501,7 @@ function isExpiredSchedule(schedule) {
     scheduleCardDate.setSeconds(0);
     scheduleCardDate.setMilliseconds(0);
 
-    return scheduleCardDate < now && !schedule.completed;
+    return scheduleCardDate < now && !isCompleted(schedule, selectedDateData);
 }
 
 //===== Render ======
@@ -624,7 +650,7 @@ function renderStatistics(schedules) {
     let etcStats = 0;
 
     schedules.forEach(scheduleStats => {
-        if(scheduleStats.completed === true) {
+        if(isCompleted(scheduleStats, selectedDateData) === true) {
             completeStats++;
         } else {
             uncompleteStats++;
@@ -709,7 +735,8 @@ function showTooltip(dateCell, year, month, date) {
 
     previewSchedules.forEach(schedule => {
         const p = document.createElement("p");
-        p.textContent = `🕒${schedule.time || "--:--"} ${CATEGORY_ICON[schedule.category]}${schedule.title.length > 10 ? schedule.title.slice(0,10) + "..." : schedule.title} ${schedule.completed === true ? "✔️" : ""} `;
+        const previewTargetDate = new Date(year, month, date);
+        p.textContent = `🕒${schedule.time || "--:--"} ${CATEGORY_ICON[schedule.category]}${schedule.title.length > 10 ? schedule.title.slice(0,10) + "..." : schedule.title} ${isCompleted(schedule, previewTargetDate) === true ? "✔️" : ""} `;
         calendarTooltip.append(p);
     });
 
@@ -815,9 +842,9 @@ function filterByPriority(filteredSchedule) {
 
 function filterByCompleted(filteredSchedule) {
     if(currentCompleted === "completed") {
-        filteredSchedule = filteredSchedule.filter(schedule => schedule.completed);
+        filteredSchedule = filteredSchedule.filter(schedule => isCompleted(schedule, selectedDateData));
     } else if (currentCompleted === "uncompleted") {
-        filteredSchedule = filteredSchedule.filter(schedule => !schedule.completed);
+        filteredSchedule = filteredSchedule.filter(schedule => !isCompleted(schedule, selectedDateData));
     }
 
     return filteredSchedule;
@@ -836,8 +863,11 @@ function filterByKeyword(filteredSchedule) {
 
 function sortSchedules(filteredSchedule) {
     return [...filteredSchedule].sort((a,b) => {
-        if(b.completed !== a.completed) {
-            return a.completed - b.completed;
+        const completedA = isCompleted(a, selectedDateData);
+        const completedB = isCompleted(b, selectedDateData);
+
+        if(completedA !== completedB) {
+            return completedA - completedB;
         }
 
         switch(currentSort) {
@@ -888,7 +918,8 @@ function exportCSV() {
             "description",
             "date",
             "time",
-            "completed",
+            "repeat",
+            "completedDates",
             "createdAt",
             "updatedAt"
         ]
@@ -903,7 +934,8 @@ function exportCSV() {
             escapeCSV(schedule.description),
             schedule.date,
             escapeCSV(schedule.time),
-            schedule.completed,
+            escapeCSV(schedule.repeat),
+            escapeCSV(schedule.completedDates.join("|")),
             schedule.createdAt,
             schedule.updatedAt
         ])
@@ -952,16 +984,17 @@ function importCSV(event) {
             const values = line.split(",");
 
             importedSchedules.push({
-                id: Number(values[0]),
-                title: unescapeCSV(values[1]),
-                category: unescapeCSV(values[2]),
-                priority: unescapeCSV(values[3]),
-                description: unescapeCSV(values[4]),
-                date: Number(values[5]),
-                time: unescapeCSV(values[6]) === "0" ? null : unescapeCSV(values[6]),
-                completed: values[7] === "true",
-                createdAt: Number(values[8]),
-                updatedAt: Number(values[9])
+                id: Number(values[CSV.ID]),
+                title: unescapeCSV(values[CSV.TITLE]),
+                category: unescapeCSV(values[CSV.CATEGORY]),
+                priority: unescapeCSV(values[CSV.PRIORITY]),
+                description: unescapeCSV(values[CSV.DESCRIPTION]),
+                date: Number(values[CSV.DATE]),
+                time: unescapeCSV(values[CSV.TIME]) === "0" ? null : unescapeCSV(values[CSV.TIME]),
+                repeat: unescapeCSV(values[CSV.REPEAT]),
+                completedDates: unescapeCSV(values[CSV.COMPLETED_DATES]).split("|").filter(Boolean),
+                createdAt: Number(values[CSV.CREATED_AT]),
+                updatedAt: Number(values[CSV.UPDATED_AT])
             });
         });
 
@@ -1023,53 +1056,60 @@ function validateCSV(lines) {
 
         const values = line.split(",");
 
-        if (values.length !== 10) {
+        if (values.length !== 11) {
+            console.log(values[13]);
             alert("CSV 형식이 올바르지 않습니다.");
             return false;
         }
 
-        if (!values[0].trim()) {
+        if (!values[CSV.ID].trim()) {
             alert("ID가 비어 있습니다.");
             return false;
         }
 
-        if (isNaN(Number(values[0]))) {
+        if (isNaN(Number(values[CSV.ID]))) {
             alert("ID 형식이 잘못되었습니다.");
             return false;
         }
 
-        if (!values[1].trim()) {
+        if (!values[CSV.TITLE].trim()) {
             alert("제목이 비어 있습니다.");
             return false;
         }
 
-        if (!(unescapeCSV(values[2]) in CATEGORY_OPTIONS)) {
+        if (!(unescapeCSV(values[CSV.CATEGORY]) in CATEGORY_OPTIONS)) {
             alert("카테고리 값이 올바르지 않습니다.");
             return false;
         }
 
-        if (!(unescapeCSV(values[3]) in PRIORITY_OPTIONS)) {
+        if (!(unescapeCSV(values[CSV.PRIORITY]) in PRIORITY_OPTIONS)) {
             alert("우선순위 값이 올바르지 않습니다.");
             return false;
         }
 
-        if (isNaN(Number(values[5]))) {
+        if (isNaN(Number(values[CSV.DATE]))) {
             alert("날짜 형식이 올바르지 않습니다.");
             return false;
         }
 
-        const completed = values[7].trim().toLowerCase();
-        if (completed !== "true" && completed !== "false") {
-            alert("완료 여부 값이 올바르지 않습니다.");
+        try {
+            const importCompletedDates = unescapeCSV(values[CSV.COMPLETED_DATES]).split("|").filter(Boolean);
+            
+            if(!Array.isArray(importCompletedDates)) {
+                alert("completedDates 형식이 올바르지 않습니다.");
+                return false;
+            }
+        } catch {
+            alert("completedDates 형식이 올바르지 않습니다.");
             return false;
         }
 
-        if (isNaN(Number(values[8]))) {
+        if (isNaN(Number(values[CSV.CREATED_AT]))) {
             alert("createdAt 값이 올바르지 않습니다.");
             return false;
         }
 
-        if (isNaN(Number(values[9]))) {
+        if (isNaN(Number(values[CSV.UPDATED_AT]))) {
             alert("updatedAt 값이 올바르지 않습니다.");
             return false;
         }
@@ -1116,6 +1156,16 @@ function showToast(message) {
             toast.textContent = "";
         }, 300);
     }, 3000);
+}
+
+function getDateKey(date) {
+    return date.toISOString().split("T")[0];
+}
+
+function isCompleted(schedule, targetDate) {
+    const key = getDateKey(targetDate);
+
+    return (schedule.completedDates ?? []).includes(key);
 }
 
 
@@ -1224,4 +1274,18 @@ updateThemeButton();
  *                            toast.classList.remove("show") > void toast.offsetWidth > toast.classList.add("show"); 순서대로 하면
  *                              'show 제거 > 레이아웃 다시 계산 > show 다시 추가'를 각각 다른 단계로 인식.
  *                              show 클래스 제거를 브라우저가 확실하게 반영한 뒤, 다시 show 클래스를 추가하여 애니메이션을 처음부터 실행한다.
+ */
+
+/* 23일차
+ * return date.toISOString().split("T")[0];     : toISOStiring()은 날짜와 시간을 ISO 8601 형식의 문자열로 변환한다.
+ *                                                  2026-04-04T06:30:20.000Z 처럼 변환된다.
+ *                                                  T는 날짜와 시간을 구분하는 문자다.
+ *                                                split("T")는 T를 기준으로 문자열을 나누어 배열로 반환한다.
+ *                                                여기서 [0]번째 배열을 불러냄으로써 '날짜'를 받을 수 있다.
+ * filter(Boolean)      : 배열에서 거짓 같은 값을 제거하는 용도.
+ *                        filter()는 배열의 각 요소를 검사해서 true면 남기고 false면 제거한다.
+ *                        Boolean(value)는 실행되면 value가 참인지 거짓인지 판단한다.
+ *                          false, 0, "", null, undefined, NaN은 거짓으로 판별된다.
+ *                        filter(Boolean)은 filter(value => Boolean(value))와 같으므로, 따라서 해당 코드는 '잘못 추가된 값, 혹은 빈 값을 제거하는 용도'로 기능한다.
+ *                          "apple", "", "banana"가 들어가 있다면, 해당 함수로 "apple", "banana"만 남길 수 있다.
  */
