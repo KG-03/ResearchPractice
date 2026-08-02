@@ -92,9 +92,12 @@ const CSV = {
     TIME: 6,
     REPEAT: 7,
     COMPLETED_DATES: 8,
-    CREATED_AT: 9,
-    UPDATED_AT: 10
-}
+    DELETED_DATES: 9,
+    CREATED_AT: 10,
+    UPDATED_AT: 11
+};
+
+const CSV_LENGTH = Object.values(CSV).length;
 
 
 let schedules = JSON.parse(localStorage.getItem("schedules")) || [];
@@ -102,12 +105,13 @@ let schedules = JSON.parse(localStorage.getItem("schedules")) || [];
 schedules = schedules.map(schedule => ({
     ...schedule,
     repeat: schedule.repeat ?? "none",
-    completedDates: schedule.completedDates ?? []
+    completedDates: schedule.completedDates ?? [],
+    deletedDates: schedule.deletedDates ?? []
 }));
 
 const todayDate = new Date();
 let currentDateData = new Date();
-let selectedDateData = null;
+let selectedDateData = new Date();
 
 let currentCategory = "all";
 let currentPriority = "all";
@@ -245,7 +249,7 @@ function addSchedule() {
         repeat: repeatSelect.value,
 
         completedDates: [],
-        exceptions: [],
+        deletedDates: [],
 
         createdAt: Date.now(),
         updatedAt: Date.now()
@@ -364,7 +368,13 @@ function copySchedule(id) {
 function deleteSchedule(id) {
     if(!confirmMessage("정말 삭제하시겠습니까?")) return;
 
-    schedules = schedules.filter(schedule => schedule.id !== id);
+    const schedule = schedules.find(s => s.id === id);
+    if(schedule.repeat === "none"){
+        schedules = schedules.filter(s => s.id !== id);
+    } else {
+        const key = getDateKey(selectedDateData);
+        schedule.deletedDates.push(key);
+    }
 
     refreshSchedules();
 
@@ -790,6 +800,14 @@ function filterByDate(filteredSchedule) {
 }
 
 function isRepeatSchedule(schedule, targetDate) {
+    if(!targetDate) return false;
+
+    const key = getDateKey(targetDate);
+
+    if(schedule.deletedDates.includes(key)) {
+        return false;
+    }
+
     const scheduleDate = new Date(schedule.date);
 
     switch(schedule.repeat) {
@@ -920,6 +938,7 @@ function exportCSV() {
             "time",
             "repeat",
             "completedDates",
+            "deletedDates",
             "createdAt",
             "updatedAt"
         ]
@@ -936,6 +955,7 @@ function exportCSV() {
             escapeCSV(schedule.time),
             escapeCSV(schedule.repeat),
             escapeCSV(schedule.completedDates.join("|")),
+            escapeCSV(schedule.deletedDates.join("|")),
             schedule.createdAt,
             schedule.updatedAt
         ])
@@ -993,6 +1013,7 @@ function importCSV(event) {
                 time: unescapeCSV(values[CSV.TIME]) === "0" ? null : unescapeCSV(values[CSV.TIME]),
                 repeat: unescapeCSV(values[CSV.REPEAT]),
                 completedDates: unescapeCSV(values[CSV.COMPLETED_DATES]).split("|").filter(Boolean),
+                deletedDates: unescapeCSV(values[CSV.DELETED_DATES]).split("|").filter(Boolean),
                 createdAt: Number(values[CSV.CREATED_AT]),
                 updatedAt: Number(values[CSV.UPDATED_AT])
             });
@@ -1056,8 +1077,7 @@ function validateCSV(lines) {
 
         const values = line.split(",");
 
-        if (values.length !== 11) {
-            console.log(values[13]);
+        if (values.length !== CSV_LENGTH) {
             alert("CSV 형식이 올바르지 않습니다.");
             return false;
         }
@@ -1159,6 +1179,8 @@ function showToast(message) {
 }
 
 function getDateKey(date) {
+    if(!date) return null;
+
     return date.toISOString().split("T")[0];
 }
 
@@ -1175,6 +1197,7 @@ preventComma(descriptionInput);
 renderTodaysDate();
 renderCalendar();
 renderSchedules();
+selectedDate.textContent = `선택 날짜: ${selectedDateData.getFullYear()}년 ${selectedDateData.getMonth()+1}월 ${selectedDateData.getDate()}일`;
 
 applyTheme(currentTheme);
 updateThemeButton();
@@ -1288,4 +1311,15 @@ updateThemeButton();
  *                          false, 0, "", null, undefined, NaN은 거짓으로 판별된다.
  *                        filter(Boolean)은 filter(value => Boolean(value))와 같으므로, 따라서 해당 코드는 '잘못 추가된 값, 혹은 빈 값을 제거하는 용도'로 기능한다.
  *                          "apple", "", "banana"가 들어가 있다면, 해당 함수로 "apple", "banana"만 남길 수 있다.
+ */
+
+/* 25일차
+ * const exception = schedule.exception?.[key];     : ?의 의미는 앞의 값이 null 또는 undefined가 아니면 뒤를 계속 실행하고, 맞다면 undefined를 반환한다.
+ *                                                    따라서 schedule에 exception 객체가 있으면 key에 해당하는 값을 가져오고, exception 객체가 없다면 오류를 내지 말고 undefined를 반환한다.
+ *                                                    지금은 사용하지 않는 방식이나, 차후 사용할 수 있으니 잘 확인할 것.
+ * 
+ * Object.values(CSV).length;       : Object.values()는 객체의 값만 뽑아서 배열로 반환하는 함수.
+ *                                    지금의 CSV에 Object.values(CSV)를 적용하면 [0, 1, 2, 3, 4, ...]를 가져올 수 있다.
+ *                                    반대로 Object.keys(CSV)는 ["ID", "TITLE", "CATEGORY", ...]를 가져올 수 있다.
+ *                                    여기에 length 옵션을 추가하면 CSV 객체 안에 있는 값으 개수(속성 개수)를 구할 수 있다. 
  */
