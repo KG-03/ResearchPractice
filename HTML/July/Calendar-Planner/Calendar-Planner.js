@@ -26,6 +26,7 @@ const categoryFilter = document.querySelector(".category-filter");
 const priorityFilter = document.querySelector(".priority-filter");
 const completedFilter = document.querySelector(".completed-filter");
 const sortFilter = document.querySelector(".sort-filter");
+const deletedFilter = document.querySelector(".deleted-filter");
 
 //===== List =====
 const scheduleList = document.querySelector(".schedule-list");
@@ -91,10 +92,11 @@ const CSV = {
     DATE: 5,
     TIME: 6,
     REPEAT: 7,
-    COMPLETED_DATES: 8,
-    DELETED_DATES: 9,
-    CREATED_AT: 10,
-    UPDATED_AT: 11
+    DELETED: 8,
+    COMPLETED_DATES: 9,
+    DELETED_DATES: 10,
+    CREATED_AT: 11,
+    UPDATED_AT: 12
 };
 
 const CSV_LENGTH = Object.values(CSV).length;
@@ -105,6 +107,7 @@ let schedules = JSON.parse(localStorage.getItem("schedules")) || [];
 schedules = schedules.map(schedule => ({
     ...schedule,
     repeat: schedule.repeat ?? "none",
+    deleted: schedule.deleted ?? false,
     completedDates: schedule.completedDates ?? [],
     deletedDates: schedule.deletedDates ?? []
 }));
@@ -120,6 +123,8 @@ let currentSort = "latest";
 let currentKeyword = "";
 let currentCell = null;
 let currentTheme = localStorage.getItem("theme") || "light";
+
+let showDeleted = false;
 
 let isEditing = false;
 let editingId = null;
@@ -206,6 +211,11 @@ themeToggleBtn.addEventListener("click", () => {
     updateThemeButton();
 });
 
+deletedFilter.addEventListener("change", () => {
+    showDeleted = deletedFilter.checked;
+    renderSchedules();
+});
+
 document.addEventListener("keydown", function(e) {
     if(e.ctrlKey && e.key === "Enter") {
         if(!isEditing) addTransaction();
@@ -247,6 +257,7 @@ function addSchedule() {
         time: timeInput.value,
 
         repeat: repeatSelect.value,
+        deleted: false,
 
         completedDates: [],
         deletedDates: [],
@@ -370,7 +381,7 @@ function deleteSchedule(id) {
 
     const schedule = schedules.find(s => s.id === id);
     if(schedule.repeat === "none"){
-        schedules = schedules.filter(s => s.id !== id);
+        schedule.deleted = true;
     } else {
         const key = getDateKey(selectedDateData);
         schedule.deletedDates.push(key);
@@ -379,6 +390,23 @@ function deleteSchedule(id) {
     refreshSchedules();
 
     showToast("일정이 삭제되었습니다.");
+}
+
+function restoreSchedule(id) {
+    const schedule = schedules.find(s => s.id === id);
+
+    if(!schedule) return;
+
+    if(schedule.repeat === "none") {
+        schedule.deleted = false;
+    } else {
+        const key = getDateKey(selectedDateData);
+
+        schedule.deletedDates = schedule.deletedDates.filter(date => date !== key);
+    }
+
+    refreshSchedules();
+    showToast("일정이 복구되었습니다.");
 }
 
 function saveSchedules() {
@@ -474,10 +502,17 @@ function createScheduleCard(schedule) {
     card.append(copyBtn);
 
     const delBtn = document.createElement("button");
-    delBtn.textContent = "🗑️ 삭제"
-    delBtn.addEventListener("click", () => {
-        deleteSchedule(schedule.id);
-    });
+    if(showDeleted) {
+        delBtn.textContent = "♻️ 복구";
+        delBtn.addEventListener("click", () => {
+            restoreSchedule(schedule.id);
+        });
+    } else {
+        delBtn.textContent = "🗑️ 삭제"
+        delBtn.addEventListener("click", () => {
+            deleteSchedule(schedule.id);
+        });
+    }
     card.append(delBtn);
 
     return card;
@@ -550,9 +585,7 @@ function renderCalendar() {
             dateNumber.textContent = date;
             dateCell.append(dateNumber);
 
-            const countSchedule = schedules.filter(schedule => {
-                return isRepeatSchedule(schedule, new Date(year, month, date));
-            }).length;
+            const countSchedule = getSchedulesByDate(new Date(year, month, date)).length;
 
             if (countSchedule > 0) {
                 const badge = document.createElement("span");
@@ -721,9 +754,7 @@ function selectCalendarCell(cell, year, month, date) {
 }
 
 function showTooltip(dateCell, year, month, date) {
-    const daySchedules = schedules.filter(schedule => {
-        return isRepeatSchedule(schedule, new Date(year, month, date));
-    });
+    const daySchedules = getSchedulesByDate(new Date(year, month, date));
 
     if(daySchedules.length === 0) return;
 
@@ -796,18 +827,27 @@ function resetScheduleForm() {
 
 //===== Filter =====
 function filterByDate(filteredSchedule) {
-    return filteredSchedule.filter(schedule => isRepeatSchedule(schedule, selectedDateData));
+    return filteredSchedule.filter(schedule => {
+        if(!isRepeatSchedule(schedule, selectedDateData)) return false;
+
+        if(schedule.repeat === "none") {
+            if(showDeleted) return schedule.deleted;
+
+            return !schedule.deleted;
+        }
+
+        const key = getDateKey(selectedDateData);
+        const repeatDeleted = schedule.deletedDates.includes(key);
+
+        if(showDeleted) return repeatDeleted;
+
+        return !repeatDeleted;
+    });
 }
 
 function isRepeatSchedule(schedule, targetDate) {
     if(!targetDate) return false;
-
-    const key = getDateKey(targetDate);
-
-    if(schedule.deletedDates.includes(key)) {
-        return false;
-    }
-
+    
     const scheduleDate = new Date(schedule.date);
 
     switch(schedule.repeat) {
@@ -937,6 +977,7 @@ function exportCSV() {
             "date",
             "time",
             "repeat",
+            "deleted",
             "completedDates",
             "deletedDates",
             "createdAt",
@@ -954,6 +995,7 @@ function exportCSV() {
             schedule.date,
             escapeCSV(schedule.time),
             escapeCSV(schedule.repeat),
+            escapeCSV(schedule.deleted),
             escapeCSV(schedule.completedDates.join("|")),
             escapeCSV(schedule.deletedDates.join("|")),
             schedule.createdAt,
@@ -1012,6 +1054,7 @@ function importCSV(event) {
                 date: Number(values[CSV.DATE]),
                 time: unescapeCSV(values[CSV.TIME]) === "0" ? null : unescapeCSV(values[CSV.TIME]),
                 repeat: unescapeCSV(values[CSV.REPEAT]),
+                deleted: unescapeCSV(values[CSV.DELETED]),
                 completedDates: unescapeCSV(values[CSV.COMPLETED_DATES]).split("|").filter(Boolean),
                 deletedDates: unescapeCSV(values[CSV.DELETED_DATES]).split("|").filter(Boolean),
                 createdAt: Number(values[CSV.CREATED_AT]),
@@ -1190,6 +1233,19 @@ function isCompleted(schedule, targetDate) {
     return (schedule.completedDates ?? []).includes(key);
 }
 
+function getSchedulesByDate(targetDate, includeDeleted = false) {
+    return schedules.filter(schedule => {
+        if(!isRepeatSchedule(schedule, targetDate)) return false;
+
+        if(schedule.repeat === "none") return includeDeleted ? schedule.deleted : !schedule.deleted;
+
+        const key = getDateKey(targetDate);
+        const deleted = schedule.deletedDates.includes(key);
+
+        return includeDeleted ? deleted : !deleted;
+    });
+}
+
 
 preventComma(titleInput);
 preventComma(descriptionInput);
@@ -1322,4 +1378,9 @@ updateThemeButton();
  *                                    지금의 CSV에 Object.values(CSV)를 적용하면 [0, 1, 2, 3, 4, ...]를 가져올 수 있다.
  *                                    반대로 Object.keys(CSV)는 ["ID", "TITLE", "CATEGORY", ...]를 가져올 수 있다.
  *                                    여기에 length 옵션을 추가하면 CSV 객체 안에 있는 값으 개수(속성 개수)를 구할 수 있다. 
+ */
+
+/* 26일차
+ * function getSchedulesByDate(targetDate, includeDeleted = false)  : includeDeleted = false는 매개변수.
+ *                                                                    함수를 호출할 때 두 번째 인자를 전달받지 않으면 includeDeleted 값을 false로 사용.
  */
