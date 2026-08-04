@@ -95,8 +95,9 @@ const CSV = {
     DELETED: 8,
     COMPLETED_DATES: 9,
     DELETED_DATES: 10,
-    CREATED_AT: 11,
-    UPDATED_AT: 12
+    EXCEPTIONS: 11,
+    CREATED_AT: 12,
+    UPDATED_AT: 13
 };
 
 const CSV_LENGTH = Object.values(CSV).length;
@@ -109,7 +110,8 @@ schedules = schedules.map(schedule => ({
     repeat: schedule.repeat ?? "none",
     deleted: schedule.deleted ?? false,
     completedDates: schedule.completedDates ?? [],
-    deletedDates: schedule.deletedDates ?? []
+    deletedDates: schedule.deletedDates ?? [],
+    exceptions: schedule.exceptions ?? {}
 }));
 
 const todayDate = new Date();
@@ -128,6 +130,7 @@ let showDeleted = false;
 
 let isEditing = false;
 let editingId = null;
+let editingMode = "all";
 
 let toastTimer = null;
 let toastRemoveTimer = null;
@@ -261,6 +264,7 @@ function addSchedule() {
 
         completedDates: [],
         deletedDates: [],
+        exceptions: {},
 
         createdAt: Date.now(),
         updatedAt: Date.now()
@@ -275,13 +279,14 @@ function addSchedule() {
     showToast("일정이 추가되었습니다.");
 }
 
-function startEdit(id) {
+function startEdit(id, editMode = "all") {
     const editSchedule = schedules.find(schedule => schedule.id === id);
 
     if(!editSchedule) return;
 
     isEditing = true;
     editingId = id;
+    editingMode = editMode;
 
     titleInput.value = editSchedule.title;
     categorySelect.value = editSchedule.category;
@@ -318,20 +323,32 @@ function updateSchedule() {
         return;
     }
 
-    editSchedule.title = titleInput.value.trim();
-
-    if(editSchedule.title === "") {
+    if(titleInput.value.trim() === "") {
         alert("제목을 입력해 주십시오.");
         return;
     }
 
-    editSchedule.category = categorySelect.value;
-    editSchedule.priority = prioritySelect.value;
-    editSchedule.repeat = repeatSelect.value;
-    editSchedule.description = descriptionInput.value.trim();
-    editSchedule.date = selectedDateData.getTime();
-    editSchedule.time = timeInput.value;
-    editSchedule.updatedAt = Date.now();
+    if(editingMode === "single") {
+        const key = getDateKey(selectedDateData);
+
+        editSchedule.exceptions[key] = {
+            title: titleInput.value.trim(),
+            category: categorySelect.value,
+            priority: prioritySelect.value,
+            description: descriptionInput.value.trim(),
+            time: timeInput.value,
+            updatedAt: Date.now()
+        }
+    } else {
+        editSchedule.title = titleInput.value.trim();
+        editSchedule.category = categorySelect.value;
+        editSchedule.priority = prioritySelect.value;
+        editSchedule.repeat = repeatSelect.value;
+        editSchedule.description = descriptionInput.value.trim();
+        editSchedule.date = selectedDateData.getTime();
+        editSchedule.time = timeInput.value;
+        editSchedule.updatedAt = Date.now();
+    }
 
     isEditing = false;
     editingId = null;
@@ -490,8 +507,18 @@ function createScheduleCard(schedule) {
     const editBtn = document.createElement("button");
     editBtn.textContent = "✏️ 수정";
     editBtn.addEventListener("click", () => {
-        startEdit(schedule.id);
-    })
+        if(schedule.repeat === "none") {
+            startEdit(schedule.id, "all");
+            return;
+        }
+
+        const answer = prompt(`1: 이번 일정만 수정
+2: 반복 일정 전체 수정`);
+
+        if(answer === "1") startEdit(schedule.id, "single");
+
+        if(answer === "2") startEdit(schedule.id, "all");
+    });
     card.append(editBtn);
 
     const copyBtn = document.createElement("button");
@@ -519,14 +546,16 @@ function createScheduleCard(schedule) {
 }
 
 function checkboxToggle(schedule, checkbox) {
+    //originalSchedule는 resolveRepeatSchedulesForDate()에서부터 받을 수 있다.
+    const original = schedule.originalSchedule || schedule;
     const key = getDateKey(selectedDateData);
 
     if(checkbox.checked) {
-        if(!schedule.completedDates.includes(key)) {
-            schedule.completedDates.push(key);
+        if(!original.completedDates.includes(key)) {
+            original.completedDates.push(key);
         }
     } else {
-        schedule.completedDates = schedule.completedDates.filter(date => date !== key);
+        original.completedDates = original.completedDates.filter(date => date !== key);
     }
 
     saveSchedules();
@@ -585,7 +614,7 @@ function renderCalendar() {
             dateNumber.textContent = date;
             dateCell.append(dateNumber);
 
-            const countSchedule = getSchedulesByDate(new Date(year, month, date)).length;
+            const countSchedule = resolveRepeatSchedulesForDate(new Date(year, month, date)).length;
 
             if (countSchedule > 0) {
                 const badge = document.createElement("span");
@@ -631,6 +660,8 @@ function renderSchedules() {
             달력에서 날짜를 선택해서 새 일정을 등록해 보세요.`;
         return;
     }
+
+    filteredSchedule = resolveRepeatSchedulesForDate(selectedDateData, showDeleted);
 
     filteredSchedule = filterByDate(filteredSchedule);
 
@@ -754,7 +785,7 @@ function selectCalendarCell(cell, year, month, date) {
 }
 
 function showTooltip(dateCell, year, month, date) {
-    const daySchedules = getSchedulesByDate(new Date(year, month, date));
+    const daySchedules = resolveRepeatSchedulesForDate(new Date(year, month, date));
 
     if(daySchedules.length === 0) return;
 
@@ -980,6 +1011,7 @@ function exportCSV() {
             "deleted",
             "completedDates",
             "deletedDates",
+            "exceptions",
             "createdAt",
             "updatedAt"
         ]
@@ -998,6 +1030,7 @@ function exportCSV() {
             escapeCSV(schedule.deleted),
             escapeCSV(schedule.completedDates.join("|")),
             escapeCSV(schedule.deletedDates.join("|")),
+            escapeCSV(schedule.exceptions.join("|")),
             schedule.createdAt,
             schedule.updatedAt
         ])
@@ -1054,9 +1087,10 @@ function importCSV(event) {
                 date: Number(values[CSV.DATE]),
                 time: unescapeCSV(values[CSV.TIME]) === "0" ? null : unescapeCSV(values[CSV.TIME]),
                 repeat: unescapeCSV(values[CSV.REPEAT]),
-                deleted: unescapeCSV(values[CSV.DELETED]),
+                deleted: unescapeCSV(values[CSV.DELETED]).toLowerCase() === "true",
                 completedDates: unescapeCSV(values[CSV.COMPLETED_DATES]).split("|").filter(Boolean),
                 deletedDates: unescapeCSV(values[CSV.DELETED_DATES]).split("|").filter(Boolean),
+                exceptions: JSON.parse(unescapeCSV(values[CSV.EXCEPTIONS]) || "{}"),
                 createdAt: Number(values[CSV.CREATED_AT]),
                 updatedAt: Number(values[CSV.UPDATED_AT])
             });
@@ -1233,16 +1267,28 @@ function isCompleted(schedule, targetDate) {
     return (schedule.completedDates ?? []).includes(key);
 }
 
-function getSchedulesByDate(targetDate, includeDeleted = false) {
+function resolveRepeatSchedulesForDate(targetDate, includeDeleted = false) {
+    const key = getDateKey(targetDate);
+
     return schedules.filter(schedule => {
         if(!isRepeatSchedule(schedule, targetDate)) return false;
 
         if(schedule.repeat === "none") return includeDeleted ? schedule.deleted : !schedule.deleted;
-
-        const key = getDateKey(targetDate);
+        
         const deleted = schedule.deletedDates.includes(key);
 
         return includeDeleted ? deleted : !deleted;
+    }).map(schedule => {
+        if(schedule.exceptions[key]) {
+            return {
+                ...schedule,
+                ...schedule.exceptions[key],
+
+                originalSchedule: schedule
+            };
+        }
+
+        return schedule;
     });
 }
 
@@ -1383,4 +1429,6 @@ updateThemeButton();
 /* 26일차
  * function getSchedulesByDate(targetDate, includeDeleted = false)  : includeDeleted = false는 매개변수.
  *                                                                    함수를 호출할 때 두 번째 인자를 전달받지 않으면 includeDeleted 값을 false로 사용.
+ * 
+ * 27일차: 현재 함수명을 resolveRepeatSchedulesForDate()로 변경.
  */
