@@ -1109,9 +1109,9 @@ function importCSV(event) {
     reader.onload = function(e) {
         const csv = e.target.result;
 
-        const lines = csv.split("\n");
+        const lines = csv.split(/\r?\n/);
         lines.shift();
-
+        
         if (!validateCSV(lines)) {
             return;
         }
@@ -1121,7 +1121,7 @@ function importCSV(event) {
         lines.forEach(line => {
             if(!line.trim()) return;
 
-            const values = line.split(",");
+            const values = parseCSVLine(line);
 
             importedSchedules.push({
                 id: Number(values[CSV.ID]),
@@ -1135,7 +1135,7 @@ function importCSV(event) {
                 deleted: unescapeCSV(values[CSV.DELETED]).toLowerCase() === "true",
                 completedDates: unescapeCSV(values[CSV.COMPLETED_DATES]).split("|").filter(Boolean),
                 deletedDates: unescapeCSV(values[CSV.DELETED_DATES]).split("|").filter(Boolean),
-                exceptions: JSON.parse(unescapeCSV(values[CSV.EXCEPTIONS]) || "{}"),
+                exceptions: values[CSV.EXCEPTIONS] ? JSON.parse(values[CSV.EXCEPTIONS]) : {},
                 createdAt: Number(values[CSV.CREATED_AT]),
                 updatedAt: Number(values[CSV.UPDATED_AT])
             });
@@ -1149,6 +1149,40 @@ function importCSV(event) {
     reader.readAsText(file, "utf-8");
 
     showToast("CSV를 불러왔습니다.")
+}
+
+function parseCSVLine(line) {
+    const values = [];
+
+    let current = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+
+        if (ch === '"') {
+            if (inQuotes && line[i + 1] === '"') {
+                current += '"';
+                i++;
+            } else {
+                inQuotes = !inQuotes;
+            }
+
+            continue;
+        }
+
+        if (ch === "," && !inQuotes) {
+            values.push(current);
+            current = "";
+            continue;
+        }
+
+        current += ch;
+    }
+
+    values.push(current);
+
+    return values;
 }
 
 //===== Theme =====
@@ -1197,7 +1231,15 @@ function validateCSV(lines) {
     for (const line of lines) {
         if (!line.trim()) continue;
 
-        const values = line.split(",");
+        const values = parseCSVLine(line);
+
+        if (values.length !== Object.values(CSV).length) {
+            console.log(values);
+            console.log(values.length);
+
+            alert("CSV 형식이 올바르지 않습니다.");
+            return false;
+        }
 
         if (values.length !== CSV_LENGTH) {
             alert("CSV 형식이 올바르지 않습니다.");
@@ -1247,7 +1289,7 @@ function validateCSV(lines) {
         }
 
         try {
-            JSON.parse(unescapeCSV(values[CSV.EXCEPTIONS]) || {});
+            JSON.parse(values[CSV.EXCEPTIONS] || "{}");
         } catch {
             alert("exceptions 형식이 올바르지 않습니다.");
             return false;
