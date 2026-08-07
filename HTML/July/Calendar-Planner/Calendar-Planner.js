@@ -288,8 +288,6 @@ function startEdit(id, editMode = "all") {
     editingId = id;
     editingMode = editMode;
 
-
-
     titleInput.value = editSchedule.title;
     categorySelect.value = editSchedule.category;
     prioritySelect.value = editSchedule.priority;
@@ -440,24 +438,53 @@ function deleteRepeatOccurrence(schedule, targetDate) {
     showToast("이번 일정만 삭제되었습니다.");
 }
 
-function permanentDeleteSchedule(id) {
+function permanentDeleteSchedule(schedule, targetDate = null) {
     if(!confirm("완전히 삭제하시겠습니까?")) return;
 
-    schedules = schedules.filter(schedule => schedule.id !== id);
+    if(targetDate) {
+        const key = getDateKey(targetDate);
+        schedule.deletedDates = schedule.deletedDates.filter(date => date !== key);
+    } else {
+        schedules = schedules.filter(s => s.id !== schedule.id);
+    }
 
     refreshSchedules();
     showToast("완전히 삭제되었습니다.");
 }
 
-function restoreSchedule(id) {
-    const schedule = schedules.find(s => s.id === id);
+function deleteAllSchedule() {
+    schedules = schedules.filter(schedule => {
+        if(schedule.repeat === "none") return !schedule.deleted;
 
-    if(!schedule) return;
+        if(schedule.deleted) return false;
 
-    schedule.deleted = false;
+        return true;
+    })
+}
+
+function restoreSchedule(schedule, targetDate = null) {
+    if(targetDate) {
+        const key = getDateKey(targetDate);
+        schedule.deletedDates = schedule.deletedDates.filter(date => date !== key);
+    } else {
+        schedule.deleted = false;
+    }
 
     refreshSchedules();
     showToast("일정이 복구되었습니다.");
+}
+
+function restoreException(schedule, targetDate) {
+    const key = getDateKey(targetDate);
+
+    if(!schedule.exceptions[key]) return;
+
+    delete schedule.exceptions[key];
+
+    saveSchedules();
+    refreshSchedules();
+
+    showToast("원래 반복 일정으로 복구되었습니다.");
 }
 
 function saveSchedules() {
@@ -546,14 +573,14 @@ function createScheduleCard(schedule) {
         const restoreBtn = document.createElement("button");
         restoreBtn.textContent = "♻️ 복구";
         restoreBtn.addEventListener("click", () => {
-            restoreSchedule(schedule.id);
+            restoreSchedule(schedule, selectedDateData);
         });
         card.append(restoreBtn);
 
         const permanentDelBtn = document.createElement("button");
-        permanentDelBtn.textContent = "🗑️ 완전 삭제";
+        permanentDelBtn.textContent = "❌ 완전 삭제";
         permanentDelBtn.addEventListener("click", () => {
-            permanentDeleteSchedule(schedule.id);
+            permanentDeleteSchedule(schedule, selectedDateData);
         })
         card.append(permanentDelBtn);
 
@@ -574,6 +601,18 @@ function createScheduleCard(schedule) {
             if(answer === "2") startEdit(schedule.id, "all");
         });
         card.append(editBtn);
+
+        if (schedule.repeat !== "none" &&
+            hasException(schedule, selectedDateData)) {
+                const restoreRepeatBtn = document.createElement("button");
+                restoreRepeatBtn.textContent = "↩ 원래 일정 복원";
+
+                restoreRepeatBtn.addEventListener("click", () => {
+                    restoreException(schedule, selectedDateData);
+                });
+
+            card.append(restoreRepeatBtn);
+        }
 
         const copyBtn = document.createElement("button");
         copyBtn.textContent = "📋 복제";
@@ -710,8 +749,6 @@ function renderSchedules() {
     }
 
     filteredSchedule = getVisibleSchedulesForDate(selectedDateData, showDeleted);
-
-    filteredSchedule = filterByDate(filteredSchedule);
 
     filteredSchedule = filterByCategory(filteredSchedule);
 
@@ -905,19 +942,32 @@ function resetScheduleForm() {
 }
 
 //===== Filter =====
-function filterByDate(filteredSchedule) {
-    return filteredSchedule.filter(schedule => {
-        if(!isRepeatSchedule(schedule, selectedDateData)) return false;
+function getVisibleSchedulesForDate(targetDate, includeDeleted = false) {
+    const key = getDateKey(targetDate);
 
-        if(schedule.repeat === "none") {
-            if(showDeleted) return schedule.deleted;
+    return schedules.filter(schedule => {
+        if(!isRepeatSchedule(schedule, targetDate)) return false;
 
-            return !schedule.deleted;
+        //일반
+        if(schedule.repeat === "none") return includeDeleted ? schedule.deleted : !schedule.deleted;
+
+        //반복일정 전체삭제
+        if(schedule.deleted) return includeDeleted;
+        
+        //반복일정 특정날짜삭제
+        const deleted = schedule.deletedDates.includes(key);
+        return includeDeleted ? deleted : !deleted;
+    }).map(schedule => {
+        if(schedule.exceptions[key]) {
+            return {
+                ...schedule,
+                ...schedule.exceptions[key],
+
+                originalSchedule: schedule
+            };
         }
 
-        if(showDeleted) return schedule.deleted;
-
-        return !schedule.deleted;
+        return schedule;
     });
 }
 
@@ -1309,6 +1359,12 @@ function validateCSV(lines) {
     return true;
 }
 
+function hasException(schedule, targetDate) {
+    const key = getDateKey(targetDate);
+
+    return !!schedule.exceptions[key];
+}
+
 //===== ETC =====
 function preventComma(input) {
     input.addEventListener("keydown", (e) => {
@@ -1359,35 +1415,6 @@ function isCompleted(schedule, targetDate) {
     const key = getDateKey(targetDate);
 
     return (schedule.completedDates ?? []).includes(key);
-}
-
-function getVisibleSchedulesForDate(targetDate, includeDeleted = false) {
-    const key = getDateKey(targetDate);
-
-    return schedules.filter(schedule => {
-        if(!isRepeatSchedule(schedule, targetDate)) return false;
-
-        //일반
-        if(schedule.repeat === "none") return includeDeleted ? schedule.deleted : !schedule.deleted;
-
-        //반복일정 전체삭제
-        if(schedule.deleted) return includeDeleted;
-        
-        //반복일정 특정날짜삭제
-        const deleted = schedule.deletedDates.includes(key);
-        return includeDeleted ? deleted : !deleted;
-    }).map(schedule => {
-        if(schedule.exceptions[key]) {
-            return {
-                ...schedule,
-                ...schedule.exceptions[key],
-
-                originalSchedule: schedule
-            };
-        }
-
-        return schedule;
-    });
 }
 
 
@@ -1530,4 +1557,10 @@ updateThemeButton();
  * 
  * 27일차: 현재 함수명을 resolveRepeatSchedulesForDate()로 변경.
  * 28일차: 현재 함수명을 getVisibleSchedulesForDate()로 변경.
+ */
+
+/* 30일차
+ * !!schedule.exceptions[key];      : 값의 존재 여부를 boolean으로 변환하는 표현식.
+ *                                    값이 존재하면 true, 존재하지 않으면(undefined, null 등) false.
+ *                                    해당 날짜에 예외 일정 데이터가 있는지 확인할 때 사용중.
  */
