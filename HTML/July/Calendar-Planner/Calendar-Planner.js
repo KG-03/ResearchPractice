@@ -444,8 +444,10 @@ function permanentDeleteSchedule(schedule, targetDate = null) {
     if(targetDate) {
         const key = getDateKey(targetDate);
         schedule.deletedDates = schedule.deletedDates.filter(date => date !== key);
+        console.log("반복 일정 삭제");
     } else {
         schedules = schedules.filter(s => s.id !== schedule.id);
+        console.log("일반 일정 삭제");
     }
 
     refreshSchedules();
@@ -468,6 +470,7 @@ function restoreSchedule(schedule, targetDate = null) {
         schedule.deletedDates = schedule.deletedDates.filter(date => date !== key);
     } else {
         schedule.deleted = false;
+        console.log("일반 일정 복구");
     }
 
     refreshSchedules();
@@ -573,14 +576,30 @@ function createScheduleCard(schedule) {
         const restoreBtn = document.createElement("button");
         restoreBtn.textContent = "♻️ 복구";
         restoreBtn.addEventListener("click", () => {
-            restoreSchedule(schedule, selectedDateData);
+        
+    console.log("복구 schedule:", schedule);
+    console.log("복구 originalSchedule:", schedule.originalSchedule);
+    console.log("복구 deleted:", schedule.deleted);
+    console.log("복구 deletedDates:", schedule.deletedDates);
+    console.log("selectedDateData:", selectedDateData);
+    console.log("selectedDateKey:", getDateKey(selectedDateData));
+
+            if(schedule.repeat === "none") {
+                restoreSchedule(schedule);
+            } else {
+                restoreSchedule(schedule, selectedDateData);
+            }
         });
         card.append(restoreBtn);
 
         const permanentDelBtn = document.createElement("button");
         permanentDelBtn.textContent = "❌ 완전 삭제";
         permanentDelBtn.addEventListener("click", () => {
-            permanentDeleteSchedule(schedule, selectedDateData);
+            if(schedule.repeat === "none") {
+                permanentDeleteSchedule(schedule);
+            } else {
+                permanentDeleteSchedule(schedule, selectedDateData);
+            }
         })
         card.append(permanentDelBtn);
 
