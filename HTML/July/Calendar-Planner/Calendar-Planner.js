@@ -576,32 +576,31 @@ function createScheduleCard(schedule) {
         const restoreBtn = document.createElement("button");
         restoreBtn.textContent = "♻️ 복구";
         restoreBtn.addEventListener("click", () => {
-        
-    console.log("복구 schedule:", schedule);
-    console.log("복구 originalSchedule:", schedule.originalSchedule);
-    console.log("복구 deleted:", schedule.deleted);
-    console.log("복구 deletedDates:", schedule.deletedDates);
-    console.log("selectedDateData:", selectedDateData);
-    console.log("selectedDateKey:", getDateKey(selectedDateData));
+            const targetSchedule = schedule.originalSchedule || schedule;
 
-            if(schedule.repeat === "none") {
-                restoreSchedule(schedule);
+            if(targetSchedule.deleted) {
+                restoreSchedule(targetSchedule);
             } else {
-                restoreSchedule(schedule, selectedDateData);
+                restoreSchedule(targetSchedule, selectedDateData);
             }
         });
         card.append(restoreBtn);
 
-        const permanentDelBtn = document.createElement("button");
-        permanentDelBtn.textContent = "❌ 완전 삭제";
-        permanentDelBtn.addEventListener("click", () => {
-            if(schedule.repeat === "none") {
-                permanentDeleteSchedule(schedule);
-            } else {
-                permanentDeleteSchedule(schedule, selectedDateData);
-            }
-        })
-        card.append(permanentDelBtn);
+        const isRepeatOccurrenceDeleted = schedule.repeat !== "none" && !schedule.deleted;
+        if(!isRepeatOccurrenceDeleted) {
+            const permanentDelBtn = document.createElement("button");
+            permanentDelBtn.textContent = "❌ 완전 삭제";
+            permanentDelBtn.addEventListener("click", () => {
+                const targetSchedule = schedule.originalSchedule || schedule;
+
+                if(targetSchedule.deleted) {
+                    permanentDeleteSchedule(targetSchedule);
+                } else {
+                    permanentDeleteSchedule(targetSchedule, selectedDateData);
+                }
+            })
+            card.append(permanentDelBtn);
+        }
 
     } else{
         const editBtn = document.createElement("button");
