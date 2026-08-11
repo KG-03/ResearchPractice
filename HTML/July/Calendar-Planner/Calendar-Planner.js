@@ -403,12 +403,15 @@ function deleteSchedule(id) {
         return;
     }
 
-    const onlyCurrent = confirm("이번 일정만 삭제하시겠습니까?\n취소를 누르면 반복 일정 전체를 삭제합니다.");
-    if(onlyCurrent) {
+    const answer = prompt("이번 일정만 삭제하시겠습니까?\n1: 이번 날짜만 삭제\n2: 반복 일정 전체 삭제\n그 외: 취소");
+
+    if(answer === "1") {
         deleteRepeatOccurrence(delTargetSchedule, selectedDateData);
-    } else {
+    }
+    if(answer === "2") {
         delTargetSchedule.deleted = true;
         refreshSchedules();
+        showToast(`반복 일정 전체를 휴지통으로 보냈습니다.`);
     }
 }
 
@@ -439,7 +442,7 @@ function deleteRepeatOccurrence(schedule, targetDate) {
 }
 
 function permanentDeleteSchedule(schedule, targetDate = null) {
-    if(!confirm("완전히 삭제하시겠습니까?")) return;
+    if(!confirm("완전히 삭제하시겠습니까?\n삭제한 일정은 복구할 수 없습니다.")) return;
 
     if(targetDate) {
         const key = getDateKey(targetDate);
@@ -451,7 +454,7 @@ function permanentDeleteSchedule(schedule, targetDate = null) {
     }
 
     refreshSchedules();
-    showToast("완전히 삭제되었습니다.");
+    showToast("일정을 완전히 삭제되었습니다.");
 }
 
 function deleteAllSchedule() {
@@ -611,8 +614,7 @@ function createScheduleCard(schedule) {
                 return;
             }
 
-            const answer = prompt(`1: 이번 일정만 수정
-2: 반복 일정 전체 수정`);
+            const answer = prompt("반복 일정입니다.\n이번 날짜의 일정만 수정하시겠습니까?\n1: 이번 일정만 수정\n2: 반복 일정 전체 수정\n그 외: 취소");
 
             if(answer === "1") startEdit(schedule.id, "single");
 
