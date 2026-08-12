@@ -28,6 +28,9 @@ const completedFilter = document.querySelector(".completed-filter");
 const sortFilter = document.querySelector(".sort-filter");
 const deletedFilter = document.querySelector(".deleted-filter");
 
+//===== Delete All Button =====
+const deleteAllBtn = document.querySelector(".delete-all-btn");
+
 //===== List =====
 const scheduleList = document.querySelector(".schedule-list");
 
@@ -217,6 +220,21 @@ themeToggleBtn.addEventListener("click", () => {
 deletedFilter.addEventListener("change", () => {
     showDeleted = deletedFilter.checked;
     renderSchedules();
+
+    if (showDeleted) deleteAllBtn.textContent = "휴지통 비우기";
+    else deleteAllBtn.textContent = "전체 삭제";
+});
+
+deleteAllBtn.addEventListener("click", () => {
+    if(!showDeleted) {
+        if(confirm("모든 일정을 휴지통으로 보내시겠습니까?")) {
+            deleteAllSchedule();
+        }
+    } else {
+        if(confirm("모든 날짜의 휴지통을 완전히 비우시겠습니까?\n비운 후에는 복구할 수 없습니다.")) {
+            emptyTrash();
+        }
+    }
 });
 
 document.addEventListener("keydown", function(e) {
@@ -408,6 +426,7 @@ function deleteSchedule(id) {
     if(answer === "1") {
         deleteRepeatOccurrence(delTargetSchedule, selectedDateData);
     }
+    
     if(answer === "2") {
         delTargetSchedule.deleted = true;
         refreshSchedules();
@@ -458,13 +477,22 @@ function permanentDeleteSchedule(schedule, targetDate = null) {
 }
 
 function deleteAllSchedule() {
+    schedules.forEach(schedule => {
+        schedule.deleted = true;
+    });
+
+    refreshSchedules();
+
+    showToast("모든 일정이 휴지통으로 이동되었습니다.");
+}
+
+function emptyTrash() {
     schedules = schedules.filter(schedule => {
-        if(schedule.repeat === "none") return !schedule.deleted;
+        return !schedule.deleted;
+    });
 
-        if(schedule.deleted) return false;
-
-        return true;
-    })
+    refreshSchedules();
+    showToast("휴지통을 비웠습니다.");
 }
 
 function restoreSchedule(schedule, targetDate = null) {
