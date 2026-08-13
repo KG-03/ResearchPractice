@@ -8,6 +8,9 @@ const weekRow = document.querySelector(".week-row");
 const prevMonthBtn = document.querySelector(".prev-month-btn");
 const nextMonthBtn = document.querySelector(".next-month-btn");
 const calendarTooltip = document.querySelector(".calendar-tooltip");
+const todayBtn = document.querySelector("#todayBtn");
+const jumpDate = document.querySelector("#jumpDate");
+const jumpDateBtn = document.querySelector("#jumpDateBtn");
 
 //===== Input ======
 const titleInput = document.querySelector(".title-input");
@@ -235,6 +238,18 @@ deleteAllBtn.addEventListener("click", () => {
             emptyTrash();
         }
     }
+});
+
+todayBtn.addEventListener("click", () => {
+    moveToDate(new Date());
+});
+
+jumpDateBtn.addEventListener("click", () => {
+    if(!jumpDate.value) return;
+
+    const [year, month, date] = jumpDate.value.split("-").map(Number);
+
+    moveToDate(new Date(year, month - 1, date));
 });
 
 document.addEventListener("keydown", function(e) {
@@ -767,8 +782,9 @@ function renderCalendar() {
         });            
 
         dateCell.addEventListener("click", () => {
-            selectCalendarCell(dateCell, year, month, date);
+            selectCalendarCell(year, month, date, dateCell);
         });
+        
         calendarGrid.append(dateCell);
 
         if(year === todayDate.getFullYear() &&
@@ -847,52 +863,20 @@ function renderTodaysDate() {
 }
 
 function renderStatistics(schedules) {
-    let completeStats = 0;
-    let uncompleteStats = 0;
-
-    let studyStats = 0;
-    let workStats = 0;
-    let personalStats = 0;
-    let exerciseStats = 0;
-    let etcStats = 0;
-
-    schedules.forEach(scheduleStats => {
-        if(isCompleted(scheduleStats, selectedDateData) === true) {
-            completeStats++;
-        } else {
-            uncompleteStats++;
-        }
-
-        switch(scheduleStats.category) {
-            case "study":
-                studyStats++;
-                break;
-            case "work":
-                workStats++;
-                break;
-            case "personal":
-                personalStats++;
-                break;
-            case "exercise":
-                exerciseStats++;
-                break;
-            case "etc":
-                etcStats++;
-                break;
-        }
-    });
+    const stats = getStatistics(schedules);
 
     statsList.innerHTML = "";
     statsList.classList.add("statistics-area");
 
-    renderStatisticsSection("전체 일정", completeStats + uncompleteStats);
-    renderStatisticsSection("완료", completeStats);
-    renderStatisticsSection("미완료", uncompleteStats);
-    renderStatisticsSection("공부", studyStats);
-    renderStatisticsSection("업무", workStats);
-    renderStatisticsSection("개인", personalStats);
-    renderStatisticsSection("운동", exerciseStats);
-    renderStatisticsSection("기타", etcStats);
+    renderStatisticsSection("전체 일정", stats.total);
+    renderStatisticsSection("완료", stats.complete);
+    renderStatisticsSection("미완료", stats.incomplete);
+
+    renderStatisticsSection("공부", stats.category.study);
+    renderStatisticsSection("업무", stats.category.work);
+    renderStatisticsSection("개인", stats.category.personal);
+    renderStatisticsSection("운동", stats.category.exercise);
+    renderStatisticsSection("기타", stats.category.etc);
     
 }
 
@@ -903,13 +887,16 @@ function renderStatisticsSection(title, count) {
     statsList.append(stats);
 }
 
-function selectCalendarCell(cell, year, month, date) {
+function selectCalendarCell(year, month, date, cell = null) {
     if (currentCell) {
         currentCell.classList.remove("click-cell");
     }
 
     currentCell = cell;
-    currentCell.classList.add("click-cell");
+
+    if(currentCell) {
+        currentCell.classList.add("click-cell");
+    }
 
     selectedDateData = new Date(year, month, date);
     selectedDate.textContent = `선택 날짜: ${year}년 ${month + 1}월 ${date}일`;
@@ -1411,6 +1398,47 @@ function hasException(schedule, targetDate) {
     const key = getDateKey(targetDate);
 
     return !!schedule.exceptions[key];
+}
+
+function getStatistics(schedules) {
+    const stats = {
+        total: schedules.length,
+        complete: 0,
+        incomplete: 0,
+        category: {
+            study: 0,
+            work: 0,
+            personal: 0,
+            exercise: 0,
+            etc: 0
+        }
+    };
+
+    schedules.forEach(schedule => {
+        if(isCompleted(schedule, selectedDateData)) {
+            stats.complete++;
+        } else {
+            stats.incomplete++;
+        }
+
+        if(stats.category[schedule.category] !== undefined) {
+            stats.category[schedule.category]++;
+        }
+    });
+
+    return stats;
+}
+
+function moveToDate(targetDate) {
+    const date = new Date(targetDate);
+    date.setHours(0, 0, 0, 0);
+
+    currentDateData = new Date(date);
+    selectedDateData = new Date(date);
+
+    renderCalendar();
+    renderSchedules();
+    selectCalendarCell(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
 //===== ETC =====
