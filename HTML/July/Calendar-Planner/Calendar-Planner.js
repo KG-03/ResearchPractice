@@ -141,6 +141,8 @@ let editingMode = "all";
 let toastTimer = null;
 let toastRemoveTimer = null;
 
+const notifiedSchedules = new Set();
+
 
 prevMonthBtn.addEventListener("click", () => {
     currentDateData.setMonth(currentDateData.getMonth() - 1);
@@ -282,6 +284,12 @@ function addSchedule() {
     const priority = prioritySelect.value;
     const description = descriptionInput.value.trim();
 
+    const scheduleDate = new Date(
+        selectedDateData.getFullYear(),
+        selectedDateData.getMonth(),
+        selectedDateData.getDate()
+    );
+
     const schedule = {
         id: Date.now(),
         title,
@@ -289,7 +297,7 @@ function addSchedule() {
         priority,
         description,
 
-        date: selectedDateData.getTime(),
+        date: scheduleDate.getTime(),
         time: timeInput.value,
 
         repeat: repeatSelect.value,
@@ -981,6 +989,7 @@ function getVisibleSchedulesForDate(targetDate, includeDeleted = false) {
     const key = getDateKey(targetDate);
 
     return schedules.filter(schedule => {
+
         if(!isRepeatSchedule(schedule, targetDate)) return false;
 
         //일반
@@ -1013,7 +1022,7 @@ function isRepeatSchedule(schedule, targetDate) {
 
     switch(schedule.repeat) {
         case "none":
-            return schedule.date === targetDate.getTime();
+            return getDateKey(scheduleDate) === getDateKey(targetDate);
 
         case "daily":
             return targetDate >= scheduleDate;
@@ -1441,6 +1450,31 @@ function moveToDate(targetDate) {
     selectCalendarCell(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
+function checkScheduleNotifications() {
+    const now = new Date();
+
+    const currentHour = String(now.getHours()).padStart(2, "0");
+    const currentMinute = String(now.getMinutes()).padStart(2, "0");
+
+    const currentTime = `${currentHour}:${currentMinute}`;
+    const todayKey = getDateKey(now);
+
+    const todaySchedules = getTodayScheduleForNotification();
+
+    todaySchedules.forEach(schedule => {
+        if(!schedule.time) return;
+        if(isCompleted(schedule, now)) return;
+        if(schedule.time !== currentTime) return;
+
+        const notificationKey = `${todayKey}_${schedule.id}_${schedule.time}`;
+        if(notifiedSchedules.has(notificationKey)) return;
+
+        notifiedSchedules.add(notificationKey);
+
+        showToast(`🔔 ${schedule.time} ${schedule.title} 일정이 있습니다.`);
+    })
+}
+
 //===== ETC =====
 function preventComma(input) {
     input.addEventListener("keydown", (e) => {
@@ -1493,6 +1527,13 @@ function isCompleted(schedule, targetDate) {
     return (schedule.completedDates ?? []).includes(key);
 }
 
+function getTodayScheduleForNotification() {
+    const nowDay = new Date();
+    nowDay.setHours(0, 0, 0, 0);
+
+    return getVisibleSchedulesForDate(nowDay, false);
+}
+
 
 preventComma(titleInput);
 preventComma(descriptionInput);
@@ -1502,8 +1543,13 @@ renderCalendar();
 renderSchedules();
 selectedDate.textContent = `선택 날짜: ${selectedDateData.getFullYear()}년 ${selectedDateData.getMonth()+1}월 ${selectedDateData.getDate()}일`;
 
+console.log(selectedDateData);
+
 applyTheme(currentTheme);
 updateThemeButton();
+
+checkScheduleNotifications();
+setInterval(checkScheduleNotifications, 10000);
 
 
 /* 5일차
