@@ -590,7 +590,7 @@ function createScheduleCard(schedule) {
         time.textContent = `🕒 ${schedule.time}`;
         card.append(time);
 
-        if(isExpiredSchedule(schedule)) {
+        if(isExpiredSchedule(schedule, selectedDateData)) {
             card.classList.add("expired-schedule");
         }
     }
@@ -719,21 +719,21 @@ function checkboxToggle(schedule, checkbox) {
     saveSchedules();
 }
 
-function isExpiredSchedule(schedule) {
+function isExpiredSchedule(schedule, targetDate) {
     if (!schedule.time) return false;
+    if (!targetDate) return false;
 
     const now = new Date();
 
     const [hour, minute] = schedule.time.split(":");
     
-    const scheduleCardDate = new Date(schedule.date);
-
-    scheduleCardDate.setHours(hour);
-    scheduleCardDate.setMinutes(minute);
+    const scheduleCardDate = new Date(targetDate);
+    scheduleCardDate.setHours(Number(hour));
+    scheduleCardDate.setMinutes(Number(minute));
     scheduleCardDate.setSeconds(0);
     scheduleCardDate.setMilliseconds(0);
 
-    return scheduleCardDate < now && !isCompleted(schedule, selectedDateData);
+    return scheduleCardDate < now && !isCompleted(schedule, targetDate);
 }
 
 //===== Render ======
@@ -1540,10 +1540,7 @@ preventComma(descriptionInput);
 
 renderTodaysDate();
 renderCalendar();
-renderSchedules();
-selectedDate.textContent = `선택 날짜: ${selectedDateData.getFullYear()}년 ${selectedDateData.getMonth()+1}월 ${selectedDateData.getDate()}일`;
-
-console.log(selectedDateData);
+selectCalendarCell(selectedDateData.getFullYear(), selectedDateData.getMonth(), selectedDateData.getDate());
 
 applyTheme(currentTheme);
 updateThemeButton();
