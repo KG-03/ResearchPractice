@@ -411,16 +411,25 @@ function cancelEdit() {
     showToast("취소되었습니다.");
 }
 
-function copySchedule(id) {
+function copySchedule(id, targetDate) {
     const copySchedule = schedules.find(schedule => schedule.id === id);
 
     if(!copySchedule) return;
+    if(!targetDate) return;
 
     const newSchedule = {
         ...copySchedule,
 
         id: Date.now(),
         title: copySchedule.title + " (복사)",
+
+        date: targetDate.getTime(),
+
+        deleted: false,
+        completedDates: [],
+        deletedDates: [],
+        exceptions: {},
+        
         createdAt: Date.now(),
         updatedAt: Date.now()
     };
@@ -688,7 +697,33 @@ function createScheduleCard(schedule) {
         const copyBtn = document.createElement("button");
         copyBtn.textContent = "📋 복제";
         copyBtn.addEventListener("click", () => {
-            copySchedule(schedule.id);
+            if(card.querySelector(".copy-date-area")) return;
+
+            const copyDateArea = document.createElement("div");
+            copyDateArea.classList.add("copy-date-area");
+
+            const copyDateInput = document.createElement("input");
+            copyDateInput.type = "date";
+
+            const copyConfirmBtn = document.createElement("button");
+            copyConfirmBtn.textContent = "복제";
+
+            copyConfirmBtn.addEventListener("click", () => {
+                if(!copyDateInput.value) {
+                    alert("복제할 날짜를 선택해 주세요.");
+                    return;
+                }
+
+                const [year, month, date] = copyDateInput.value.split("-").map(Number);
+
+                const targetDate = new Date(year, month - 1, date);
+                targetDate.setHours(0, 0, 0, 0);
+
+                copySchedule(schedule.id, targetDate);
+            });
+
+            copyDateArea.append(copyDateInput, copyConfirmBtn);
+            card.append(copyDateArea);
         });
         card.append(copyBtn);
 
