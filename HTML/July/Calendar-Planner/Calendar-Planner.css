@@ -109,11 +109,6 @@ header {
 
     padding: 10px;
 
-    background: white;
-
-    border: 1px solid #ccc;
-    border-radius: 8px;
-
     box-shadow: 0 3px 10px rgba(0,0,0,0.2);
 
     z-index: 1000;
@@ -199,6 +194,7 @@ header {
     
     padding: 10px;
     margin-right: 5px;
+    margin-bottom: 5px;
 
     border: none;
     border-radius: 5px;
@@ -333,6 +329,20 @@ body.light-theme .statistics-box {
 
 body.dark-theme .statistics-box {
     background: #b3a282;
+}
+
+body.light-theme .calendar-tooltip {
+    background: white;
+
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+body.dark-theme .calendar-tooltip {
+    background: black;
+
+    border: 1px solid #222222;
+    border-radius: 8px;    
 }
 
 /* 2일차
