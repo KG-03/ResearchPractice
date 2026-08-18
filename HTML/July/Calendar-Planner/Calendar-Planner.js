@@ -31,8 +31,11 @@ const completedFilter = document.querySelector(".completed-filter");
 const sortFilter = document.querySelector(".sort-filter");
 const deletedFilter = document.querySelector(".deleted-filter");
 
-//===== Delete All Button =====
+//===== Util =====
 const deleteAllBtn = document.querySelector(".delete-all-btn");
+const bulkCompleteBtn = document.querySelector("#bulk-complete-btn");
+const bulkDeleteBtn = document.querySelector("#bulk-delete-btn");
+const bulkCancelBtn = document.querySelector("#bulk-cancel-btn");
 
 //===== List =====
 const scheduleList = document.querySelector(".schedule-list");
@@ -121,8 +124,8 @@ schedules = schedules.map(schedule => ({
 }));
 
 const todayDate = new Date();
-let currentDateData = new Date();
-let selectedDateData = new Date();
+let currentDateData = normalizeDate(new Date());
+let selectedDateData = normalizeDate(new Date());
 
 let currentCategory = "all";
 let currentPriority = "all";
@@ -142,6 +145,7 @@ let toastTimer = null;
 let toastRemoveTimer = null;
 
 const notifiedSchedules = new Set();
+const selectedScheduleIds = new Set();
 
 
 prevMonthBtn.addEventListener("click", () => {
@@ -225,6 +229,7 @@ themeToggleBtn.addEventListener("click", () => {
 deletedFilter.addEventListener("change", () => {
     showDeleted = deletedFilter.checked;
     renderSchedules();
+    updateBulkActionButton();
 
     if (showDeleted) deleteAllBtn.textContent = "휴지통 비우기";
     else deleteAllBtn.textContent = "전체 삭제";
@@ -252,6 +257,62 @@ jumpDateBtn.addEventListener("click", () => {
     const [year, month, date] = jumpDate.value.split("-").map(Number);
 
     moveToDate(new Date(year, month - 1, date));
+});
+
+bulkCompleteBtn.addEventListener("click", () => {
+    const key = getDateKey(selectedDateData);
+
+    selectedScheduleIds.forEach(id => {
+        const schedule = schedules.find(schedule => schedule.id === id);
+
+        if(!schedule) return;
+
+        const original = schedule.originalSchedule || schedule;
+
+        if(!original.completedDates.includes(key)) original.completedDates.push(key);
+    });
+
+    selectedScheduleIds.clear();
+
+    refreshSchedules();
+    updateBulkActionButton();
+
+    showToast("선택한 일정을 완료시켰습니다.");
+});
+
+bulkDeleteBtn.addEventListener("click", () => {
+    if(!confirm("선택한 일정을 휴지통으로 보내시겠습니까?")) return;
+
+    const key = getDateKey(selectedDateData);    
+    
+    selectedScheduleIds.forEach(id => {
+        const schedule = schedules.find(schedule => schedule.id === id);
+
+        if(!schedule) return;
+
+        if(schedule.repeat === "none") {
+            schedule.deleted = true;
+            return;
+        }
+
+        if(schedule.deleted) return;
+
+        if(!schedule.deletedDates.includes(key)) schedule.deletedDates.push(key);
+    });
+
+    selectedScheduleIds.clear();
+
+    refreshSchedules();
+    updateBulkActionButton();
+
+    showToast("선택한 일정을 완료시켰습니다.");
+});
+
+bulkCancelBtn.addEventListener("click", () => {
+    selectedScheduleIds.clear();
+
+    renderSchedules();
+    updateBulkActionButton();
 });
 
 document.addEventListener("keydown", function(e) {
@@ -635,6 +696,18 @@ function createScheduleCard(schedule) {
     }
     card.append(date);
 
+    const selectedCheckbox = document.createElement("input");
+    selectedCheckbox.type = "checkbox";
+    selectedCheckbox.classList.add("schedule.select");
+    selectedCheckbox.checked = selectedScheduleIds.has(schedule.id);
+    selectedCheckbox.addEventListener("change", () => {
+        if(selectedCheckbox.checked) selectedScheduleIds.add(schedule.id);
+        else selectedScheduleIds.delete(schedule.id);
+
+        updateBulkActionButton();
+    });
+    card.append(selectedCheckbox);
+
     if(showDeleted) {
         const restoreBtn = document.createElement("button");
         restoreBtn.textContent = "♻️ 복구";
@@ -802,6 +875,9 @@ function renderCalendar() {
     for (let date = 1; date <= lastDate; date++) {
         const dateCell = document.createElement("div");
         dateCell.classList.add("date-cell");
+        dateCell.dataset.year = year;
+        dateCell.dataset.month = month;
+        dateCell.dataset.date = date;
 
             const dateNumber = document.createElement("span");
             dateNumber.textContent = date;
@@ -933,6 +1009,11 @@ function renderStatisticsSection(title, count) {
 function selectCalendarCell(year, month, date, cell = null) {
     if (currentCell) {
         currentCell.classList.remove("click-cell");
+    }
+
+    if(cell === null) {
+        cell = document.querySelector(`.date-cell[data-year="${year}"][data-month="${month}"][data-date="${date}"]`);
+
     }
 
     currentCell = cell;
@@ -1481,7 +1562,6 @@ function moveToDate(targetDate) {
     selectedDateData = new Date(date);
 
     renderCalendar();
-    renderSchedules();
     selectCalendarCell(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
@@ -1508,6 +1588,30 @@ function checkScheduleNotifications() {
 
         showToast(`🔔 ${schedule.time} ${schedule.title} 일정이 있습니다.`);
     })
+}
+
+function normalizeDate(date) {
+    const result = new Date(date);
+    result.setHours(0, 0, 0, 0);
+    return result;
+}
+
+function updateBulkActionButton() {
+    const hasSelection = selectedScheduleIds.size > 0;
+
+    bulkCancelBtn.style.display = hasSelection ? "inline-block" : "none";
+
+    if(showDeleted) {
+        bulkCompleteBtn.style.display = "none";
+        bulkDeleteBtn.style.display = "none";
+        return;
+    }
+
+    bulkCompleteBtn.style.display = "inline-block";
+    bulkDeleteBtn.style.display = "inline-block";
+
+    bulkCompleteBtn.disabled = !hasSelection;
+    bulkDeleteBtn.disabled = !hasSelection;
 }
 
 //===== ETC =====
@@ -1572,6 +1676,7 @@ function getTodayScheduleForNotification() {
 
 preventComma(titleInput);
 preventComma(descriptionInput);
+updateBulkActionButton();
 
 renderTodaysDate();
 renderCalendar();
@@ -1717,4 +1822,9 @@ setInterval(checkScheduleNotifications, 10000);
  * !!schedule.exceptions[key];      : 값의 존재 여부를 boolean으로 변환하는 표현식.
  *                                    값이 존재하면 true, 존재하지 않으면(undefined, null 등) false.
  *                                    해당 날짜에 예외 일정 데이터가 있는지 확인할 때 사용중.
+ */
+
+/* 41일차
+ * selectedCheckbox.checked = selectedScheduleIds.has(schedule.id); : has는 Set이나 Map에 특정 값이 들어있는지 확인하는 메서드.
+ *                                                                    현재 코드로 '현재 일정의 ID가 선택된 일정 ID 목록에 있는가'를 확인한다.
  */
