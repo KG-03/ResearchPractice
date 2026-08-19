@@ -670,10 +670,80 @@ function createScheduleCard(schedule) {
 
         const category = document.createElement("p");
         category.textContent = `카테고리: ${CATEGORY_OPTIONS[schedule.category]}`;
+        category.addEventListener("click", () => {
+            const select = document.createElement("select");
+
+            Object.entries(CATEGORY_OPTIONS).forEach(([value, label]) => {
+                const option = document.createElement("option");
+
+                option.value = value;
+                option.textContent = label;
+
+                if (value === schedule.category) option.selected = true;
+
+                select.append(option);
+            });
+
+            const changeCancelBtn = document.createElement("button");
+            changeCancelBtn.textContent = "취소";
+
+            const wrapper = document.createElement("div");
+            wrapper.append(select, changeCancelBtn);
+
+            category.replaceWith(wrapper);
+            select.focus();
+
+            select.addEventListener("change", () => {
+                changeScheduleField(schedule, "category", select.value);
+            });
+
+            changeCancelBtn.addEventListener("click", () => {
+                wrapper.replaceWith(category);
+            });
+
+            select.addEventListener("keydown", (e) => {
+                if(e.key === "Escape") wrapper.replaceWith(category);
+            });
+        });
         classification.append(category);
         
         const priority = document.createElement("p");
         priority.textContent = `우선순위: ${PRIORITY_OPTIONS[schedule.priority]}`;
+        priority.addEventListener("click", () => {
+            const select = document.createElement("select");
+
+            Object.entries(PRIORITY_OPTIONS).forEach(([value, label]) => {
+                const option = document.createElement("option");
+
+                option.value = value;
+                option.textContent = label;
+
+                if (value === schedule.priority) option.selected = true;
+
+                select.append(option);
+            });
+
+            const changeCancelBtn = document.createElement("button");
+            changeCancelBtn.textContent = "취소";
+
+            const wrapper = document.createElement("div");
+            wrapper.append(select, changeCancelBtn);
+
+            priority.replaceWith(wrapper);
+            select.focus();
+
+            select.addEventListener("change", () => {
+                changeScheduleField(schedule, "priority", select.value);
+            });
+
+            changeCancelBtn.addEventListener("click", () => {
+                wrapper.replaceWith(priority);
+            });
+
+            select.addEventListener("keydown", (e) => {
+                if(e.key === "Escape") wrapper.replaceWith(priority);
+            });
+        });
         classification.append(priority);
 
         const repeat = document.createElement("p");
@@ -1614,6 +1684,45 @@ function updateBulkActionButton() {
     bulkDeleteBtn.disabled = !hasSelection;
 }
 
+function changeScheduleField(schedule, field, value) {
+    if(schedule.repeat === "none") {
+        schedule[field] = value;
+        schedule.updatedAt = Date.now();
+
+        refreshSchedules();
+        return;
+    }
+
+    const answer = prompt("반복 일정입니다.\n" +
+                    "1: 이번 날짜의 일정만 변경\n" + 
+                    "2. 반복 일정 전체 변경\n" +
+                    "그 외: 취소");
+    
+    if (answer === "1") {
+        const original = schedule.originalSchedule || schedule;
+        const key = getDateKey(selectedDateData);
+
+        original.exceptions[key] = {
+            ...original.exceptions[key],
+            [field]: value,
+            updatedAt: Date.now()
+        };
+
+        refreshSchedules();
+        return;
+    }
+
+    if(answer === "2") {
+        const original = schedule.originalSchedule || schedule;
+
+        original[field] = value;
+        original.updatedAt = Date.now();
+
+        refreshSchedules();
+        return;
+    }
+}
+
 //===== ETC =====
 function preventComma(input) {
     input.addEventListener("keydown", (e) => {
@@ -1827,4 +1936,14 @@ setInterval(checkScheduleNotifications, 10000);
 /* 41일차
  * selectedCheckbox.checked = selectedScheduleIds.has(schedule.id); : has는 Set이나 Map에 특정 값이 들어있는지 확인하는 메서드.
  *                                                                    현재 코드로 '현재 일정의 ID가 선택된 일정 ID 목록에 있는가'를 확인한다.
+ */
+
+/* 42일차
+ * category.replaceWith(select);        : DOM에서 현재 요소를 다른 요소로 교체하는 메서드.
+ *                                        category 요소를 제거하고, 그 자리에 select 요소를 넣게 된다.
+ * Object.entries(PRIORITY_OPTIONS).forEach(([value, label]) => {...}       : 객체의 key와 value를 [key, value] 형태의 배열로 만들어주는 함수.
+ *                                                                            PRIORITY_OPTION의 low:"낮음", normal:"보통", high:"높음"을
+ *                                                                              ["low", "낮음"], ["normal", "보통"], ["high", "높음"]으로 변경하는 형식.
+ *                                                                            그리고 forEach([value, label])을 통해서 value = "low"; label = "낮음"; ...으로 변경한다.
+ *                                                                              각 요소가 가지고 있는 배열을 자동으로 분해해서 [value, label]에 넣는 것.
  */
