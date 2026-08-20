@@ -22,6 +22,8 @@ const descriptionInput = document.querySelector(".description-input");
 const addBtn = document.querySelector(".add-btn");
 const cancelEditBtn = document.querySelector(".cancel-edit-btn");
 const selectedDate = document.querySelector(".selected-date");
+const repeatEndArea = document.querySelector(".repeat-end-area");
+const repeatEndDateInput = document.querySelector(".repeat-end-date-input");
 
 //===== Filter =====
 const searchInput = document.querySelector(".search-input");
@@ -101,12 +103,13 @@ const CSV = {
     DATE: 5,
     TIME: 6,
     REPEAT: 7,
-    DELETED: 8,
-    COMPLETED_DATES: 9,
-    DELETED_DATES: 10,
-    EXCEPTIONS: 11,
-    CREATED_AT: 12,
-    UPDATED_AT: 13
+    REPEAT_END_DATE: 8,
+    DELETED: 9,
+    COMPLETED_DATES: 10,
+    DELETED_DATES: 11,
+    EXCEPTIONS: 12,
+    CREATED_AT: 13,
+    UPDATED_AT: 14
 };
 
 const CSV_LENGTH = Object.values(CSV).length;
@@ -117,6 +120,7 @@ let schedules = JSON.parse(localStorage.getItem("schedules")) || [];
 schedules = schedules.map(schedule => ({
     ...schedule,
     repeat: schedule.repeat ?? "none",
+    repeatEndDate: schedule.repeatEndDate ?? "",
     deleted: schedule.deleted ?? false,
     completedDates: schedule.completedDates ?? [],
     deletedDates: schedule.deletedDates ?? [],
@@ -140,6 +144,7 @@ let showDeleted = false;
 let isEditing = false;
 let editingId = null;
 let editingMode = "all";
+let editRepeatDate = "";
 
 let toastTimer = null;
 let toastRemoveTimer = null;
@@ -315,6 +320,15 @@ bulkCancelBtn.addEventListener("click", () => {
     updateBulkActionButton();
 });
 
+repeatSelect.addEventListener("change", () => {
+    if(repeatSelect.value === "none") {
+        repeatEndArea.style.display = "none";
+        repeatEndDateInput.value = "";
+    } else {
+        repeatEndArea.style.display = "block";
+    }
+})
+
 document.addEventListener("keydown", function(e) {
     if(e.ctrlKey && e.key === "Enter") {
         if(!isEditing) addTransaction();
@@ -362,6 +376,7 @@ function addSchedule() {
         time: timeInput.value,
 
         repeat: repeatSelect.value,
+        repeatEndDate: repeatEndDateInput.value || "",
         deleted: false,
 
         completedDates: [],
@@ -390,6 +405,25 @@ function startEdit(id, editMode = "all") {
     editingId = id;
     editingMode = editMode;
 
+    if(editSchedule.repeat === "none" || editingMode === "single") {
+        repeatSelect.style.display = "none";
+
+        repeatEndArea.style.display = "none";
+        repeatEndDateInput.value = "";
+    }
+    else {
+        repeatSelect.style.display = "block";
+
+        repeatEndArea.style.display = "block";
+        repeatEndDateInput.value = editSchedule.repeatEndDate || "";
+
+        const repeatOriginDate = new Date(editSchedule.date);
+        repeatOriginDate.setHours(0, 0, 0, 0);
+        if(getDateKey(repeatOriginDate) === getDateKey(selectedDateData)) {
+            editRepeatDate = new Date(editSchedule.date);
+        }
+    }
+
     titleInput.value = editSchedule.title;
     categorySelect.value = editSchedule.category;
     prioritySelect.value = editSchedule.priority;
@@ -408,10 +442,13 @@ function updateSchedule() {
 
     if(!editSchedule) return;
 
+    const repeatEndDateData = repeatEndDateInput.value || null;
+
     const isChanged = editSchedule.title !== titleInput.value.trim() ||
                       editSchedule.category !== categorySelect.value ||
                       editSchedule.priority !== prioritySelect.value ||
                       editSchedule.repeat !== repeatSelect.value ||
+                      editSchedule.repeatEndDate !== repeatEndDateData ||
                       editSchedule.description !== descriptionInput.value.trim() ||
                       editSchedule.date !== selectedDateData.getTime() ||
                       editSchedule.time !== timeInput.value;
@@ -446,14 +483,19 @@ function updateSchedule() {
         editSchedule.category = categorySelect.value;
         editSchedule.priority = prioritySelect.value;
         editSchedule.repeat = repeatSelect.value;
+        editSchedule.repeatEndDate = repeatEndDateData;
         editSchedule.description = descriptionInput.value.trim();
-        editSchedule.date = selectedDateData.getTime();
         editSchedule.time = timeInput.value;
         editSchedule.updatedAt = Date.now();
+
+        if(editRepeatDate !== "") {
+            editSchedule.date = selectedDateData.getTime();
+        }
     }
 
     isEditing = false;
     editingId = null;
+    editRepeatDate = "";
 
     refreshSchedules();
     resetScheduleForm();
@@ -465,6 +507,7 @@ function updateSchedule() {
 function cancelEdit() {
     isEditing = false;
     editingId = null;
+    editRepeatDate = "";
 
     resetScheduleForm();
     titleInput.focus();
@@ -1159,11 +1202,15 @@ function resetCell() {
 }
 
 function resetScheduleForm() {
+    repeatSelect.style.display = "block";
+    
     titleInput.value = "";
     descriptionInput.value = "";
     categorySelect.value = "study";
     prioritySelect.value = "high";
     repeatSelect.value = "none";
+    repeatEndArea.value = "";
+    repeatEndArea.style.display = "none";
     timeInput.value = "";
 
     addBtn.textContent = "✓ 추가";
@@ -1203,8 +1250,16 @@ function getVisibleSchedulesForDate(targetDate, includeDeleted = false) {
 
 function isRepeatSchedule(schedule, targetDate) {
     if(!targetDate) return false;
+    targetDate.setHours(0, 0, 0, 0);
     
     const scheduleDate = new Date(schedule.date);
+
+    if(schedule.repeat !== "none" && schedule.repeatEndDate) {
+        const endDate = new Date(schedule.repeatEndDate);
+        endDate.setHours(0, 0, 0, 0);
+
+        if(targetDate > endDate) return false;
+    }
 
     switch(schedule.repeat) {
         case "none":
@@ -1333,6 +1388,7 @@ function exportCSV() {
             "date",
             "time",
             "repeat",
+            "repeatEndDate",
             "deleted",
             "completedDates",
             "deletedDates",
@@ -1352,6 +1408,7 @@ function exportCSV() {
             schedule.date,
             escapeCSV(schedule.time),
             escapeCSV(schedule.repeat),
+            escapeCSV(schedule.repeatEndDate ?? ""),
             escapeCSV(schedule.deleted),
             escapeCSV(schedule.completedDates.join("|")),
             escapeCSV(schedule.deletedDates.join("|")),
@@ -1412,6 +1469,7 @@ function importCSV(event) {
                 date: Number(values[CSV.DATE]),
                 time: unescapeCSV(values[CSV.TIME]) === "0" ? null : unescapeCSV(values[CSV.TIME]),
                 repeat: unescapeCSV(values[CSV.REPEAT]),
+                repeatEndDate: unescapeCSV(values[CSV.REPEAT_END_DATE]) || "",
                 deleted: unescapeCSV(values[CSV.DELETED]).toLowerCase() === "true",
                 completedDates: unescapeCSV(values[CSV.COMPLETED_DATES]).split("|").filter(Boolean),
                 deletedDates: unescapeCSV(values[CSV.DELETED_DATES]).split("|").filter(Boolean),
@@ -1422,7 +1480,6 @@ function importCSV(event) {
         });
 
         schedules = importedSchedules;
-
         refreshSchedules();
     };
 
@@ -1463,29 +1520,6 @@ function parseCSVLine(line) {
     values.push(current);
 
     return values;
-}
-
-//===== Theme =====
-function applyTheme(theme) {
-    document.body.classList.remove("light-theme", "dark-theme");
-    document.body.classList.add(`${theme}-theme`);
-}
-
-function updateThemeButton() {
-    themeToggleBtn.textContent = currentTheme === "light" ? "🌙" : "☀️";
-}
-
-//===== Utils =====
-function formatDate(timestamp) {
-    if(!timestamp) return "";
-
-    const date = new Date(timestamp);
-
-    return date.toLocaleString("ko-KR");
-}
-
-function confirmMessage(message) {
-    return confirm(message);
 }
 
 function escapeCSV(value) {
@@ -1587,6 +1621,29 @@ function validateCSV(lines) {
     }
 
     return true;
+}
+
+//===== Theme =====
+function applyTheme(theme) {
+    document.body.classList.remove("light-theme", "dark-theme");
+    document.body.classList.add(`${theme}-theme`);
+}
+
+function updateThemeButton() {
+    themeToggleBtn.textContent = currentTheme === "light" ? "🌙" : "☀️";
+}
+
+//===== Utils =====
+function formatDate(timestamp) {
+    if(!timestamp) return "";
+
+    const date = new Date(timestamp);
+
+    return date.toLocaleString("ko-KR");
+}
+
+function confirmMessage(message) {
+    return confirm(message);
 }
 
 function hasException(schedule, targetDate) {
