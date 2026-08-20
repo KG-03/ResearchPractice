@@ -46,7 +46,9 @@
             <section class="input-area">
                 입력:
                 <input class="title-input" placeholder="일정 제목" maxlength="30">
+
                 <input class="time-input" type="time">
+
                 <select class="category-select">
                     <option value="study">공부</option>
                     <option value="work">업무</option>
@@ -54,11 +56,13 @@
                     <option value="exercise">운동</option>
                     <option value="etc">기타</option>
                 </select>
+
                 <select class="priority-select">
                     <option value="high">높음</option>
                     <option value="medium">보통</option>
                     <option value="low">낮음</option>
                 </select>
+
                 <select class="repeat-select">
                     <option value="none">반복 안 함</option>
                     <option value="daily">매일</option>
@@ -66,11 +70,17 @@
                     <option value="monthly">매월</option>
                     <option value="yearly">매년</option>
                 </select>
+
                 <textarea class="description-input" placeholder="메모" maxlength="500"></textarea>
 
                 <button class="add-btn">✓ 추가</button>
                 <button class="cancel-edit-btn">수정 취소</button>
             </section>
+
+            <div class="repeat-end-area">
+                <label for="repeat-end-date">➕ 반복 종료일:</label>
+                <input class="repeat-end-date-input" type="date">
+            </div>
 
             <section class="filter-area">필터:
                 <input class="search-input" placeholder="검색">
