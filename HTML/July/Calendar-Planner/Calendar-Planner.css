@@ -127,6 +127,24 @@ header {
     display: none;
 }
 
+/*===== reminder =====*/
+.reminder-area {
+    display: none;
+    
+    gap: 10px;
+    margin-bottom: 10px;
+    margin-left: 50px;
+}
+
+/*===== repeat =====*/
+.repeat-end-area {
+    display: none;
+
+    gap: 10px;
+    margin-bottom: 10px;
+    margin-left: 50px;
+}
+
 /*===== Filter =====*/
 .filter-area {
     display: flex;
