@@ -24,6 +24,8 @@ const cancelEditBtn = document.querySelector(".cancel-edit-btn");
 const selectedDate = document.querySelector(".selected-date");
 const repeatEndArea = document.querySelector(".repeat-end-area");
 const repeatEndDateInput = document.querySelector(".repeat-end-date-input");
+const reminderArea = document.querySelector(".reminder-area");
+const reminderSelect = document.querySelector(".reminder-select");
 
 //===== Filter =====
 const searchInput = document.querySelector(".search-input");
@@ -102,14 +104,15 @@ const CSV = {
     DESCRIPTION: 4,
     DATE: 5,
     TIME: 6,
-    REPEAT: 7,
-    REPEAT_END_DATE: 8,
-    DELETED: 9,
-    COMPLETED_DATES: 10,
-    DELETED_DATES: 11,
-    EXCEPTIONS: 12,
-    CREATED_AT: 13,
-    UPDATED_AT: 14
+    REMINDER: 7,
+    REPEAT: 8,
+    REPEAT_END_DATE: 9,
+    DELETED: 10,
+    COMPLETED_DATES: 11,
+    DELETED_DATES: 12,
+    EXCEPTIONS: 13,
+    CREATED_AT: 14,
+    UPDATED_AT: 15
 };
 
 const CSV_LENGTH = Object.values(CSV).length;
@@ -119,6 +122,7 @@ let schedules = JSON.parse(localStorage.getItem("schedules")) || [];
 
 schedules = schedules.map(schedule => ({
     ...schedule,
+    reminder: schedule.reminder ?? "",
     repeat: schedule.repeat ?? "none",
     repeatEndDate: schedule.repeatEndDate ?? "",
     deleted: schedule.deleted ?? false,
@@ -329,6 +333,15 @@ repeatSelect.addEventListener("change", () => {
     }
 })
 
+timeInput.addEventListener("change", () => {
+    if(timeInput.value === "") {
+        reminderArea.style.display = "none";
+        reminderSelect.value = "";
+    } else {
+        reminderArea.style.display = "block";
+    }
+});
+
 document.addEventListener("keydown", function(e) {
     if(e.ctrlKey && e.key === "Enter") {
         if(!isEditing) addTransaction();
@@ -374,6 +387,7 @@ function addSchedule() {
 
         date: scheduleDate.getTime(),
         time: timeInput.value,
+        reminder: reminderSelect.value === "" ? null : Number(reminderSelect.value),
 
         repeat: repeatSelect.value,
         repeatEndDate: repeatEndDateInput.value || "",
@@ -396,40 +410,64 @@ function addSchedule() {
     showToast("일정이 추가되었습니다.");
 }
 
-function startEdit(id, editMode = "all") {
-    const editSchedule = schedules.find(schedule => schedule.id === id);
+function startEdit(schedule, editMode = "all") {
+    const originalSchedule = schedule.originalSchedule || schedule;
 
-    if(!editSchedule) return;
+    if(!originalSchedule) return;
 
     isEditing = true;
-    editingId = id;
+    editingId = originalSchedule.id;
     editingMode = editMode;
+    editRepeatDate = "";
 
-    if(editSchedule.repeat === "none" || editingMode === "single") {
+    if(editingMode === "single") {
+        titleInput.value = schedule.title;
+        categorySelect.value = schedule.category;
+        prioritySelect.value = schedule.priority;
+        descriptionInput.value = schedule.description;
+        timeInput.value = schedule.time;
+        reminderSelect.value = schedule.reminder == null ? "" : String(schedule.reminder);
+        repeatSelect.value = originalSchedule.repeat;
+
         repeatSelect.style.display = "none";
 
         repeatEndArea.style.display = "none";
         repeatEndDateInput.value = "";
     }
     else {
+        titleInput.value = originalSchedule.title;
+        categorySelect.value = originalSchedule.category;
+        prioritySelect.value = originalSchedule.priority;
+        descriptionInput.value = originalSchedule.description;
+        timeInput.value = originalSchedule.time;
+        reminderSelect.value = originalSchedule.reminder == null ? "" : String(originalSchedule.reminder);
+        repeatSelect.value = originalSchedule.repeat;
+
         repeatSelect.style.display = "block";
 
-        repeatEndArea.style.display = "block";
-        repeatEndDateInput.value = editSchedule.repeatEndDate || "";
+        if(originalSchedule.repeat === "none") {
+            repeatEndArea.style.display = "none";
+            repeatEndDateInput.value = "";
+        } else {
+            repeatEndArea.style.display = "block";
+            repeatEndDateInput.value = originalSchedule.repeatEndDate || "";
+        }
 
-        const repeatOriginDate = new Date(editSchedule.date);
+
+        //반복 일정은 '최초 만들었던 일정'을 수정하는 게 아닌 이상, Date 수정 불가
+        const repeatOriginDate = new Date(originalSchedule.date);
         repeatOriginDate.setHours(0, 0, 0, 0);
         if(getDateKey(repeatOriginDate) === getDateKey(selectedDateData)) {
-            editRepeatDate = new Date(editSchedule.date);
+            editRepeatDate = new Date(originalSchedule.date);
         }
     }
 
-    titleInput.value = editSchedule.title;
-    categorySelect.value = editSchedule.category;
-    prioritySelect.value = editSchedule.priority;
-    repeatSelect.value = editSchedule.repeat;
-    descriptionInput.value = editSchedule.description;
-    timeInput.value = editSchedule.time;
+    if(timeInput.value === "") {
+        reminderArea.style.display = "none";
+        reminderSelect.value = "";
+    } else {
+        reminderArea.style.display = "block";
+    }
 
     addBtn.textContent = "수정 완료";
     cancelEditBtn.style.display = "inline-block";
@@ -443,10 +481,13 @@ function updateSchedule() {
     if(!editSchedule) return;
 
     const repeatEndDateData = repeatEndDateInput.value || null;
+    const reminderData = timeInput.value === "" ? null : (
+                        reminderSelect.value === "" ? null : Number(reminderSelect.value));
 
     const isChanged = editSchedule.title !== titleInput.value.trim() ||
                       editSchedule.category !== categorySelect.value ||
                       editSchedule.priority !== prioritySelect.value ||
+                      editSchedule.reminder !== reminderData ||
                       editSchedule.repeat !== repeatSelect.value ||
                       editSchedule.repeatEndDate !== repeatEndDateData ||
                       editSchedule.description !== descriptionInput.value.trim() ||
@@ -471,11 +512,13 @@ function updateSchedule() {
         const key = getDateKey(selectedDateData);
 
         editSchedule.exceptions[key] = {
+            ...editSchedule.exceptions[key],
             title: titleInput.value.trim(),
             category: categorySelect.value,
             priority: prioritySelect.value,
             description: descriptionInput.value.trim(),
             time: timeInput.value,
+            reminder: reminderData,
             updatedAt: Date.now()
         }
     } else {
@@ -486,6 +529,7 @@ function updateSchedule() {
         editSchedule.repeatEndDate = repeatEndDateData;
         editSchedule.description = descriptionInput.value.trim();
         editSchedule.time = timeInput.value;
+        editSchedule.reminder = reminderData,
         editSchedule.updatedAt = Date.now();
 
         if(editRepeatDate !== "") {
@@ -703,6 +747,12 @@ function createScheduleCard(schedule) {
         time.textContent = `🕒 ${schedule.time}`;
         card.append(time);
 
+        if(schedule.reminder) {
+            const reminder = document.createElement("p");
+            reminder.textContent = `🔔 ${schedule.reminder}분 전 알림`;
+            card.append(reminder);
+        }
+
         if(isExpiredSchedule(schedule, selectedDateData)) {
             card.classList.add("expired-schedule");
         }
@@ -856,15 +906,14 @@ function createScheduleCard(schedule) {
         editBtn.textContent = "✏️ 수정";
         editBtn.addEventListener("click", () => {
             if(schedule.repeat === "none") {
-                startEdit(schedule.id, "all");
+                startEdit(schedule, "all");
                 return;
             }
 
             const answer = prompt("반복 일정입니다.\n이번 날짜의 일정만 수정하시겠습니까?\n1: 이번 일정만 수정\n2: 반복 일정 전체 수정\n그 외: 취소");
 
-            if(answer === "1") startEdit(schedule.id, "single");
-
-            if(answer === "2") startEdit(schedule.id, "all");
+            if(answer === "1") startEdit(schedule, "single");
+            if(answer === "2") startEdit(schedule, "all");
         });
         card.append(editBtn);
 
@@ -1208,11 +1257,16 @@ function resetScheduleForm() {
     descriptionInput.value = "";
     categorySelect.value = "study";
     prioritySelect.value = "high";
-    repeatSelect.value = "none";
-    repeatEndArea.value = "";
-    repeatEndArea.style.display = "none";
+
     timeInput.value = "";
 
+    reminderSelect.value = "";
+    reminderArea.style.display = "none";
+    
+    repeatSelect.value = "none";
+    repeatEndDateInput.value = "";
+    repeatEndArea.style.display = "none";
+    
     addBtn.textContent = "✓ 추가";
     cancelEditBtn.style.display = "none";
 }
@@ -1387,6 +1441,7 @@ function exportCSV() {
             "description",
             "date",
             "time",
+            "reminder",
             "repeat",
             "repeatEndDate",
             "deleted",
@@ -1407,6 +1462,7 @@ function exportCSV() {
             escapeCSV(schedule.description),
             schedule.date,
             escapeCSV(schedule.time),
+            escapeCSV(schedule.reminder ?? ""),
             escapeCSV(schedule.repeat),
             escapeCSV(schedule.repeatEndDate ?? ""),
             escapeCSV(schedule.deleted),
@@ -1468,6 +1524,7 @@ function importCSV(event) {
                 description: unescapeCSV(values[CSV.DESCRIPTION]),
                 date: Number(values[CSV.DATE]),
                 time: unescapeCSV(values[CSV.TIME]) === "0" ? null : unescapeCSV(values[CSV.TIME]),
+                reminder: values[CSV.REMINDER] === "" ? null : Number(unescapeCSV(values[CSV.REMINDER])),
                 repeat: unescapeCSV(values[CSV.REPEAT]),
                 repeatEndDate: unescapeCSV(values[CSV.REPEAT_END_DATE]) || "",
                 deleted: unescapeCSV(values[CSV.DELETED]).toLowerCase() === "true",
@@ -1705,16 +1762,31 @@ function checkScheduleNotifications() {
 
     todaySchedules.forEach(schedule => {
         if(!schedule.time) return;
+        if(schedule.reminder == null) return;
         if(isCompleted(schedule, now)) return;
-        if(schedule.time !== currentTime) return;
 
-        const notificationKey = `${todayKey}_${schedule.id}_${schedule.time}`;
+        const [hour, minute] = schedule.time.split(":").map(Number);
+
+        const scheduleTime = new Date(now);
+        scheduleTime.setHours(hour);
+        scheduleTime.setMinutes(minute);
+        scheduleTime.setSeconds(0);
+        scheduleTime.setMilliseconds(0);
+
+        const reminderTime = new Date(scheduleTime.getTime() - schedule.reminder * 60 * 1000);
+        const reminderHour = String(reminderTime.getHours()).padStart(2, "0");
+        const reminderMinute = String(reminderTime.getMinutes()).padStart(2, "0");
+        const reminderTimeString = `${reminderHour}:${reminderMinute}`;
+
+        if(currentTime !== reminderTimeString) return;
+
+        const notificationKey = `${todayKey}_${schedule.id}_${schedule.time}_${schedule.reminder}`;
         if(notifiedSchedules.has(notificationKey)) return;
 
         notifiedSchedules.add(notificationKey);
 
-        showToast(`🔔 ${schedule.time} ${schedule.title} 일정이 있습니다.`);
-    })
+        showToast(`🔔 ${schedule.reminder}분 후, ${schedule.time} [${schedule.title}] 일정이 있습니다.`);
+    });
 }
 
 function normalizeDate(date) {
@@ -2003,4 +2075,12 @@ setInterval(checkScheduleNotifications, 10000);
  *                                                                              ["low", "낮음"], ["normal", "보통"], ["high", "높음"]으로 변경하는 형식.
  *                                                                            그리고 forEach([value, label])을 통해서 value = "low"; label = "낮음"; ...으로 변경한다.
  *                                                                              각 요소가 가지고 있는 배열을 자동으로 분해해서 [value, label]에 넣는 것.
+ */
+
+/* 44일차
+ * editSchedule.reminder == null ? "" : String(editSchedule.reminder);  : 여기서 == null으로 지정하면 null과 undefined를 모두 받을 수 있다.
+ *
+ * const reminderData = timeInput.value === "" ? null : (
+ *                      reminderSelect.value === "" ? null : Number(reminderSelect.value));
+ *                      : 이 식의 설명은 'time 설정이 되어 있지 않으면 알림 설정 값을 없앨 것'.
  */
