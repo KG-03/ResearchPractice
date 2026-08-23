@@ -154,6 +154,47 @@ header {
     margin-bottom: 10px;
 }
 
+/*===== Bulk =====*/
+.bulk-area {
+    gap: 10px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.bulk-selected-number {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+
+    height: 20px;
+}
+
+/* ===== toast =====*/
+.toast-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+
+    height: 20px;
+    margin-bottom: 10px;
+}
+
+.toast {
+    pointer-events: none;
+    opacity: 0;
+
+    transition: 
+        opacity .3s,
+        background-color .3s,
+        color .3s;
+}
+
+.toast.show {
+    opacity: 1;
+}
+
 /*===== schedule =====*/
 .schedule-area {
     padding: 15px;
@@ -254,31 +295,6 @@ header {
     display: flex;
     justify-content: flex-end;
     align-items: center;
-}
-
-/* ===== toast =====*/
-.toast-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
-
-    height: 40px;
-    margin-bottom: 10px;
-}
-
-.toast {
-    pointer-events: none;
-    opacity: 0;
-
-    transition: 
-        opacity .3s,
-        background-color .3s,
-        color .3s;
-}
-
-.toast.show {
-    opacity: 1;
 }
 
 /*===== theme =====*/
