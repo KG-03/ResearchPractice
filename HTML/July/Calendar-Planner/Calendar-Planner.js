@@ -40,6 +40,8 @@ const deleteAllBtn = document.querySelector(".delete-all-btn");
 const bulkCompleteBtn = document.querySelector("#bulk-complete-btn");
 const bulkDeleteBtn = document.querySelector("#bulk-delete-btn");
 const bulkCancelBtn = document.querySelector("#bulk-cancel-btn");
+const bulkAllSelectBtn = document.querySelector("#bulk-all-select-btn");
+const bulkSelectedNumber = document.querySelector(".bulk-selected-number");
 
 //===== List =====
 const scheduleList = document.querySelector(".schedule-list");
@@ -285,6 +287,7 @@ bulkCompleteBtn.addEventListener("click", () => {
 
     refreshSchedules();
     updateBulkActionButton();
+    updateSelectedScheduleCount();
 
     showToast("선택한 일정을 완료시켰습니다.");
 });
@@ -313,16 +316,25 @@ bulkDeleteBtn.addEventListener("click", () => {
 
     refreshSchedules();
     updateBulkActionButton();
+    updateSelectedScheduleCount();
 
     showToast("선택한 일정을 완료시켰습니다.");
 });
 
 bulkCancelBtn.addEventListener("click", () => {
-    selectedScheduleIds.clear();
+    resetBulkAction();
+    updateSelectedScheduleCount();
+});
+
+bulkAllSelectBtn.addEventListener("click", () => {
+    const visibleSchedules = getVisibleSchedulesForDate(selectedDateData, showDeleted);
+
+    visibleSchedules.forEach(schedule => selectedScheduleIds.add(schedule.id));
 
     renderSchedules();
     updateBulkActionButton();
-});
+    updateSelectedScheduleCount();
+})
 
 repeatSelect.addEventListener("change", () => {
     if(repeatSelect.value === "none") {
@@ -868,6 +880,7 @@ function createScheduleCard(schedule) {
         else selectedScheduleIds.delete(schedule.id);
 
         updateBulkActionButton();
+        updateSelectedScheduleCount();
     });
     card.append(selectedCheckbox);
 
@@ -1064,6 +1077,8 @@ function renderCalendar() {
 
         dateCell.addEventListener("click", () => {
             selectCalendarCell(year, month, date, dateCell);
+            resetBulkAction();
+            updateSelectedScheduleCount();
         });
         
         calendarGrid.append(dateCell);
@@ -1795,24 +1810,6 @@ function normalizeDate(date) {
     return result;
 }
 
-function updateBulkActionButton() {
-    const hasSelection = selectedScheduleIds.size > 0;
-
-    bulkCancelBtn.style.display = hasSelection ? "inline-block" : "none";
-
-    if(showDeleted) {
-        bulkCompleteBtn.style.display = "none";
-        bulkDeleteBtn.style.display = "none";
-        return;
-    }
-
-    bulkCompleteBtn.style.display = "inline-block";
-    bulkDeleteBtn.style.display = "inline-block";
-
-    bulkCompleteBtn.disabled = !hasSelection;
-    bulkDeleteBtn.disabled = !hasSelection;
-}
-
 function changeScheduleField(schedule, field, value) {
     if(schedule.repeat === "none") {
         schedule[field] = value;
@@ -1850,6 +1847,39 @@ function changeScheduleField(schedule, field, value) {
         refreshSchedules();
         return;
     }
+}
+
+//==== Bulk =====
+function updateBulkActionButton() {
+    const hasSelection = selectedScheduleIds.size > 0;
+
+    bulkCancelBtn.style.display = hasSelection ? "inline-block" : "none";
+
+    if(showDeleted) {
+        bulkCompleteBtn.style.display = "none";
+        bulkDeleteBtn.style.display = "none";
+        bulkAllSelectBtn.style.display = "none";
+        return;
+    }
+
+    bulkCompleteBtn.style.display = "inline-block";
+    bulkDeleteBtn.style.display = "inline-block";
+    bulkAllSelectBtn.style.display = "inline-block";
+
+    bulkCompleteBtn.disabled = !hasSelection;
+    bulkDeleteBtn.disabled = !hasSelection;
+}
+
+function resetBulkAction() {
+    selectedScheduleIds.clear();
+
+    renderSchedules();
+    updateBulkActionButton();
+}
+
+function updateSelectedScheduleCount() {
+    if(selectedScheduleIds.size > 0) bulkSelectedNumber.textContent = `선택된 일정: ${selectedScheduleIds.size}개`;
+    else bulkSelectedNumber.textContent = "";
 }
 
 //===== ETC =====
