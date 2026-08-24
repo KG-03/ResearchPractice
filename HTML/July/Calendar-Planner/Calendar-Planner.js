@@ -355,17 +355,83 @@ timeInput.addEventListener("change", () => {
 });
 
 document.addEventListener("keydown", function(e) {
-    if(e.ctrlKey && e.key === "Enter") {
-        if(!isEditing) addTransaction();
-        else updateTransaction();
+    console.log(e.key);
+    
+    if(e.key === "Escape" && (titleInput.value !== "" ||
+                            timeInput.value !== "" ||
+                            categorySelect.value !== "study" ||
+                            prioritySelect.value !== "high" ||
+                            repeatSelect.value !== "none" ||
+                            descriptionInput.value !== "" ||
+                            isEditing)) {
+        cancelEdit();
+        return;
     }
 
-    if(e.key === "Escape" && (titleInput.value !== "" ||
-                                timeInput.value !== "" ||
-                                categorySelect.value !== "study" ||
-                                prioritySelect.value !== "high" ||
-                                descriptionInput.value !== "")) {
-        cancelEdit();
+    //이 아래로는 입력창 바깥에서 사용 가능한 단축키
+    if(e.target.matches("input, textarea, select")) return;
+    if(!selectedDateData) return;
+
+    if(e.key === "PageUp") {
+        e.preventDefault();
+        prevMonthBtn.click();
+        return;
+    }
+    if(e.key === "PageDown") {
+        e.preventDefault();
+        nextMonthBtn.click();
+        return;
+    }
+
+    if(e.key === "ArrowLeft") {
+        e.preventDefault();
+
+        const previousDate = new Date(selectedDateData);
+        previousDate.setDate(previousDate.getDate() - 1);
+
+        moveToDate(previousDate);
+        return;
+    }
+    if(e.key === "ArrowRight") {
+        e.preventDefault();
+        const nextDate = new Date(selectedDateData);
+        nextDate.setDate(nextDate.getDate() + 1);
+
+        moveToDate(nextDate);
+        return;
+    }
+
+    if(e.key.toLowerCase() === "t") {
+        moveToDate(new Date());
+        return;
+    }
+
+    if(e.key.toLowerCase() === "r") {
+        refreshSchedules();
+        return;
+    }
+
+    if(e.key.toLowerCase() === "a" && !showDeleted) {
+        bulkAllSelectBtn.click();
+        return;
+    }
+    if(e.key.toLowerCase() === "x") {
+        bulkCancelBtn.click();
+        return;
+    }
+    if(selectedScheduleIds.size > 0 && e.ctrlKey && e.key === "Delete") bulkDeleteBtn.click();
+
+    if(e.ctrlKey && e.key === "Enter") {
+        if(selectedScheduleIds.size > 0) bulkCompleteBtn.click();
+        else if(!isEditing) addSchedule();
+        else updateSchedule();
+
+        return;
+    }
+
+    if(e.key.toLowerCase() === "d") {
+        themeToggleBtn.click();
+        return;
     }
 });
 
