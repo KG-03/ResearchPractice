@@ -43,10 +43,15 @@ const bulkCancelBtn = document.querySelector("#bulk-cancel-btn");
 const bulkAllSelectBtn = document.querySelector("#bulk-all-select-btn");
 const bulkSelectedNumber = document.querySelector(".bulk-selected-number");
 
-//===== List =====
+//===== Schedule List =====
 const scheduleList = document.querySelector(".schedule-list");
 
 const statsList = document.querySelector(".stats-list");
+
+//===== Complete =====
+const completionRateArea = document.querySelector(".completion-rate-area");
+const completionRateText = document.querySelector(".completion-rate-text");
+const completionProgress = document.querySelector(".completion-progress");
 
 //===== Storage =====
 const exportBtn = document.querySelector(".export-btn");
@@ -56,8 +61,10 @@ const importInput = document.querySelector(".import-input");
 //===== Toast =====
 const toast = document.querySelector(".toast");
 
-//===== theme =====
+//===== Top Tool =====
 const themeToggleBtn = document.querySelector(".theme-toggle-btn");
+const helper = document.querySelector(".helper");
+const helperTooltip = document.querySelector(".helper-tooltip");
 
 
 const WEEK_NAMES = [ "일", "월", "화", "수", "목", "금", "토" ];
@@ -354,9 +361,20 @@ timeInput.addEventListener("change", () => {
     }
 });
 
-document.addEventListener("keydown", function(e) {
-    console.log(e.key);
-    
+helper.addEventListener("mouseenter", () => {
+    const rect = helper.getBoundingClientRect();
+
+    helperTooltip.style.left = rect.left + window.scrollX + "px";
+    helperTooltip.style.top = rect.bottom + window.scrollY + 5 + "px";
+
+    helperTooltip.style.display = "block";
+});
+
+helper.addEventListener("mouseleave", () => {
+    helperTooltip.style.display = "none";
+});
+
+document.addEventListener("keydown", function(e) {    
     if(e.key === "Escape" && (titleInput.value !== "" ||
                             timeInput.value !== "" ||
                             categorySelect.value !== "study" ||
@@ -1163,27 +1181,27 @@ function renderSchedules() {
 
     if(!selectedDateData) {
         scheduleList.textContent = "날짜를 선택해 주세요.";
+        renderCompletionRate([]);
         return;
     }
-
-    let filteredSchedule = [...schedules];
 
     if(!schedules.length) {
         scheduleList.textContent = `📅 등록된 일정이 아무 것도 없습니다.
             달력에서 날짜를 선택해서 새 일정을 등록해 보세요.`;
+        renderCompletionRate([]);
         return;
     }
 
+    const visibleSchedules = getVisibleSchedulesForDate(selectedDateData, false);
+    renderCompletionRate(visibleSchedules);
+
+    let filteredSchedule = [...schedules];
+
     filteredSchedule = getVisibleSchedulesForDate(selectedDateData, showDeleted);
-
     filteredSchedule = filterByCategory(filteredSchedule);
-
     filteredSchedule = filterByPriority(filteredSchedule);
-
     filteredSchedule = filterByCompleted(filteredSchedule);
-
     filteredSchedule = filterByKeyword(filteredSchedule);
-
     filteredSchedule = sortSchedules(filteredSchedule);
 
     if(filteredSchedule.length === 0 &&
@@ -1238,8 +1256,7 @@ function renderStatistics(schedules) {
     renderStatisticsSection("업무", stats.category.work);
     renderStatisticsSection("개인", stats.category.personal);
     renderStatisticsSection("운동", stats.category.exercise);
-    renderStatisticsSection("기타", stats.category.etc);
-    
+    renderStatisticsSection("기타", stats.category.etc);    
 }
 
 function renderStatisticsSection(title, count) {
@@ -1315,6 +1332,34 @@ function showTooltip(dateCell, year, month, date) {
 
 function hideTooltip() {
     calendarTooltip.style.display = "none";
+}
+
+function renderCompletionRate(schedule) {
+    if(showDeleted) {
+        completionRateText.textContent = "";
+        completionProgress.style.width = "0%";
+        completionRateArea.style.display = "none";
+        return;
+    } else {
+        completionRateArea.style.display = "block";
+    }
+    
+    const total = schedule.length;
+
+    if (total === 0) {
+        completionRateText.textContent = "0%";
+        completionProgress.style.width = "0%";
+        return;
+    }
+
+    const complete = schedule.filter(s => {
+        return isCompleted(s, selectedDateData);
+    }).length;
+
+    const rate = Math.round((complete / total) * 100);
+
+    completionRateText.textContent = `${rate}%`;
+    completionProgress.style.width = `${rate}%`;
 }
 
 //===== Reset =====
