@@ -9,6 +9,23 @@ header {
     text-align: center;
 }
 
+/*===== top tool area =====*/
+.top-tool-area {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom: 10px;
+}
+
+.helper, .theme-toggle-btn {
+    padding: 5px;
+    border-radius: 10px;
+    border: none;
+
+    background:#eeeeee;
+}
+
 /*===== calendar =====*/
 .calendar-area {
     padding: 15px;
@@ -102,7 +119,7 @@ header {
     padding: 5px;
 }
 
-.calendar-tooltip {
+.calendar-tooltip, .helper-tooltip {
     position: absolute;
 
     display: none;
@@ -193,6 +210,32 @@ header {
 
 .toast.show {
     opacity: 1;
+}
+
+/*===== complete =====*/
+.completion-rate-area {
+    margin-bottom: 10px;
+}
+
+.completion-rate-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.completion-bar {
+    width: 100%;
+    height: 10px;
+    background: #e5e5e5;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.completion-progress {
+    width: 0%;
+    height: 100%;
+    background: orange;
+    transition: width 0.3s ease;
 }
 
 /*===== schedule =====*/
@@ -290,13 +333,6 @@ header {
     background: #fff1d5;
 }
 
-/*===== dark/light theme =====*/
-.theme-toggle-box {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-}
-
 /*===== theme =====*/
 body.light-theme {
     background: white;
@@ -365,14 +401,16 @@ body.dark-theme .statistics-box {
     background: #b3a282;
 }
 
-body.light-theme .calendar-tooltip {
+body.light-theme .calendar-tooltip,
+body.light-theme .helper-tooltip {
     background: white;
 
     border: 1px solid #ccc;
     border-radius: 8px;
 }
 
-body.dark-theme .calendar-tooltip {
+body.dark-theme .calendar-tooltip,
+body.dark-theme .helper-tooltip {
     background: black;
 
     border: 1px solid #222222;
