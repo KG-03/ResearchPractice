@@ -48,8 +48,8 @@ header {
     grid-template-columns: repeat(7, 1fr);
 }
 
-.calendar-grid div,
-.week-row div {
+.calendar-grid > div,
+.week-row > div {
     height: 100px;
 
     display: flex;
@@ -59,7 +59,7 @@ header {
     border: 1px solid #ddd;
 }
 
-.calendar-grid div {
+.calendar-grid > div {
     border-radius: 6px;
 }
 
@@ -95,14 +95,20 @@ header {
     border-radius: 50%;
 }
 
-.count-schedule {
-    width: 20px;
+.schedule-badge-area {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+
+    gap: 5px;
+}
+
+.schedule-badge {
+    min-width: 20px;
     height: 20px;
 
     border-radius: 50%;
-
-    background: #4b7bec;
-    color: white;
 
     display: flex;
     justify-content: center;
@@ -110,6 +116,16 @@ header {
 
     font-size: 12px;
     font-weight: bold;
+}
+
+.incomplete-badge {
+    background: #ec4b4b;
+    color: white;
+}
+
+.complete-badge {
+    background: #4b7bec;
+    color: white;
 }
 
 .selected-date {
@@ -424,4 +440,9 @@ body.dark-theme .helper-tooltip {
  *                            repeat()  : 같은 설정을 여러 번 반복해서 작성하는 함수. (횟수, 반복할 것)
  *                                        (7, 1fr)이라면 1fr을 7번 반복한다는 의미다.
  *                            1fr       : fraction(비율)을 의미하는 Grid 전용 단위.
+ */
+
+/* 49일차
+ * .calendar-grid > div     : calendar-grid의 바로 아래에 있는 div만 해당 css를 적용하라는 의미.
+ *
  */
