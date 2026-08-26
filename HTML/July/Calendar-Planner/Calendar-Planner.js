@@ -825,7 +825,7 @@ function createScheduleCard(schedule) {
                     card.classList.remove("completed");
                 }
 
-                renderSchedules();
+                refreshSchedules();
             });
             header.append(checkbox); 
         } else {
@@ -1142,14 +1142,27 @@ function renderCalendar() {
             dateNumber.textContent = date;
             dateCell.append(dateNumber);
 
-            const countSchedule = getVisibleSchedulesForDate(new Date(year, month, date)).length;
+            const dayDate = new Date(year, month, date);
+            const completeStats = getDayScheduleCompleteStats(dayDate);
+            
+            const badgeArea = document.createElement("div");
+            badgeArea.classList.add("schedule-badge-area");
 
-            if (countSchedule > 0) {
-                const badge = document.createElement("span");
-                badge.classList.add("count-schedule");
-                badge.textContent = countSchedule;
-                dateCell.append(badge);
-            }
+                if (completeStats.incomplete > 0) {
+                    const incompleteBadge = document.createElement("span");
+                    incompleteBadge.classList.add("schedule-badge", "incomplete-badge");
+                    incompleteBadge.textContent = completeStats.incomplete;
+                    badgeArea.append(incompleteBadge);
+                }
+
+                if(completeStats.completed > 0) {
+                    const completeBadge = document.createElement("span");
+                    completeBadge.classList.add("schedule-badge", "complete-badge");
+                    completeBadge.textContent = completeStats.completed;
+                    badgeArea.append(completeBadge);
+                }
+
+            dateCell.append(badgeArea);
 
         dateCell.addEventListener("mouseenter", () => {
             showTooltip(dateCell, year, month, date);
@@ -1173,6 +1186,18 @@ function renderCalendar() {
             dateCell.classList.add("today-cell");
         }
     }
+}
+
+function getDayScheduleCompleteStats(date) {
+    const schedule = getVisibleSchedulesForDate(date, false);
+
+    const completed = schedule.filter(s => isCompleted(s, date)).length;
+
+    return {
+        total: schedule.length,
+        completed,
+        incomplete: schedule.length - completed
+    };
 }
 
 function renderSchedules() {
@@ -2010,7 +2035,7 @@ function preventComma(input) {
 function refreshSchedules() {
     saveSchedules();
     renderCalendar();
-    renderSchedules();
+    selectCalendarCell(selectedDateData.getFullYear(), selectedDateData.getMonth(), selectedDateData.getDate());
 }
 
 function showToast(message) {
