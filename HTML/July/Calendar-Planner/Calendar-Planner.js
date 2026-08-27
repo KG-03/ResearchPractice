@@ -42,6 +42,7 @@ const bulkDeleteBtn = document.querySelector("#bulk-delete-btn");
 const bulkCancelBtn = document.querySelector("#bulk-cancel-btn");
 const bulkAllSelectBtn = document.querySelector("#bulk-all-select-btn");
 const bulkSelectedNumber = document.querySelector(".bulk-selected-number");
+const deleteDateBtn = document.querySelector(".delete-date-btn");
 
 //===== Schedule List =====
 const scheduleList = document.querySelector(".schedule-list");
@@ -249,8 +250,14 @@ deletedFilter.addEventListener("change", () => {
     renderSchedules();
     updateBulkActionButton();
 
-    if (showDeleted) deleteAllBtn.textContent = "휴지통 비우기";
-    else deleteAllBtn.textContent = "전체 삭제";
+    if (showDeleted) {
+        deleteAllBtn.textContent = "휴지통 비우기";
+        deleteDateBtn.style.display = "none";
+    }
+    else {
+        deleteAllBtn.textContent = "전체 삭제";
+        deleteDateBtn.style.display = "inline-block";
+    }
 });
 
 deleteAllBtn.addEventListener("click", () => {
@@ -374,6 +381,12 @@ helper.addEventListener("mouseleave", () => {
     helperTooltip.style.display = "none";
 });
 
+deleteDateBtn.addEventListener("click", () => {
+    if(confirm("오늘 일정을 휴지통으로 보내시겠습니까?")) {
+        deleteDateSchedule();
+    }
+})
+
 document.addEventListener("keydown", function(e) {    
     if(e.key === "Escape" && (titleInput.value !== "" ||
                             timeInput.value !== "" ||
@@ -386,9 +399,8 @@ document.addEventListener("keydown", function(e) {
         return;
     }
 
-    //이 아래로는 입력창 바깥에서 사용 가능한 단축키
+    //이 아래로는 입력창 바깥에서만 사용 가능한 단축키
     if(e.target.matches("input, textarea, select")) return;
-    if(!selectedDateData) return;
 
     if(e.key === "PageUp") {
         e.preventDefault();
@@ -400,6 +412,14 @@ document.addEventListener("keydown", function(e) {
         nextMonthBtn.click();
         return;
     }
+
+    if(e.key.toLowerCase() === "t") {
+        moveToDate(new Date());
+        return;
+    }
+
+    //이 아래로는 입력 날짜가 필요한 단축키
+    if(!selectedDateData) return;
 
     if(e.key === "ArrowLeft") {
         e.preventDefault();
@@ -416,11 +436,6 @@ document.addEventListener("keydown", function(e) {
         nextDate.setDate(nextDate.getDate() + 1);
 
         moveToDate(nextDate);
-        return;
-    }
-
-    if(e.key.toLowerCase() === "t") {
-        moveToDate(new Date());
         return;
     }
 
@@ -760,6 +775,25 @@ function deleteAllSchedule() {
     refreshSchedules();
 
     showToast("모든 일정이 휴지통으로 이동되었습니다.");
+}
+
+function deleteDateSchedule() {
+    const dateSchedules = getVisibleSchedulesForDate(selectedDateData, false);
+
+    dateSchedules.forEach(schedule => {
+        const original = schedule.originalSchedule || schedule;
+
+        if(original.repeat === "none") original.deleted = true;
+        else {
+            const key = getDateKey(selectedDateData);
+
+            if(!original.deletedDates.includes(key)) original.deletedDates.push(key);
+        }
+    });
+
+    refreshSchedules();
+
+    showToast("선택한 날짜의 일정이 휴지통으로 이동되었습니다.");
 }
 
 function emptyTrash() {
@@ -1337,7 +1371,8 @@ function showTooltip(dateCell, year, month, date) {
     previewSchedules.forEach(schedule => {
         const p = document.createElement("p");
         const previewTargetDate = new Date(year, month, date);
-        p.textContent = `🕒${schedule.time || "--:--"} ${CATEGORY_ICON[schedule.category]}${schedule.title.length > 10 ? schedule.title.slice(0,10) + "..." : schedule.title} ${isCompleted(schedule, previewTargetDate) === true ? "✔️" : ""} `;
+        const repeat = schedule.repeat !== "none" ? "[반복]" : "";
+        p.textContent = `🕒${schedule.time || "--:--"} ${CATEGORY_ICON[schedule.category]} ${repeat} ${schedule.title.length > 10 ? schedule.title.slice(0,10) + "..." : schedule.title} ${isCompleted(schedule, previewTargetDate) === true ? "✔️" : ""} `;
         calendarTooltip.append(p);
     });
 
