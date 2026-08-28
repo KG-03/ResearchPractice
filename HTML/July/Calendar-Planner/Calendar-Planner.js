@@ -602,7 +602,7 @@ function updateSchedule() {
                       editSchedule.repeat !== repeatSelect.value ||
                       editSchedule.repeatEndDate !== repeatEndDateData ||
                       editSchedule.description !== descriptionInput.value.trim() ||
-                      editSchedule.date !== selectedDateData.getTime() ||
+                      (editRepeatDate !== "" && editSchedule.date !== selectedDateData.getTime()) ||
                       editSchedule.time !== timeInput.value;
 
     if(!isChanged) {
@@ -644,7 +644,7 @@ function updateSchedule() {
         editSchedule.updatedAt = Date.now();
 
         if(editRepeatDate !== "") {
-            editSchedule.date = selectedDateData.getTime();
+            shiftRepeatSchedule(editSchedule, editRepeatDate, selectedDateData);
         }
     }
 
@@ -1924,17 +1924,6 @@ function getStatistics(schedules) {
     return stats;
 }
 
-function moveToDate(targetDate) {
-    const date = new Date(targetDate);
-    date.setHours(0, 0, 0, 0);
-
-    currentDateData = new Date(date);
-    selectedDateData = new Date(date);
-
-    renderCalendar();
-    selectCalendarCell(date.getFullYear(), date.getMonth(), date.getDate());
-}
-
 function checkScheduleNotifications() {
     const now = new Date();
 
@@ -2020,6 +2009,64 @@ function changeScheduleField(schedule, field, value) {
     }
 }
 
+//===== Shift =====
+function moveToDate(targetDate) {
+    const date = new Date(targetDate);
+    date.setHours(0, 0, 0, 0);
+
+    currentDateData = new Date(date);
+    selectedDateData = new Date(date);
+
+    renderCalendar();
+    selectCalendarCell(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function shiftDateKey(dateKey, diffDays) {
+    const date = new Date(`${dateKey}T00:00:00`);
+
+    date.setDate(date.getDate() + diffDays);
+
+    return getDateKey(date);
+}
+
+function shiftDateKeys(dateKeys, diffDays) {
+    return dateKeys.map(dateKey => {
+        return shiftDateKey(dateKey, diffDays);
+    });
+}
+
+function shiftExceptions(exceptions, diffDays) {
+    const shiftedExceptions = {};
+
+    Object.entries(exceptions).forEach(([dateKey, exception]) => {
+        const newDateKey = shiftDateKey(dateKey, diffDays);
+
+        shiftedExceptions[newDateKey] = exception;
+    });
+
+    return shiftedExceptions;
+}
+
+function shiftRepeatSchedule(schedule, oldDate, newDate) {
+    const oldDay = new Date(oldDate);
+    oldDay.setHours(0, 0, 0, 0);
+
+    const newDay = new Date(newDate);
+    newDay.setHours(0, 0, 0, 0);
+
+    const diffDays = Math.round((newDay - oldDay) / (1000 * 60 * 60 * 24));
+
+    schedule.completedDates = shiftDateKeys(schedule.completedDates, diffDays);
+    schedule.deletedDates = shiftDateKeys(schedule.deletedDates, diffDays);
+    schedule.exceptions = shiftExceptions(schedule.exceptions, diffDays);
+
+    if(schedule.repeatEndDate) {
+        schedule.repeatEndDate = shiftDateKey(schedule.repeatEndDate, diffDays);
+    }
+
+    schedule.date = newDay.getTime();
+}
+
 //==== Bulk =====
 function updateBulkActionButton() {
     const hasSelection = selectedScheduleIds.size > 0;
@@ -2096,7 +2143,11 @@ function showToast(message) {
 function getDateKey(date) {
     if(!date) return null;
 
-    return date.toISOString().split("T")[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
 }
 
 function isCompleted(schedule, targetDate) {
