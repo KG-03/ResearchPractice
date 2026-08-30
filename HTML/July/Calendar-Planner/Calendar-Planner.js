@@ -605,6 +605,8 @@ function updateSchedule() {
                       (editRepeatDate !== "" && editSchedule.date !== selectedDateData.getTime()) ||
                       editSchedule.time !== timeInput.value;
 
+    const isConvertingToNormal = editSchedule.repeat !== "none" && repeatSelect.value === "none";
+
     if(!isChanged) {
         refreshSchedules();
         resetScheduleForm();
@@ -630,6 +632,8 @@ function updateSchedule() {
             description: descriptionInput.value.trim(),
             time: timeInput.value,
             reminder: reminderData,
+            repeat: "none",
+            repeatEndDate: null,
             updatedAt: Date.now()
         }
     } else {
@@ -640,10 +644,17 @@ function updateSchedule() {
         editSchedule.repeatEndDate = repeatEndDateData;
         editSchedule.description = descriptionInput.value.trim();
         editSchedule.time = timeInput.value;
-        editSchedule.reminder = reminderData,
+        editSchedule.reminder = reminderData;
         editSchedule.updatedAt = Date.now();
 
-        if(editRepeatDate !== "") {
+        if(isConvertingToNormal) {
+            editSchedule.completedDates = [];
+            editSchedule.deletedDates = [];
+            editSchedule.exceptions = {};
+            editSchedule.repeatEndDate = null;
+
+            if(editRepeatDate !== "") editSchedule.date = selectedDateData.getTime();
+        } else if(editRepeatDate !== "") {
             shiftRepeatSchedule(editSchedule, editRepeatDate, selectedDateData);
         }
     }
