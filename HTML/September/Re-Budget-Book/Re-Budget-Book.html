@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8">
+        <title>Re-Budget-book</title>
+        <link rel="stylesheet" href="Re-Budget-book.css">
+    </head>
+
+    <body>
+        <header>
+            <h1>Re 가계부</h1>
+            <p class="today-date">오늘 날짜: 00월 00일</p>
+        </header>
+
+        <main>
+            <section class="summary-area">
+                <div class="month-summary">
+                    <p>이번 달 수입: 0원</p>
+                    <p>이번 달 지출: 0원</p>
+                    <p>이번 달 저축: 0원</p>
+                    <p>잔액: 0원</p>
+                </div>
+
+                <div class="category-summary">
+                    <p>카테고리별 요약</p>
+                </div>
+            </section>
+
+            <section class="input-area">
+                <input class="date-input" type="date">
+                
+                <input class="amount-input" placeholder="금액">
+                
+                <select class="type-select">
+                    <option value="expense">지출</option>
+                    <option value="income">수입</option>
+                    <option value="saving">저축</option>
+                    <option value="investment">투자/재테크</option>
+                </select>
+
+                <select class="category-select">
+                    <option>카테고리</option>
+                </select>
+
+                <input class="description-input" placeholder="메모">
+
+                <button class="list-add-btn">추가</button>
+            </section>
+
+            <section class="filter-area">
+                <button class="filter-reset">필터 리셋</button>
+
+                <select class="type-filter">
+                    <option value="all">전체</option>
+                    <option value="expense">지출</option>
+                    <option value="income">수입</option>
+                    <option value="saving">저축</option>
+                    <option value="investment">투자/재테크</option>
+                </select>
+
+                <select class="category-filter">
+                    <option>카테고리</option>
+                </select>
+            </section>
+
+            <section class="budget-list">
+            </section>
+
+        </main>
+
+        <script src="Re-Budget-book.js"></script>
+    </body>
+</html>
