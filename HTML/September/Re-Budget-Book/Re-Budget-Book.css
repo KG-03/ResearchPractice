@@ -2,3 +2,57 @@ header {
     justify-content: center;
     text-align: center;
 }
+
+.summary-area,
+.input-area,
+.filter-area,
+.budget-list {
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.summary-area {
+    justify-content: center;
+    text-align: center;
+
+    background: #c8dbca;
+}
+
+.month-summary {
+    justify-content: center;
+    text-align: center;
+
+    gap: 10px;
+}
+
+.prev-month-btn,
+.now-month-btn,
+.next-month-btn {
+    padding: 5px;
+    margin: 5px;
+
+    border-radius: 5px;
+    border: none;
+    background: #a4c4a7;
+}
+
+.prev-month-btn:hover,
+.now-month-btn:hover,
+.next-month-btn:hover {
+    cursor: pointer;
+    background: #88ac8c;
+}
+
+.category-summary {
+    display: flex;
+    justify-content: center;
+    text-align: center;
+}
+
+.budget-card {
+    padding: 5px;
+    margin-bottom: 5px;
+
+    border-radius: 5px;
+    background: #a4c4a7;
+}
