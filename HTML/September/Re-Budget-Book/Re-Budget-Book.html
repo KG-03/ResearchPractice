@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <title>Re-Budget-book</title>
-        <link rel="stylesheet" href="Re-Budget-book.css">
+        <link rel="stylesheet" href="Re-Budget-Book.css">
     </head>
 
     <body>
@@ -14,22 +14,35 @@
 
         <main>
             <section class="summary-area">
+                <h2 class="selected-month">n월 통계</h2>
                 <div class="month-summary">
                     <p>이번 달 수입: 0원</p>
                     <p>이번 달 지출: 0원</p>
                     <p>이번 달 저축: 0원</p>
+                    <p>이번 달 투자: 0원</p>
                     <p>잔액: 0원</p>
                 </div>
 
                 <div class="category-summary">
                     <p>카테고리별 요약</p>
+                    <select class="type-summary">
+                        <option value="expense">지출</option>
+                        <option value="income">수입</option>
+                        <option value="saving">저축</option>
+                        <option value="investment">투자/재테크</option>
+                    </select>
                 </div>
+
+                <button class="prev-month-btn">이전 달</button>
+                <button class="now-month-btn">이번 달</button>
+                <button class="next-month-btn">다음 달</button>
             </section>
 
             <section class="input-area">
+                <h2>입력</h2>
                 <input class="date-input" type="date">
                 
-                <input class="amount-input" placeholder="금액">
+                <input class="amount-input" type="number" placeholder="금액">
                 
                 <select class="type-select">
                     <option value="expense">지출</option>
@@ -44,10 +57,11 @@
 
                 <input class="description-input" placeholder="메모">
 
-                <button class="list-add-btn">추가</button>
+                <button class="add-btn">추가</button>
             </section>
 
             <section class="filter-area">
+                <h2>필터</h2>
                 <button class="filter-reset">필터 리셋</button>
 
                 <select class="type-filter">
@@ -64,6 +78,7 @@
             </section>
 
             <section class="budget-list">
+                <p>아직 등록된 기록이 없습니다!</p>
             </section>
 
         </main>
