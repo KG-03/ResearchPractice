@@ -18,11 +18,53 @@ header {
     background: #c8dbca;
 }
 
-.month-summary {
+.summary-sort {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+}
+
+.summary-month-area,
+.summary-category-area {
+    flex: 1;
+
+    background: white;
+    border-radius: 10px;
+}
+
+.summary-month-area {
+    justify-content: center;
+    text-align: center;
+}
+
+.summary-category-area {
     justify-content: center;
     text-align: center;
 
     gap: 10px;
+    margin-bottom: 10px;
+}
+
+.summary-category-option {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    gap: 10px;
+}
+
+.summary-category-type {
+    width: 120px;
+    height: 30px;
+    text-align: center;
+}
+
+.summary-category-card {
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .prev-month-btn,
@@ -41,12 +83,6 @@ header {
 .next-month-btn:hover {
     cursor: pointer;
     background: #88ac8c;
-}
-
-.category-summary {
-    display: flex;
-    justify-content: center;
-    text-align: center;
 }
 
 .budget-card {
