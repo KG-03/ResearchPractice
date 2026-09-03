@@ -14,28 +14,41 @@
 
         <main>
             <section class="summary-area">
-                <h2 class="selected-month">n월 통계</h2>
-                <div class="month-summary">
-                    <p>이번 달 수입: 0원</p>
-                    <p>이번 달 지출: 0원</p>
-                    <p>이번 달 저축: 0원</p>
-                    <p>이번 달 투자: 0원</p>
-                    <p>잔액: 0원</p>
+                <h2 class="selected-month">n년 n월 통계</h2>
+
+                <div class="summary-sort">
+                    <div class="summary-month-area">
+                        <p>이번 달 수입: 0원</p>
+                        <p>이번 달 지출: 0원</p>
+                        <p>이번 달 저축: 0원</p>
+                        <p>이번 달 투자: 0원</p>
+                        <p>잔액: 0원</p>
+                    </div>
+
+                    <div class="summary-category-area">
+                        <div class="summary-category-option">
+                            <p>카테고리별 요약</p>
+                            <select class="summary-category-type">
+                                <option value="expense">지출</option>
+                                <option value="income">수입</option>
+                                <option value="saving">저축</option>
+                                <option value="investment">투자/재테크</option>
+                            </select>
+                        </div>
+                        
+                        <div class="category-summary">
+                        </div>
+                    </div>
                 </div>
 
-                <div class="category-summary">
-                    <p>카테고리별 요약</p>
-                    <select class="type-summary">
-                        <option value="expense">지출</option>
-                        <option value="income">수입</option>
-                        <option value="saving">저축</option>
-                        <option value="investment">투자/재테크</option>
-                    </select>
-                </div>
-
-                <button class="prev-month-btn">이전 달</button>
+                <button class="prev-month-btn">⬅️이전 달</button>
                 <button class="now-month-btn">이번 달</button>
-                <button class="next-month-btn">다음 달</button>
+                <button class="next-month-btn">다음 달➡️</button>
+
+                <div>
+                    <input class="date-shift" type="month">
+                    <button class="shift-month-btn">이동</button>
+                </div>
             </section>
 
             <section class="input-area">
