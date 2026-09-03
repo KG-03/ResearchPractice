@@ -1,9 +1,16 @@
 
 const todayDate = document.querySelector(".today-date");
+
+const summaryMonthArea = document.querySelector(".summary-month-area");
+const summaryCategoryType = document.querySelector(".summary-category-type");
+const categorySummary = document.querySelector(".category-summary");
+
 const selectedMonth = document.querySelector(".selected-month");
 const prevMonthBtn = document.querySelector(".prev-month-btn");
 const nowMonthBtn = document.querySelector(".now-month-btn");
 const nextMonthBtn = document.querySelector(".next-month-btn");
+const dateShift = document.querySelector(".date-shift");
+const shiftMonthBtn = document.querySelector(".shift-month-btn");
 
 const dateInput = document.querySelector(".date-input");
 const amountInput = document.querySelector(".amount-input");
@@ -93,6 +100,10 @@ let currentTypeSelect = "expense";
 let currentTypeFilter = "all";
 
 
+summaryCategoryType.addEventListener("change", () => {
+    summaryCategory();
+});
+
 prevMonthBtn.addEventListener("click", () => {
     const year = selectedMonthDate.getFullYear();
     const month = selectedMonthDate.getMonth();
@@ -119,8 +130,18 @@ nextMonthBtn.addEventListener("click", () => {
     updateToday();
 });
 
+shiftMonthBtn.addEventListener("click", () => {
+    if(dateShift.value) {
+        selectedMonthDate = new Date(dateShift.value);
+    }
+
+    updateToday();
+    dateShift.value = "";
+});
+
 addBtn.addEventListener("click", () => {
     addTransaction();
+    summaryCategory();
 });
 
 typeSelect.addEventListener("change", () => {
@@ -162,7 +183,7 @@ function createTransactionCard(transaction) {
     card.append(date);
 
     const amount = document.createElement("p");
-    amount.textContent = transaction.amount;
+    amount.textContent = `${transaction.amount}원`;
     card.append(amount);
 
     const type = document.createElement("p");
@@ -206,6 +227,83 @@ function updateToday() {
     selectedMonth.textContent = `${selectedMonthDate.getFullYear()}년도 ${selectedMonthDate.getMonth() + 1}월 통계`;
 }
 
+function summaryCategory() {
+    categorySummary.innerHTML = "";
+
+    const categoryAmounts = transactions
+        .filter(transaction => transaction.type === summaryCategoryType.value)
+        .reduce((result, transaction) => {
+            result[transaction.category] = (result[transaction.category] || 0) + transaction.amount;
+
+            return result;
+        }, {});
+    
+    Object.entries(categoryAmounts).forEach(([category, amount]) => {
+        categorySummary.append(createSummaryCategoryCard(category, amount));
+    });
+}
+
+function createSummaryCategoryCard(category, amount) {
+    const card = document.createElement("div");
+    card.classList.add("summary-category-card");
+
+    const categoryOption = CATEGORY_OPTIONS[summaryCategoryType.value].find(
+        option => option.value === category
+    );
+    const categoryName = document.createElement("p");
+    categoryName.textContent = categoryOption.label;
+    card.append(categoryName);
+
+    const categoryAmount = document.createElement("p");
+    categoryAmount.textContent = `: ${amount}원`;
+    card.append(categoryAmount);
+    
+    return card;
+}
+
 updateCategoryOptions(currentTypeSelect, categorySelect);
 updateCategoryOptions(currentTypeFilter, categoryFilter);
 updateToday();
+
+/* 3일차
+ * .filter()    : 배열을 반환.
+ * .reduce()    : 여러 개의 배열 요소를 하나의 결과로 모으는 함수.
+ * 
+ *              배열.reduce((누적값, 현재값) => {
+ *                      //누적값을 어떻게 바꿀지 작성, 작업
+ *                      return 누적값;
+ *                  }, 초기값);
+ * 
+ *              result[transaction.category] = (result[transaction.category] || 0) + transaction.amount;
+ *                  여기서 result 배열을 만드는데, 초기값을 {}으로 해두었다면,
+ *                      result[transaction.category]의 값은 undefined. {}로 시작했으니 존재하지 않는다.
+ *                  여기서, 존재하지 않는 값을 불러오면 오류가 나므로, 초기값 {}으로 시작했다면 그 값을 0으로 바꾼다.
+ *                      해당 카테고리의 합계가 없다면 0부터 시작한다는 의미다.
+ *                  이후 transaction.amount를 더하는 형식.
+ *                  마지막에 return result로 값을 반환하는 이유는 다음 반복에서도 result를 사용하기 위해.
+ * 
+ *              reduce()는 꼭 숫자를 만드는 건 아니다.
+ *              본질적으로 '배열의 여러 요소를 처리해서 최종적으로 하나의 값으로 만드는 것'.
+ * 
+ * Object.entries(categoryAmounts).forEach(([category, amount]) =>      :
+ *              Object.entries()는 객체를 [키, 값] 형태의 배열로 바꿔주는 메서드.
+ *              'Object.entries(객체)'가 기본 형태.
+ *              const person = { name: "철수", age: 20 }이라는 객체에 Obejct.entries(person)을 하면,
+ *                  [ ["name", "철수"], ["age", 20] ]이 된다.
+ *              객체 안의 내용을 하나씩 반복하고 싶을 때, forEach()를 바로 사용할 수 없다.
+ *                forEach()는 배열 메서드이기 때문.
+ *              그래서 Object.entries()를 통해 배열로 만든다.
+ * 
+ *              entries는 '객체의 항목들' 정도로 생각할 것. 위의 예에서 '항목'은 ["name", "철수"] 혹은 ["age", 20].
+ *              각 항목은 항상 [키, 값]의 형태다.
+ * 
+ *              [category, amount] 자체는 구조 분해.
+ *              요소가 ["food", 15000]으로 들어오면, 자동으로 category = "food", amount = 15000으로 변환된다.
+ * 
+ *              Object.keys()       : [키, 값]의 형태에서 '키'만 가져오는 것.
+ *                                    예제로 본다면 ["name", "age"]만 가져온다.
+ *              Object.values()     : [키, 값]의 형태에서 '값'만 가져오는 것.
+ *                                    예제로 본다면 ["철수", 20]만 가져온다.
+ *              Object.entries()    : [키, 값]의 형태에서 '키'와 '값' 둘 다 가져오는 것.
+ *                                    예제로 본다면 ["name", "철수"], ["age", 20]을 가져오게 된다.
+ */
