@@ -1,9 +1,9 @@
 
 const todayDate = document.querySelector(".today-date");
 
-const summaryMonthArea = document.querySelector(".summary-month-area");
+const summaryMonthList = document.querySelector(".summary-month-list");
 const summaryCategoryType = document.querySelector(".summary-category-type");
-const categorySummary = document.querySelector(".category-summary");
+const summaryCategoryList = document.querySelector(".summary-category-list");
 
 const selectedMonth = document.querySelector(".selected-month");
 const prevMonthBtn = document.querySelector(".prev-month-btn");
@@ -141,7 +141,6 @@ shiftMonthBtn.addEventListener("click", () => {
 
 addBtn.addEventListener("click", () => {
     addTransaction();
-    summaryCategory();
 });
 
 typeSelect.addEventListener("change", () => {
@@ -208,6 +207,8 @@ function renderTransactions() {
     budgetList.innerHTML = "";
 
     transactions.forEach(transaction => budgetList.append(createTransactionCard(transaction)));
+
+    renderSummary();
 }
 
 function updateCategoryOptions(type, select) {
@@ -227,19 +228,36 @@ function updateToday() {
     selectedMonth.textContent = `${selectedMonthDate.getFullYear()}년도 ${selectedMonthDate.getMonth() + 1}월 통계`;
 }
 
+function renderSummary() {
+    summaryMonth();
+    summaryCategory();
+}
+
+function summaryMonth() {
+    summaryMonthList.innerHTML = "";
+
+    const expenseAmount = summaryTransactionAmount("type", "expense", "type");
+    const incomeAmount = summaryTransactionAmount("type", "income", "type");
+    const savingAmount = summaryTransactionAmount("type", "saving", "type");
+    const investmentAmount = summaryTransactionAmount("type", "investment", "type");
+    const balanceAmount = incomeAmount - expenseAmount - savingAmount - investmentAmount;
+
+    summaryMonthList.innerHTML = `
+        <p>이번 달 수입: ${incomeAmount}원</p>
+        <p>이번 달 지출: ${expenseAmount}원</p>
+        <p>이번 달 저축: ${savingAmount}원</p>
+        <p>이번 달 투자: ${investmentAmount}원</p>
+        <p>잔액: ${balanceAmount}원</p>
+    `;
+}
+
 function summaryCategory() {
-    categorySummary.innerHTML = "";
+    summaryCategoryList.innerHTML = "";
 
-    const categoryAmounts = transactions
-        .filter(transaction => transaction.type === summaryCategoryType.value)
-        .reduce((result, transaction) => {
-            result[transaction.category] = (result[transaction.category] || 0) + transaction.amount;
-
-            return result;
-        }, {});
+    const categoryAmounts = summarySumAmount("type", summaryCategoryType.value, "category");
     
     Object.entries(categoryAmounts).forEach(([category, amount]) => {
-        categorySummary.append(createSummaryCategoryCard(category, amount));
+        summaryCategoryList.append(createSummaryCategoryCard(category, amount));
     });
 }
 
@@ -250,20 +268,38 @@ function createSummaryCategoryCard(category, amount) {
     const categoryOption = CATEGORY_OPTIONS[summaryCategoryType.value].find(
         option => option.value === category
     );
-    const categoryName = document.createElement("p");
-    categoryName.textContent = categoryOption.label;
-    card.append(categoryName);
 
-    const categoryAmount = document.createElement("p");
-    categoryAmount.textContent = `: ${amount}원`;
-    card.append(categoryAmount);
+    const categoryLabelAmount = document.createElement("p");
+    categoryLabelAmount.textContent = `${categoryOption.label}: ${amount}원`;
+    card.append(categoryLabelAmount);
     
     return card;
 }
 
+//배열로 전달
+function summarySumAmount(filterTarget, filterValue, reduceTarget) {
+    return transactions
+        .filter(transaction => transaction[filterTarget] === filterValue)
+        .reduce((result, transaction) => {
+            result[transaction[reduceTarget]] = (result[transaction[reduceTarget]] || 0) + transaction.amount;
+
+            return result;
+        }, {});
+}
+
+//값으로 전달
+function summaryTransactionAmount(filterTarget, filterValue) {
+    return transactions
+        .filter(transaction => transaction[filterTarget] === filterValue)
+        .reduce((result, transaction) => result + transaction.amount, 0);
+}
+
+
 updateCategoryOptions(currentTypeSelect, categorySelect);
 updateCategoryOptions(currentTypeFilter, categoryFilter);
 updateToday();
+
+renderSummary();
 
 /* 3일차
  * .filter()    : 배열을 반환.
