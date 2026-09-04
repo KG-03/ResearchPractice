@@ -18,16 +18,16 @@
 
                 <div class="summary-sort">
                     <div class="summary-month-area">
-                        <p>이번 달 수입: 0원</p>
-                        <p>이번 달 지출: 0원</p>
-                        <p>이번 달 저축: 0원</p>
-                        <p>이번 달 투자: 0원</p>
-                        <p>잔액: 0원</p>
+                        <p><b>전체 통계</b></p>
+                        
+                        <div class="summary-month-list">
+                        </div>
                     </div>
 
                     <div class="summary-category-area">
                         <div class="summary-category-option">
-                            <p>카테고리별 요약</p>
+                            <p><b>카테고리별 요약</b></p>
+                            
                             <select class="summary-category-type">
                                 <option value="expense">지출</option>
                                 <option value="income">수입</option>
@@ -36,7 +36,7 @@
                             </select>
                         </div>
                         
-                        <div class="category-summary">
+                        <div class="summary-category-list">
                         </div>
                     </div>
                 </div>
@@ -87,6 +87,15 @@
 
                 <select class="category-filter">
                     <option>카테고리</option>
+                </select>
+
+                <select class="sort-filter">
+                    <option value="latest">최신순</option>
+                    <option value="oldest">오래된순</option>
+                    <option value="dates_asc">날짜 오름차순</option>
+                    <option value="dates_desc">날짜 내림차순</option>
+                    <option value="amount_asc">가격 오름차순</option>
+                    <option value="amount_desc">가격 내림차순</option>
                 </select>
             </section>
 
