@@ -85,10 +85,54 @@ header {
     background: #88ac8c;
 }
 
+/*===== budget card =====*/
 .budget-card {
-    padding: 5px;
+    padding: 10px;
     margin-bottom: 5px;
 
     border-radius: 5px;
     background: #a4c4a7;
+}
+
+.budget-card-option {
+    display: flex;
+    align-items: center;
+}
+
+.budget-card-header-date,
+.budget-card-header-badge, 
+.budget-card-header-badge-expense, 
+.budget-card-header-badge-income, 
+.budget-card-header-badge-saving,
+.budget-card-header-badge-investment {
+    padding: 5px;
+    margin: 5px;
+
+    border-radius: 5px;
+    background: white;
+
+    font-size: 12px;
+}
+
+.budget-card-header-date {
+    padding: 10px;
+    margin-right: 10px;
+
+    font-size: 20px;
+}
+
+.budget-card-header-badge-expense {
+    background: #ffd7d7;
+}
+
+.budget-card-header-badge-income {
+    background: #ffe9d7;
+}
+
+.budget-card-header-badge-saving {
+    background: #fffed7;
+}
+
+.budget-card-header-badge-investment {
+    background: #f0ffd7;
 }
