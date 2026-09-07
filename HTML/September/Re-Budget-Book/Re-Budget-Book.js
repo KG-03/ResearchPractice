@@ -25,6 +25,8 @@ const categoryFilter = document.querySelector(".category-filter");
 const budgetList = document.querySelector(".budget-list");
 
 
+const STORAGE_KEY = "reBudgetTransactions";
+
 const TYPE_OPTIONS = {
     all: "전체",
     expense: "지출",
@@ -92,7 +94,7 @@ const CATEGORY_OPTIONS = {
     ]
 };
 
-let transactions = [];
+let transactions = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
 let today = new Date();
 let selectedMonthDate = new Date();
@@ -144,13 +146,7 @@ shiftMonthBtn.addEventListener("click", () => {
 });
 
 addBtn.addEventListener("click", () => {
-    if(dateInput.value === "") {
-        confirm("날짜란이 비어 있습니다! 날짜를 입력해 주세요");
-    } else if(amountInput.value === "") {
-        confirm("금액란이 비어 있습니다! 금액을 입력해 주세요.")
-    } else {
-        addTransaction();
-    }
+    addTransaction();
 });
 
 typeSelect.addEventListener("change", () => {
@@ -165,6 +161,20 @@ typeFilter.addEventListener("change", () => {
 
 
 function addTransaction() {
+    if(!dateInput.value) {
+        confirm("날짜란이 비어 있습니다! 날짜를 입력해 주세요");
+        return;
+    } else if(!Number(amountInput.value)) {
+        confirm("금액란이 비어 있습니다! 금액을 입력해 주세요.")
+        return;
+    } else if (Number(amountInput.value) <= 0) {
+        confirm("금액란에 음수를 쓸 수 없습니다! 금액을 다시 입력해 주세요.");
+        return;
+    } else if(categorySelect.value === "") {
+        confirm("카테고리란의 값을 다시 확인해 주세요!");
+        return;
+    }
+
     const transaction = {
         id: Date.now(),
         date: dateInput.value,
@@ -180,6 +190,7 @@ function addTransaction() {
 
     transactions.push(transaction);
 
+    saveTransactions();
     renderTransactions();
 }
 
@@ -187,24 +198,32 @@ function createTransactionCard(transaction) {
     const card = document.createElement("div");
     card.classList.add("budget-card");
 
-    const date = document.createElement("p");
-    date.textContent = transaction.date;
-    card.append(date);
+    const cardHeader = document.createElement("div");
+    cardHeader.classList.add("budget-card-option");
+
+        const date = document.createElement("p");
+        date.textContent = transaction.date;
+        date.classList.add("budget-card-header-date");
+        cardHeader.append(date);
+
+        const type = document.createElement("p");
+        type.textContent = TYPE_OPTIONS[transaction.type];
+        type.classList.add(`budget-card-header-badge-${transaction.type}`);
+        cardHeader.append(type);
+
+        const categoryOption = CATEGORY_OPTIONS[transaction.type].find(
+            option => option.value === transaction.category
+        );
+        const category = document.createElement("p");
+        category.textContent = categoryOption.label;
+        category.classList.add("budget-card-header-badge");
+        cardHeader.append(category);
+
+    card.append(cardHeader);
 
     const amount = document.createElement("p");
     amount.textContent = `${transaction.amount}원`;
     card.append(amount);
-
-    const type = document.createElement("p");
-    type.textContent = TYPE_OPTIONS[transaction.type];
-    card.append(type);
-
-    const categoryOption = CATEGORY_OPTIONS[transaction.type].find(
-        option => option.value === transaction.category
-    );
-    const category = document.createElement("p");
-    category.textContent = categoryOption.label;
-    card.append(category);
 
     const description = document.createElement("p");
     description.textContent = transaction.description;
@@ -305,6 +324,10 @@ function summaryTransactionAmount(targetTransaction, filterTarget, filterValue) 
 }
 
 //util function
+function saveTransactions() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+}
+
 function updateCategoryOptions(type, select) {
     select.innerHTML = "";
 
@@ -327,6 +350,7 @@ updateCategoryOptions(currentTypeFilter, categoryFilter);
 updateToday();
 
 renderSummary();
+renderTransactions();
 
 /* 3일차
  * .filter()    : 배열을 반환.
