@@ -112,12 +112,14 @@ prevMonthBtn.addEventListener("click", () => {
     selectedMonthDate = new Date(year, month-1, date);
 
     updateToday();
+    renderSummary();
 });
 
 nowMonthBtn.addEventListener("click", () => {
     selectedMonthDate = new Date(today);
 
     updateToday();
+    renderSummary();
 });
 
 nextMonthBtn.addEventListener("click", () => {
@@ -128,6 +130,7 @@ nextMonthBtn.addEventListener("click", () => {
     selectedMonthDate = new Date(year, month+1, date);
 
     updateToday();
+    renderSummary();
 });
 
 shiftMonthBtn.addEventListener("click", () => {
@@ -136,11 +139,18 @@ shiftMonthBtn.addEventListener("click", () => {
     }
 
     updateToday();
+    renderSummary();
     dateShift.value = "";
 });
 
 addBtn.addEventListener("click", () => {
-    addTransaction();
+    if(dateInput.value === "") {
+        confirm("날짜란이 비어 있습니다! 날짜를 입력해 주세요");
+    } else if(amountInput.value === "") {
+        confirm("금액란이 비어 있습니다! 금액을 입력해 주세요.")
+    } else {
+        addTransaction();
+    }
 });
 
 typeSelect.addEventListener("change", () => {
@@ -203,6 +213,7 @@ function createTransactionCard(transaction) {
     return card;
 }
 
+//render transaction function
 function renderTransactions() {
     budgetList.innerHTML = "";
 
@@ -211,23 +222,18 @@ function renderTransactions() {
     renderSummary();
 }
 
-function updateCategoryOptions(type, select) {
-    select.innerHTML = "";
+function getTransactionsByMonth() {
+    return transactions.filter(transaction => {
+        const dataDate = new Date(transaction.date);
 
-    CATEGORY_OPTIONS[type].forEach(option => {
-        const categoryOption = document.createElement("option");
-        categoryOption.value = option.value;
-        categoryOption.textContent = option.label;
-
-        select.append(categoryOption);
+        return (
+            dataDate.getFullYear() === selectedMonthDate.getFullYear() &&
+            dataDate.getMonth() === selectedMonthDate.getMonth()
+        );
     });
 }
 
-function updateToday() {
-    todayDate.textContent = `오늘 날짜: ${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
-    selectedMonth.textContent = `${selectedMonthDate.getFullYear()}년도 ${selectedMonthDate.getMonth() + 1}월 통계`;
-}
-
+//summary function
 function renderSummary() {
     summaryMonth();
     summaryCategory();
@@ -236,10 +242,12 @@ function renderSummary() {
 function summaryMonth() {
     summaryMonthList.innerHTML = "";
 
-    const expenseAmount = summaryTransactionAmount("type", "expense", "type");
-    const incomeAmount = summaryTransactionAmount("type", "income", "type");
-    const savingAmount = summaryTransactionAmount("type", "saving", "type");
-    const investmentAmount = summaryTransactionAmount("type", "investment", "type");
+    const targetTransactions = getTransactionsByMonth();
+
+    const expenseAmount = summaryTransactionAmount(targetTransactions, "type", "expense", "type");
+    const incomeAmount = summaryTransactionAmount(targetTransactions, "type", "income", "type");
+    const savingAmount = summaryTransactionAmount(targetTransactions, "type", "saving", "type");
+    const investmentAmount = summaryTransactionAmount(targetTransactions, "type", "investment", "type");
     const balanceAmount = incomeAmount - expenseAmount - savingAmount - investmentAmount;
 
     summaryMonthList.innerHTML = `
@@ -254,7 +262,9 @@ function summaryMonth() {
 function summaryCategory() {
     summaryCategoryList.innerHTML = "";
 
-    const categoryAmounts = summarySumAmount("type", summaryCategoryType.value, "category");
+    const targetTransactions = getTransactionsByMonth();
+
+    const categoryAmounts = summarySumAmount(targetTransactions, "type", summaryCategoryType.value, "category");
     
     Object.entries(categoryAmounts).forEach(([category, amount]) => {
         summaryCategoryList.append(createSummaryCategoryCard(category, amount));
@@ -277,8 +287,8 @@ function createSummaryCategoryCard(category, amount) {
 }
 
 //배열로 전달
-function summarySumAmount(filterTarget, filterValue, reduceTarget) {
-    return transactions
+function summarySumAmount(targetTransaction, filterTarget, filterValue, reduceTarget) {
+    return targetTransaction
         .filter(transaction => transaction[filterTarget] === filterValue)
         .reduce((result, transaction) => {
             result[transaction[reduceTarget]] = (result[transaction[reduceTarget]] || 0) + transaction.amount;
@@ -288,12 +298,29 @@ function summarySumAmount(filterTarget, filterValue, reduceTarget) {
 }
 
 //값으로 전달
-function summaryTransactionAmount(filterTarget, filterValue) {
-    return transactions
+function summaryTransactionAmount(targetTransaction, filterTarget, filterValue) {
+    return targetTransaction
         .filter(transaction => transaction[filterTarget] === filterValue)
         .reduce((result, transaction) => result + transaction.amount, 0);
 }
 
+//util function
+function updateCategoryOptions(type, select) {
+    select.innerHTML = "";
+
+    CATEGORY_OPTIONS[type].forEach(option => {
+        const categoryOption = document.createElement("option");
+        categoryOption.value = option.value;
+        categoryOption.textContent = option.label;
+
+        select.append(categoryOption);
+    });
+}
+
+function updateToday() {
+    todayDate.textContent = `오늘 날짜: ${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
+    selectedMonth.textContent = `${selectedMonthDate.getFullYear()}년도 ${selectedMonthDate.getMonth() + 1}월 통계`;
+}
 
 updateCategoryOptions(currentTypeSelect, categorySelect);
 updateCategoryOptions(currentTypeFilter, categoryFilter);
