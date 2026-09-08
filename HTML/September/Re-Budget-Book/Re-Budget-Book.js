@@ -18,6 +18,7 @@ const typeSelect = document.querySelector(".type-select");
 const categorySelect = document.querySelector(".category-select");
 const descriptionInput = document.querySelector(".description-input");
 const addBtn = document.querySelector(".add-btn");
+const editCancelBtn = document.querySelector(".edit-cancel-btn");
 
 const typeFilter = document.querySelector(".type-filter");
 const categoryFilter = document.querySelector(".category-filter");
@@ -101,6 +102,9 @@ let selectedMonthDate = new Date();
 let currentTypeSelect = "expense";
 let currentTypeFilter = "all";
 
+let editingId = null;
+let isEditing = false;
+
 
 summaryCategoryType.addEventListener("change", () => {
     summaryCategory();
@@ -114,14 +118,14 @@ prevMonthBtn.addEventListener("click", () => {
     selectedMonthDate = new Date(year, month-1, date);
 
     updateToday();
-    renderSummary();
+    renderTransactions();
 });
 
 nowMonthBtn.addEventListener("click", () => {
     selectedMonthDate = new Date(today);
 
     updateToday();
-    renderSummary();
+    renderTransactions();
 });
 
 nextMonthBtn.addEventListener("click", () => {
@@ -132,7 +136,7 @@ nextMonthBtn.addEventListener("click", () => {
     selectedMonthDate = new Date(year, month+1, date);
 
     updateToday();
-    renderSummary();
+    renderTransactions();
 });
 
 shiftMonthBtn.addEventListener("click", () => {
@@ -141,26 +145,11 @@ shiftMonthBtn.addEventListener("click", () => {
     }
 
     updateToday();
-    renderSummary();
+    renderTransactions();
     dateShift.value = "";
 });
 
 addBtn.addEventListener("click", () => {
-    addTransaction();
-});
-
-typeSelect.addEventListener("change", () => {
-    currentTypeSelect = typeSelect.value;
-    updateCategoryOptions(currentTypeSelect, categorySelect);
-});
-
-typeFilter.addEventListener("change", () => {
-    currentTypeFilter = typeFilter.value;
-    updateCategoryOptions(currentTypeFilter, categoryFilter);
-});
-
-
-function addTransaction() {
     if(!dateInput.value) {
         confirm("날짜란이 비어 있습니다! 날짜를 입력해 주세요");
         return;
@@ -175,6 +164,28 @@ function addTransaction() {
         return;
     }
 
+    if(isEditing === false) addTransaction();
+    else editEnd();
+});
+
+editCancelBtn.addEventListener("click", () => {
+    editingId = null;
+    isEditing = false;
+    resetInputForm();
+});
+
+typeSelect.addEventListener("change", () => {
+    currentTypeSelect = typeSelect.value;
+    updateCategoryOptions(currentTypeSelect, categorySelect);
+});
+
+typeFilter.addEventListener("change", () => {
+    currentTypeFilter = typeFilter.value;
+    updateCategoryOptions(currentTypeFilter, categoryFilter);
+});
+
+
+function addTransaction() {
     const transaction = {
         id: Date.now(),
         date: dateInput.value,
@@ -194,12 +205,58 @@ function addTransaction() {
     renderTransactions();
 }
 
+function deleteTransaction(targetTransaction) {
+    if(targetTransaction === undefined) return;
+
+    if(confirm("정말 삭제하시겠습니까?")) {
+        transactions = transactions.filter(transaction => transaction.id !== targetTransaction.id);
+
+        saveTransactions();
+        renderTransactions();
+    }
+}
+
+function editStart(targetTransaction) {
+    editingId = targetTransaction.id;
+    isEditing = true;
+
+    dateInput.value = targetTransaction.date;
+    amountInput.value = Number(targetTransaction.amount);
+    typeSelect.value = targetTransaction.type;
+        currentTypeSelect = targetTransaction.type;
+        updateCategoryOptions(currentTypeSelect, categorySelect);
+    categorySelect.value = targetTransaction.category;
+    descriptionInput.value = targetTransaction.description;
+
+    editCancelBtn.style.display = "block";
+    addBtn.textContent = "수정 완료";
+    amountInput.focus();
+}
+
+function editEnd() {
+    const editTransaction = transactions.find(transaction => transaction.id === editingId);
+
+    editTransaction.date = dateInput.value;
+    editTransaction.amount = Number(amountInput.value);
+    editTransaction.type = typeSelect.value;
+    editTransaction.category = categorySelect.value;
+    editTransaction.description = descriptionInput.value;
+    editTransaction.updatedAt = Date.now();
+
+    editingId = null;
+    isEditing = false;
+
+    resetInputForm();
+    saveTransactions();
+    renderTransactions();
+}
+
 function createTransactionCard(transaction) {
     const card = document.createElement("div");
     card.classList.add("budget-card");
 
     const cardHeader = document.createElement("div");
-    cardHeader.classList.add("budget-card-option");
+    cardHeader.classList.add("budget-card-header");
 
         const date = document.createElement("p");
         date.textContent = transaction.date;
@@ -221,13 +278,43 @@ function createTransactionCard(transaction) {
 
     card.append(cardHeader);
 
-    const amount = document.createElement("p");
-    amount.textContent = `${transaction.amount}원`;
-    card.append(amount);
+    const cardMain = document.createElement("div");
+    cardMain.classList.add("budget-card-main");
 
-    const description = document.createElement("p");
-    description.textContent = transaction.description;
-    card.append(description);
+        const amount = document.createElement("p");
+        amount.textContent = `▶ ${transaction.amount.toLocaleString('ko-KR')} 원`;
+        amount.classList.add("budget-card-amount");
+        cardMain.append(amount);
+
+        if(transaction.description !== "") {
+            const description = document.createElement("p");
+            description.textContent = transaction.description;
+            description.classList.add("budget-card-description");
+            cardMain.append(description);
+        }
+    
+    card.append(cardMain);
+
+    const createdDate = document.createElement("p");
+    createdDate.textContent = new Date(transaction.createdAt).toLocaleString('ko-KR');
+    card.append(createdDate);
+
+    const updatedDate = document.createElement("p");
+    updatedDate.textContent = new Date(transaction.updatedAt).toLocaleString('ko-KR');
+    card.append(updatedDate);
+
+    const editBtn = document.createElement("button");
+    editBtn.textContent = "✏️ 수정";
+    editBtn.addEventListener("click", () => { editStart(transaction); });
+    editBtn.classList.add("budget-card-button");
+    card.append(editBtn);
+
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "❌ 삭제";
+    delBtn.addEventListener("click", () => { deleteTransaction(transaction) });
+    delBtn.classList.add("budget-card-button");
+    card.append(delBtn);
+
 
     return card;
 }
@@ -235,6 +322,11 @@ function createTransactionCard(transaction) {
 //render transaction function
 function renderTransactions() {
     budgetList.innerHTML = "";
+
+    if(!transactions.length) {
+        budgetList.innerHTML = "❌ 아직 등록된 기록이 없습니다!";
+        return;
+    }
 
     transactions.forEach(transaction => budgetList.append(createTransactionCard(transaction)));
 
@@ -270,11 +362,11 @@ function summaryMonth() {
     const balanceAmount = incomeAmount - expenseAmount - savingAmount - investmentAmount;
 
     summaryMonthList.innerHTML = `
-        <p>이번 달 수입: ${incomeAmount}원</p>
-        <p>이번 달 지출: ${expenseAmount}원</p>
-        <p>이번 달 저축: ${savingAmount}원</p>
-        <p>이번 달 투자: ${investmentAmount}원</p>
-        <p>잔액: ${balanceAmount}원</p>
+        <p>이번 달 수입: ${incomeAmount.toLocaleString('ko-KR')}원</p>
+        <p>이번 달 지출: ${expenseAmount.toLocaleString('ko-KR')}원</p>
+        <p>이번 달 저축: ${savingAmount.toLocaleString('ko-KR')}원</p>
+        <p>이번 달 투자: ${investmentAmount.toLocaleString('ko-KR')}원</p>
+        <p>잔액: ${balanceAmount.toLocaleString('ko-KR')}원</p>
     `;
 }
 
@@ -299,7 +391,7 @@ function createSummaryCategoryCard(category, amount) {
     );
 
     const categoryLabelAmount = document.createElement("p");
-    categoryLabelAmount.textContent = `${categoryOption.label}: ${amount}원`;
+    categoryLabelAmount.textContent = `${categoryOption.label}: ${amount.toLocaleString('ko-KR')}원`;
     card.append(categoryLabelAmount);
     
     return card;
@@ -328,6 +420,19 @@ function saveTransactions() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
 }
 
+function resetInputForm() {
+    dateInput.value = "";
+    amountInput.value = "";
+    typeSelect.value = "expense";
+        currentTypeSelect = typeSelect.value;
+        updateCategoryOptions(currentTypeSelect, categorySelect);
+    categorySelect.value = "food";
+    descriptionInput.value = "";
+
+    addBtn.textContent = "추가";
+    editCancelBtn.style.display = "none";
+}
+
 function updateCategoryOptions(type, select) {
     select.innerHTML = "";
 
@@ -343,6 +448,9 @@ function updateCategoryOptions(type, select) {
 function updateToday() {
     todayDate.textContent = `오늘 날짜: ${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
     selectedMonth.textContent = `${selectedMonthDate.getFullYear()}년도 ${selectedMonthDate.getMonth() + 1}월 통계`;
+
+    const offset = new Date().getTimezoneOffset() * 60000;
+    dateInput.value = new Date(Date.now() - offset).toISOString().substring(0, 10);
 }
 
 updateCategoryOptions(currentTypeSelect, categorySelect);
@@ -351,6 +459,7 @@ updateToday();
 
 renderSummary();
 renderTransactions();
+
 
 /* 3일차
  * .filter()    : 배열을 반환.
@@ -393,4 +502,20 @@ renderTransactions();
  *                                    예제로 본다면 ["철수", 20]만 가져온다.
  *              Object.entries()    : [키, 값]의 형태에서 '키'와 '값' 둘 다 가져오는 것.
  *                                    예제로 본다면 ["name", "철수"], ["age", 20]을 가져오게 된다.
+ */
+
+/* 9일차
+ * const offset = new Date().getTimezoneOffset() * 60000;
+ * dateInput.value = new Date(Date.now() - offset).toISOString().substring(0, 10);
+ *      : 오늘 날짜 > YYYY-MM-DD 형태로 변환 > dateInput에 넣기.
+ *        첫 번째 줄: 현재 시간대의 UTC 차이를 밀리초 단위로 계산.
+ *          new Date()  : 현재 날짜와 시간을 나타내는 Date 객체를 만듦.
+ *          getTimezoneOffset() : 현재 컴퓨터의 현지 시각과 UTC 사이의 차이를 분 단위로 반환.
+ *          * 60000     : 1분을 밀리초로 변환. 분 단위의 시간 차이를 밀리초 단위의 시간 차이로 변환시키는 것.
+ * 
+ *        두 번째 줄: 보정 값 이용해서 오늘 날짜를 생성, 그 값을 실제로 입력칸에 대입시킨다.
+ *          Date.now()  : 현재 시각을 밀리초 숫자로 반환. new Date()가 날짜 객체라면, Date.now()는 현재 시점을 나타내는 숫자.
+ *                        여기서 - offset을 하면서, 시간대 보정을 할 수 있다.
+ *          toISOString()   : Date 객체를 ISO 형식의 문자열로 변환. 2026-09-09T04:00:00.000Z와 같은 형태. T는 날짜/시간 구분선, Z는 UTC를 의미.
+ *          substring(0,10) : 앞에서부터 10글자를 가져와서, 2026-09-09를 만들어낸다.
  */
