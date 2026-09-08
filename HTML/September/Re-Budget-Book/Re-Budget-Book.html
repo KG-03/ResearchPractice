@@ -51,26 +51,30 @@
                 </div>
             </section>
 
+            
             <section class="input-area">
                 <h2>입력</h2>
-                <input class="date-input" type="date">
+                <div class="input">
+                    <input class="date-input" type="date">
                 
-                <input class="amount-input" type="number" placeholder="금액">
-                
-                <select class="type-select">
-                    <option value="expense">지출</option>
-                    <option value="income">수입</option>
-                    <option value="saving">저축</option>
-                    <option value="investment">투자/재테크</option>
-                </select>
+                    <input class="amount-input" type="number" placeholder="금액">
+                    
+                    <select class="type-select">
+                        <option value="expense">지출</option>
+                        <option value="income">수입</option>
+                        <option value="saving">저축</option>
+                        <option value="investment">투자/재테크</option>
+                    </select>
 
-                <select class="category-select">
-                    <option value="">카테고리</option>
-                </select>
+                    <select class="category-select">
+                        <option value="">카테고리</option>
+                    </select>
 
-                <input class="description-input" placeholder="메모">
+                    <input class="description-input" placeholder="메모">
 
-                <button class="add-btn">추가</button>
+                    <button class="add-btn">추가</button>
+                    <button class="edit-cancel-btn">수정 취소</button>
+                </div>
             </section>
 
             <section class="filter-area">
@@ -100,7 +104,6 @@
             </section>
 
             <section class="budget-list">
-                <p>아직 등록된 기록이 없습니다!</p>
             </section>
 
         </main>
