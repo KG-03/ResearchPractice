@@ -85,16 +85,28 @@ header {
     background: #88ac8c;
 }
 
+/*===== input area =====*/
+.input {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+}
+
+.edit-cancel-btn {
+    display: none;
+}
+
 /*===== budget card =====*/
 .budget-card {
     padding: 10px;
     margin-bottom: 5px;
 
     border-radius: 5px;
-    background: #a4c4a7;
+    background: #c8dbca;
 }
 
-.budget-card-option {
+.budget-card-header {
     display: flex;
     align-items: center;
 }
@@ -109,7 +121,6 @@ header {
     margin: 5px;
 
     border-radius: 5px;
-    background: white;
 
     font-size: 12px;
 }
@@ -118,7 +129,16 @@ header {
     padding: 10px;
     margin-right: 10px;
 
+    color: #4e8b55;
+    border-style: dotted;
+    background: #d9e9db;
+
+    font-weight: bold;
     font-size: 20px;
+}
+
+.budget-card-header-badge {
+    background: white;
 }
 
 .budget-card-header-badge-expense {
@@ -135,4 +155,33 @@ header {
 
 .budget-card-header-badge-investment {
     background: #f0ffd7;
+}
+
+.budget-card-main {
+    margin-left: 20px;
+}
+
+.budget-card-amount {
+    color: #4e8b55;
+
+    font-size: 20px;
+    font-weight: 500;
+}
+
+.budget-card-description {
+    padding: 10px;
+    margin-right: 20px;
+
+    background: white;
+    border-radius: 5px;
+}
+
+.budget-card-button {
+    padding: 5px;
+    margin: 5px;
+
+    border-style: hidden;
+    border-radius: 5px;
+
+    background: #e3f0e5;
 }
