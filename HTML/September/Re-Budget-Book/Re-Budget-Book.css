@@ -100,7 +100,7 @@ header {
 /*===== budget card =====*/
 .budget-card {
     padding: 10px;
-    margin-bottom: 5px;
+    margin-bottom: 10px;
 
     border-radius: 5px;
     background: #c8dbca;
@@ -116,7 +116,8 @@ header {
 .budget-card-header-badge-expense, 
 .budget-card-header-badge-income, 
 .budget-card-header-badge-saving,
-.budget-card-header-badge-investment {
+.budget-card-header-badge-investment,
+.budget-card-date {
     padding: 5px;
     margin: 5px;
 
@@ -162,7 +163,7 @@ header {
 }
 
 .budget-card-amount {
-    color: #4e8b55;
+    color: #245229;
 
     font-size: 20px;
     font-weight: 500;
@@ -174,6 +175,14 @@ header {
 
     background: white;
     border-radius: 5px;
+}
+
+.budget-card-date {
+    padding: 5px;
+    color: gray;
+
+    font-size: 12px;
+    line-height: 0.5;
 }
 
 .budget-card-button {
