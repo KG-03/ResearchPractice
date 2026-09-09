@@ -20,8 +20,10 @@ const descriptionInput = document.querySelector(".description-input");
 const addBtn = document.querySelector(".add-btn");
 const editCancelBtn = document.querySelector(".edit-cancel-btn");
 
+const filterResetBtn = document.querySelector(".filter-reset-btn");
 const typeFilter = document.querySelector(".type-filter");
 const categoryFilter = document.querySelector(".category-filter");
+const sortFilter = document.querySelector(".sort-filter");
 
 const budgetList = document.querySelector(".budget-list");
 
@@ -101,6 +103,8 @@ let today = new Date();
 let selectedMonthDate = new Date();
 let currentTypeSelect = "expense";
 let currentTypeFilter = "all";
+let currentCategoryFilter = "all";
+let currentSortFilter = "latest";
 
 let editingId = null;
 let isEditing = false;
@@ -119,6 +123,7 @@ prevMonthBtn.addEventListener("click", () => {
 
     updateToday();
     renderTransactions();
+    renderSummary();
 });
 
 nowMonthBtn.addEventListener("click", () => {
@@ -126,6 +131,7 @@ nowMonthBtn.addEventListener("click", () => {
 
     updateToday();
     renderTransactions();
+    renderSummary();
 });
 
 nextMonthBtn.addEventListener("click", () => {
@@ -137,6 +143,7 @@ nextMonthBtn.addEventListener("click", () => {
 
     updateToday();
     renderTransactions();
+    renderSummary();
 });
 
 shiftMonthBtn.addEventListener("click", () => {
@@ -146,7 +153,13 @@ shiftMonthBtn.addEventListener("click", () => {
 
     updateToday();
     renderTransactions();
+    renderSummary();
     dateShift.value = "";
+});
+
+typeSelect.addEventListener("change", () => {
+    currentTypeSelect = typeSelect.value;
+    updateCategoryOptions(currentTypeSelect, categorySelect);
 });
 
 addBtn.addEventListener("click", () => {
@@ -156,7 +169,7 @@ addBtn.addEventListener("click", () => {
     } else if(!Number(amountInput.value)) {
         confirm("금액란이 비어 있습니다! 금액을 입력해 주세요.")
         return;
-    } else if (Number(amountInput.value) <= 0) {
+    } else if(Number(amountInput.value) <= 0) {
         confirm("금액란에 음수를 쓸 수 없습니다! 금액을 다시 입력해 주세요.");
         return;
     } else if(categorySelect.value === "") {
@@ -174,15 +187,42 @@ editCancelBtn.addEventListener("click", () => {
     resetInputForm();
 });
 
-typeSelect.addEventListener("change", () => {
-    currentTypeSelect = typeSelect.value;
-    updateCategoryOptions(currentTypeSelect, categorySelect);
+filterResetBtn.addEventListener("click", () => {
+    currentTypeFilter = "all";
+    currentCategoryFilter = "all";
+    currentSortFilter = "latest";
+
+    typeFilter.value = currentTypeFilter;
+        updateCategoryOptions(currentTypeFilter, categoryFilter);
+    categoryFilter.value = currentCategoryFilter;
+    sortFilter.value = currentSortFilter;
+
+    renderTransactions();
+    renderSummary();
 });
 
 typeFilter.addEventListener("change", () => {
     currentTypeFilter = typeFilter.value;
-    updateCategoryOptions(currentTypeFilter, categoryFilter);
+        updateCategoryOptions(currentTypeFilter, categoryFilter);
+    currentCategoryFilter = categoryFilter.value;
+
+    renderTransactions();
+    renderSummary();
 });
+
+categoryFilter.addEventListener("change", () => {
+    currentCategoryFilter = categoryFilter.value;
+
+    renderTransactions();
+    renderSummary();
+});
+
+sortFilter.addEventListener("change", () => {
+    currentSortFilter = sortFilter.value;
+
+    renderTransactions();
+    renderSummary();
+})
 
 
 function addTransaction() {
@@ -203,6 +243,7 @@ function addTransaction() {
 
     saveTransactions();
     renderTransactions();
+    renderSummary();
 }
 
 function deleteTransaction(targetTransaction) {
@@ -213,6 +254,7 @@ function deleteTransaction(targetTransaction) {
 
         saveTransactions();
         renderTransactions();
+        renderSummary();
     }
 }
 
@@ -249,6 +291,7 @@ function editEnd() {
     resetInputForm();
     saveTransactions();
     renderTransactions();
+    renderSummary();
 }
 
 function createTransactionCard(transaction) {
@@ -295,13 +338,21 @@ function createTransactionCard(transaction) {
     
     card.append(cardMain);
 
-    const createdDate = document.createElement("p");
-    createdDate.textContent = new Date(transaction.createdAt).toLocaleString('ko-KR');
-    card.append(createdDate);
+    const cardDate = document.createElement("div");
+    cardDate.classList.add("budget-card-date");
 
-    const updatedDate = document.createElement("p");
-    updatedDate.textContent = new Date(transaction.updatedAt).toLocaleString('ko-KR');
-    card.append(updatedDate);
+        const createdDate = document.createElement("p");
+        createdDate.textContent = `생성일: ${new Date(transaction.createdAt).toLocaleString('ko-KR')}`;
+        cardDate.append(createdDate);
+
+        if(transaction.createdAt !== transaction.updatedAt) {
+            const updatedDate = document.createElement("p");
+            updatedDate.textContent = `수정일: ${new Date(transaction.updatedAt).toLocaleString('ko-KR')}`;
+            cardDate.append(updatedDate);
+        }
+
+
+    card.append(cardDate);
 
     const editBtn = document.createElement("button");
     editBtn.textContent = "✏️ 수정";
@@ -323,12 +374,18 @@ function createTransactionCard(transaction) {
 function renderTransactions() {
     budgetList.innerHTML = "";
 
-    if(!transactions.length) {
+    let filteredTransaction = getTransactionsByMonth();
+
+    if(!filteredTransaction.length) {
         budgetList.innerHTML = "❌ 아직 등록된 기록이 없습니다!";
         return;
     }
 
-    transactions.forEach(transaction => budgetList.append(createTransactionCard(transaction)));
+    filteredTransaction = filterByType(filteredTransaction);
+    filteredTransaction = filterByCategory(filteredTransaction);
+    filteredTransaction = sortTransactions(filteredTransaction);
+
+    filteredTransaction.forEach(transaction => budgetList.append(createTransactionCard(transaction)));
 
     renderSummary();
 }
@@ -413,6 +470,43 @@ function summaryTransactionAmount(targetTransaction, filterTarget, filterValue) 
     return targetTransaction
         .filter(transaction => transaction[filterTarget] === filterValue)
         .reduce((result, transaction) => result + transaction.amount, 0);
+}
+
+//filter function
+function filterByType(filteredTransaction) {
+    if(currentTypeFilter === "all") return filteredTransaction;
+
+    return filteredTransaction.filter(transaction => transaction.type === currentTypeFilter);
+}
+
+function filterByCategory(filteredTransaction) {
+    if(currentCategoryFilter === "all") return filteredTransaction;
+
+    return filteredTransaction.filter(transaction => transaction.category === currentCategoryFilter);
+}
+
+function sortTransactions(filteredTransaction) {
+    return filteredTransaction.sort((a,b) => {
+        switch(currentSortFilter) {
+            case "latest":
+                return b.createdAt - a.createdAt;
+
+            case "oldest":
+                return a.createdAt - b.createdAt;
+
+            case "dates_desc":
+                return new Date(b.date) - new Date(a.date);
+
+            case "dates_asc":
+                return new Date(a.date) - new Date(b.date);
+
+            case "amount_desc":
+                return b.amount - a.amount;
+
+            case "amount_asc":
+                return a.amount - b.amount;
+        }
+    });
 }
 
 //util function
