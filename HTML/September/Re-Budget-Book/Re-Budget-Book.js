@@ -24,6 +24,7 @@ const filterResetBtn = document.querySelector(".filter-reset-btn");
 const typeFilter = document.querySelector(".type-filter");
 const categoryFilter = document.querySelector(".category-filter");
 const sortFilter = document.querySelector(".sort-filter");
+const searchFilterInput = document.querySelector(".search-filter-input");
 
 const budgetList = document.querySelector(".budget-list");
 
@@ -39,72 +40,113 @@ const TYPE_OPTIONS = {
 };
 
 const CATEGORY_OPTIONS = {
-    all: [
-        {value: "all", label: "전체"},
+    input: {
+        expense: [
+            {value: "food", label: "식비"},
+            {value: "traffic", label: "교통비"},
+            {value: "housing", label: "주거비"},
+            {value: "living", label: "생활비"},
 
-        {value: "salary", label: "급여"},
+            {value: "medical", label: "의료/건강"},
+            {value: "shopping", label: "쇼핑/미용"},
+            {value: "leisure", label: "여가/관계"},
 
-        {value: "food", label: "식비"},
-        {value: "traffic", label: "교통비"},
-        {value: "housing", label: "주거비"},
-        {value: "living", label: "생활비"},
-        {value: "medical", label: "의료/건강"},
-        {value: "shopping", label: "쇼핑/미용"},
-        {value: "leisure", label: "여가/관계"},
-        
-        {value: "short-term", label: "단기저축"},
-        {value: "long-term", label: "장기저축"},
+            {value: "etc", label: "기타"}
+        ],
 
-        {value: "safe-haven-assets", label: "안전자산"},
-        {value: "invest-assets", label: "투자자산"},
-        {value: "real-assets", label: "실물/대체자산"},
+        income: [
+            {value: "salary", label: "급여"},
+            {value: "etc", label: "기타"}
+        ],
 
-        {value: "etc", label: "기타"}
-    ],
+        saving: [
+            {value: "short-term", label: "단기저축"},
+            {value: "long-term", label: "장기저축"},
+            {value: "etc", label: "기타"}
+        ],
 
-    expense: [
-        {value: "food", label: "식비"},
-        {value: "traffic", label: "교통비"},
-        {value: "housing", label: "주거비"},
-        {value: "living", label: "생활비"},
+        investment: [
+            {value: "safe-haven-assets", label: "안전자산"},
+            {value: "invest-assets", label: "투자자산"},
+            {value: "real-assets", label: "실물/대체자산"},
+            {value: "etc", label: "기타"}
+        ]
+    },
 
-        {value: "medical", label: "의료/건강"},
-        {value: "shopping", label: "쇼핑/미용"},
-        {value: "leisure", label: "여가/관계"},
+    filter: {
+        all: [
+            {value: "all", label: "전체"},
 
-        {value: "etc", label: "기타"}
-    ],
+            {value: "salary", label: "급여"},
 
-    income: [
-        {value: "salary", label: "급여"},
+            {value: "food", label: "식비"},
+            {value: "traffic", label: "교통비"},
+            {value: "housing", label: "주거비"},
+            {value: "living", label: "생활비"},
+            {value: "medical", label: "의료/건강"},
+            {value: "shopping", label: "쇼핑/미용"},
+            {value: "leisure", label: "여가/관계"},
+            
+            {value: "short-term", label: "단기저축"},
+            {value: "long-term", label: "장기저축"},
 
-        {value: "etc", label: "기타"}
-    ],
+            {value: "safe-haven-assets", label: "안전자산"},
+            {value: "invest-assets", label: "투자자산"},
+            {value: "real-assets", label: "실물/대체자산"},
 
-    saving: [
-        {value: "short-term", label: "단기저축"},
-        {value: "long-term", label: "장기저축"},
+            {value: "etc", label: "기타"}
+        ],
 
-        {value: "etc", label: "기타"}
-    ],
+        expense: [
+            {value: "all", label: "전체"},
 
-    investment: [
-        {value: "safe-haven-assets", label: "안전자산"},
-        {value: "invest-assets", label: "투자자산"},
-        {value: "real-assets", label: "실물/대체자산"},
+            {value: "food", label: "식비"},
+            {value: "traffic", label: "교통비"},
+            {value: "housing", label: "주거비"},
+            {value: "living", label: "생활비"},
 
-        {value: "etc", label: "기타"}
-    ]
+            {value: "medical", label: "의료/건강"},
+            {value: "shopping", label: "쇼핑/미용"},
+            {value: "leisure", label: "여가/관계"},
+
+            {value: "etc", label: "기타"}
+        ],
+
+        income: [
+            {value: "all", label: "전체"},
+            {value: "salary", label: "급여"},
+            {value: "etc", label: "기타"}
+        ],
+
+        saving: [
+            {value: "all", label: "전체"},
+            {value: "short-term", label: "단기저축"},
+            {value: "long-term", label: "장기저축"},
+            {value: "etc", label: "기타"}
+        ],
+
+        investment: [
+            {value: "all", label: "전체"},
+            {value: "safe-haven-assets", label: "안전자산"},
+            {value: "invest-assets", label: "투자자산"},
+            {value: "real-assets", label: "실물/대체자산"},
+            {value: "etc", label: "기타"}
+        ]
+    }
 };
+
 
 let transactions = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
 let today = new Date();
 let selectedMonthDate = new Date();
+
 let currentTypeSelect = "expense";
+
 let currentTypeFilter = "all";
 let currentCategoryFilter = "all";
 let currentSortFilter = "latest";
+let currentKeyword = "";
 
 let editingId = null;
 let isEditing = false;
@@ -122,16 +164,14 @@ prevMonthBtn.addEventListener("click", () => {
     selectedMonthDate = new Date(year, month-1, date);
 
     updateToday();
-    renderTransactions();
-    renderSummary();
+    renderPage();
 });
 
 nowMonthBtn.addEventListener("click", () => {
     selectedMonthDate = new Date(today);
 
     updateToday();
-    renderTransactions();
-    renderSummary();
+    renderPage();
 });
 
 nextMonthBtn.addEventListener("click", () => {
@@ -142,8 +182,7 @@ nextMonthBtn.addEventListener("click", () => {
     selectedMonthDate = new Date(year, month+1, date);
 
     updateToday();
-    renderTransactions();
-    renderSummary();
+    renderPage();
 });
 
 shiftMonthBtn.addEventListener("click", () => {
@@ -152,14 +191,14 @@ shiftMonthBtn.addEventListener("click", () => {
     }
 
     updateToday();
-    renderTransactions();
-    renderSummary();
+    renderPage();
+
     dateShift.value = "";
 });
 
 typeSelect.addEventListener("change", () => {
     currentTypeSelect = typeSelect.value;
-    updateCategoryOptions(currentTypeSelect, categorySelect);
+    updateCategoryOptions("input", currentTypeSelect, categorySelect);
 });
 
 addBtn.addEventListener("click", () => {
@@ -193,35 +232,37 @@ filterResetBtn.addEventListener("click", () => {
     currentSortFilter = "latest";
 
     typeFilter.value = currentTypeFilter;
-        updateCategoryOptions(currentTypeFilter, categoryFilter);
+        updateCategoryOptions("filter", currentTypeFilter, categoryFilter);
     categoryFilter.value = currentCategoryFilter;
     sortFilter.value = currentSortFilter;
 
-    renderTransactions();
-    renderSummary();
+    renderPage();
 });
 
 typeFilter.addEventListener("change", () => {
     currentTypeFilter = typeFilter.value;
-        updateCategoryOptions(currentTypeFilter, categoryFilter);
+        updateCategoryOptions("filter", currentTypeFilter, categoryFilter);
     currentCategoryFilter = categoryFilter.value;
 
-    renderTransactions();
-    renderSummary();
+    renderPage();
 });
 
 categoryFilter.addEventListener("change", () => {
     currentCategoryFilter = categoryFilter.value;
 
-    renderTransactions();
-    renderSummary();
+    renderPage();
 });
 
 sortFilter.addEventListener("change", () => {
     currentSortFilter = sortFilter.value;
 
-    renderTransactions();
-    renderSummary();
+    renderPage();
+});
+
+searchFilterInput.addEventListener("input", () => {
+    currentKeyword = searchFilterInput.value;
+
+    renderPage();
 })
 
 
@@ -242,8 +283,9 @@ function addTransaction() {
     transactions.push(transaction);
 
     saveTransactions();
-    renderTransactions();
-    renderSummary();
+    renderPage();
+
+    resetInputForm();
 }
 
 function deleteTransaction(targetTransaction) {
@@ -253,8 +295,7 @@ function deleteTransaction(targetTransaction) {
         transactions = transactions.filter(transaction => transaction.id !== targetTransaction.id);
 
         saveTransactions();
-        renderTransactions();
-        renderSummary();
+        renderPage();
     }
 }
 
@@ -266,7 +307,7 @@ function editStart(targetTransaction) {
     amountInput.value = Number(targetTransaction.amount);
     typeSelect.value = targetTransaction.type;
         currentTypeSelect = targetTransaction.type;
-        updateCategoryOptions(currentTypeSelect, categorySelect);
+        updateCategoryOptions("input", currentTypeSelect, categorySelect);
     categorySelect.value = targetTransaction.category;
     descriptionInput.value = targetTransaction.description;
 
@@ -278,6 +319,17 @@ function editStart(targetTransaction) {
 function editEnd() {
     const editTransaction = transactions.find(transaction => transaction.id === editingId);
 
+    const isChanged = editTransaction.date !== dateInput.value ||
+                        editTransaction.amount !== Number(amountInput.value) ||
+                        editTransaction.type !== typeSelect.value ||
+                        editTransaction.category !== categorySelect.value ||
+                        editTransaction.description !== descriptionInput.value;
+
+    if(!isChanged) {
+        editCancelBtn.click();
+        return;
+    }
+
     editTransaction.date = dateInput.value;
     editTransaction.amount = Number(amountInput.value);
     editTransaction.type = typeSelect.value;
@@ -288,10 +340,10 @@ function editEnd() {
     editingId = null;
     isEditing = false;
 
-    resetInputForm();
     saveTransactions();
-    renderTransactions();
-    renderSummary();
+    renderPage();
+
+    resetInputForm();
 }
 
 function createTransactionCard(transaction) {
@@ -311,7 +363,7 @@ function createTransactionCard(transaction) {
         type.classList.add(`budget-card-header-badge-${transaction.type}`);
         cardHeader.append(type);
 
-        const categoryOption = CATEGORY_OPTIONS[transaction.type].find(
+        const categoryOption = CATEGORY_OPTIONS["input"][transaction.type].find(
             option => option.value === transaction.category
         );
         const category = document.createElement("p");
@@ -370,7 +422,7 @@ function createTransactionCard(transaction) {
     return card;
 }
 
-//render transaction function
+//render function
 function renderTransactions() {
     budgetList.innerHTML = "";
 
@@ -383,13 +435,18 @@ function renderTransactions() {
 
     filteredTransaction = filterByType(filteredTransaction);
     filteredTransaction = filterByCategory(filteredTransaction);
+    filteredTransaction = filterByKeyword(filteredTransaction);
     filteredTransaction = sortTransactions(filteredTransaction);
 
     filteredTransaction.forEach(transaction => budgetList.append(createTransactionCard(transaction)));
+}
 
+function renderPage() {
+    renderTransactions();
     renderSummary();
 }
 
+//filter function
 function getTransactionsByMonth() {
     return transactions.filter(transaction => {
         const dataDate = new Date(transaction.date);
@@ -398,6 +455,53 @@ function getTransactionsByMonth() {
             dataDate.getFullYear() === selectedMonthDate.getFullYear() &&
             dataDate.getMonth() === selectedMonthDate.getMonth()
         );
+    });
+}
+
+function filterByType(filteredTransaction) {
+    if(currentTypeFilter === "all") return filteredTransaction;
+
+    return filteredTransaction.filter(transaction => transaction.type === currentTypeFilter);
+}
+
+function filterByCategory(filteredTransaction) {
+    if(currentCategoryFilter === "all") return filteredTransaction;
+
+    return filteredTransaction.filter(transaction => transaction.category === currentCategoryFilter);
+}
+
+function filterByKeyword(filteredTransaction) {
+    if(currentKeyword === "") return filteredTransaction;
+
+    return filteredTransaction.filter(transaction => {
+        const amountMatch = (String(transaction.amount) || "").toLowerCase().includes(currentKeyword);
+        const descriptionMatch = (transaction.description || "").toLowerCase().includes(currentKeyword);
+
+        return amountMatch || descriptionMatch;
+    });
+}
+
+function sortTransactions(filteredTransaction) {
+    return filteredTransaction.sort((a,b) => {
+        switch(currentSortFilter) {
+            case "latest":
+                return b.createdAt - a.createdAt;
+
+            case "oldest":
+                return a.createdAt - b.createdAt;
+
+            case "dates_desc":
+                return new Date(b.date) - new Date(a.date);
+
+            case "dates_asc":
+                return new Date(a.date) - new Date(b.date);
+
+            case "amount_desc":
+                return b.amount - a.amount;
+
+            case "amount_asc":
+                return a.amount - b.amount;
+        }
     });
 }
 
@@ -443,7 +547,7 @@ function createSummaryCategoryCard(category, amount) {
     const card = document.createElement("div");
     card.classList.add("summary-category-card");
 
-    const categoryOption = CATEGORY_OPTIONS[summaryCategoryType.value].find(
+    const categoryOption = CATEGORY_OPTIONS["input"][summaryCategoryType.value].find(
         option => option.value === category
     );
 
@@ -454,7 +558,7 @@ function createSummaryCategoryCard(category, amount) {
     return card;
 }
 
-//배열로 전달
+    //배열로 전달
 function summarySumAmount(targetTransaction, filterTarget, filterValue, reduceTarget) {
     return targetTransaction
         .filter(transaction => transaction[filterTarget] === filterValue)
@@ -465,48 +569,11 @@ function summarySumAmount(targetTransaction, filterTarget, filterValue, reduceTa
         }, {});
 }
 
-//값으로 전달
+    //값으로 전달
 function summaryTransactionAmount(targetTransaction, filterTarget, filterValue) {
     return targetTransaction
         .filter(transaction => transaction[filterTarget] === filterValue)
         .reduce((result, transaction) => result + transaction.amount, 0);
-}
-
-//filter function
-function filterByType(filteredTransaction) {
-    if(currentTypeFilter === "all") return filteredTransaction;
-
-    return filteredTransaction.filter(transaction => transaction.type === currentTypeFilter);
-}
-
-function filterByCategory(filteredTransaction) {
-    if(currentCategoryFilter === "all") return filteredTransaction;
-
-    return filteredTransaction.filter(transaction => transaction.category === currentCategoryFilter);
-}
-
-function sortTransactions(filteredTransaction) {
-    return filteredTransaction.sort((a,b) => {
-        switch(currentSortFilter) {
-            case "latest":
-                return b.createdAt - a.createdAt;
-
-            case "oldest":
-                return a.createdAt - b.createdAt;
-
-            case "dates_desc":
-                return new Date(b.date) - new Date(a.date);
-
-            case "dates_asc":
-                return new Date(a.date) - new Date(b.date);
-
-            case "amount_desc":
-                return b.amount - a.amount;
-
-            case "amount_asc":
-                return a.amount - b.amount;
-        }
-    });
 }
 
 //util function
@@ -519,7 +586,7 @@ function resetInputForm() {
     amountInput.value = "";
     typeSelect.value = "expense";
         currentTypeSelect = typeSelect.value;
-        updateCategoryOptions(currentTypeSelect, categorySelect);
+        updateCategoryOptions("input", currentTypeSelect, categorySelect);
     categorySelect.value = "food";
     descriptionInput.value = "";
 
@@ -527,10 +594,10 @@ function resetInputForm() {
     editCancelBtn.style.display = "none";
 }
 
-function updateCategoryOptions(type, select) {
+function updateCategoryOptions(optionType, type, select) {
     select.innerHTML = "";
 
-    CATEGORY_OPTIONS[type].forEach(option => {
+    CATEGORY_OPTIONS[optionType][type].forEach(option => {
         const categoryOption = document.createElement("option");
         categoryOption.value = option.value;
         categoryOption.textContent = option.label;
@@ -547,12 +614,11 @@ function updateToday() {
     dateInput.value = new Date(Date.now() - offset).toISOString().substring(0, 10);
 }
 
-updateCategoryOptions(currentTypeSelect, categorySelect);
-updateCategoryOptions(currentTypeFilter, categoryFilter);
+updateCategoryOptions("input", currentTypeSelect, categorySelect);
+updateCategoryOptions("filter", currentTypeFilter, categoryFilter);
 updateToday();
 
-renderSummary();
-renderTransactions();
+renderPage();
 
 
 /* 3일차
