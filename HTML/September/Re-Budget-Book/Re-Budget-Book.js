@@ -25,6 +25,7 @@ const typeFilter = document.querySelector(".type-filter");
 const categoryFilter = document.querySelector(".category-filter");
 const sortFilter = document.querySelector(".sort-filter");
 const searchFilterInput = document.querySelector(".search-filter-input");
+const displayFilteredTransactionsNumber = document.querySelector(".display-filtered-transactions-number");
 
 const budgetList = document.querySelector(".budget-list");
 
@@ -426,19 +427,17 @@ function createTransactionCard(transaction) {
 function renderTransactions() {
     budgetList.innerHTML = "";
 
-    let filteredTransaction = getTransactionsByMonth();
+    const filteredTransactions = getVisibleTransactions();
 
-    if(!filteredTransaction.length) {
-        budgetList.innerHTML = "❌ 아직 등록된 기록이 없습니다!";
+    displayFilteredTransactionsNumber.textContent = `현재 표시되는 거래 내역은 ${filteredTransactions.length}건 입니다.`;
+
+    if(!filteredTransactions.length) {
+        const message = transactions.length === 0 ? "❌ 아직 등록된 거래가 없습니다!" : "❎ 조건에 맞는 거래가 없습니다!";
+        budgetList.innerHTML = message;
         return;
     }
 
-    filteredTransaction = filterByType(filteredTransaction);
-    filteredTransaction = filterByCategory(filteredTransaction);
-    filteredTransaction = filterByKeyword(filteredTransaction);
-    filteredTransaction = sortTransactions(filteredTransaction);
-
-    filteredTransaction.forEach(transaction => budgetList.append(createTransactionCard(transaction)));
+    filteredTransactions.forEach(transaction => budgetList.append(createTransactionCard(transaction)));
 }
 
 function renderPage() {
@@ -447,6 +446,17 @@ function renderPage() {
 }
 
 //filter function
+function getVisibleTransactions() {
+    let filteredTransactions = getTransactionsByMonth();
+
+    filteredTransactions = filterByType(filteredTransactions);
+    filteredTransactions = filterByCategory(filteredTransactions);
+    filteredTransactions = filterByKeyword(filteredTransactions);
+    filteredTransactions = sortTransactions(filteredTransactions);
+
+    return filteredTransactions;
+}
+
 function getTransactionsByMonth() {
     return transactions.filter(transaction => {
         const dataDate = new Date(transaction.date);
@@ -458,22 +468,22 @@ function getTransactionsByMonth() {
     });
 }
 
-function filterByType(filteredTransaction) {
-    if(currentTypeFilter === "all") return filteredTransaction;
+function filterByType(filteredTransactions) {
+    if(currentTypeFilter === "all") return filteredTransactions;
 
-    return filteredTransaction.filter(transaction => transaction.type === currentTypeFilter);
+    return filteredTransactions.filter(transaction => transaction.type === currentTypeFilter);
 }
 
-function filterByCategory(filteredTransaction) {
-    if(currentCategoryFilter === "all") return filteredTransaction;
+function filterByCategory(filteredTransactions) {
+    if(currentCategoryFilter === "all") return filteredTransactions;
 
-    return filteredTransaction.filter(transaction => transaction.category === currentCategoryFilter);
+    return filteredTransactions.filter(transaction => transaction.category === currentCategoryFilter);
 }
 
-function filterByKeyword(filteredTransaction) {
-    if(currentKeyword === "") return filteredTransaction;
+function filterByKeyword(filteredTransactions) {
+    if(currentKeyword === "") return filteredTransactions;
 
-    return filteredTransaction.filter(transaction => {
+    return filteredTransactions.filter(transaction => {
         const amountMatch = (String(transaction.amount) || "").toLowerCase().includes(currentKeyword);
         const descriptionMatch = (transaction.description || "").toLowerCase().includes(currentKeyword);
 
@@ -481,8 +491,8 @@ function filterByKeyword(filteredTransaction) {
     });
 }
 
-function sortTransactions(filteredTransaction) {
-    return filteredTransaction.sort((a,b) => {
+function sortTransactions(filteredTransactions) {
+    return filteredTransactions.sort((a,b) => {
         switch(currentSortFilter) {
             case "latest":
                 return b.createdAt - a.createdAt;
@@ -524,9 +534,9 @@ function summaryMonth() {
 
     summaryMonthList.innerHTML = `
         <p>이번 달 수입: ${incomeAmount.toLocaleString('ko-KR')}원</p>
-        <p>이번 달 지출: ${expenseAmount.toLocaleString('ko-KR')}원</p>
-        <p>이번 달 저축: ${savingAmount.toLocaleString('ko-KR')}원</p>
-        <p>이번 달 투자: ${investmentAmount.toLocaleString('ko-KR')}원</p>
+        <p>이번 달 지출: ${expenseAmount.toLocaleString('ko-KR')}원, ${summaryPercentage(expenseAmount, incomeAmount)}</p>
+        <p>이번 달 저축: ${savingAmount.toLocaleString('ko-KR')}원, ${summaryPercentage(savingAmount, incomeAmount)}</p>
+        <p>이번 달 투자: ${investmentAmount.toLocaleString('ko-KR')}원, ${summaryPercentage(investmentAmount, incomeAmount)}</p>
         <p>잔액: ${balanceAmount.toLocaleString('ko-KR')}원</p>
     `;
 }
@@ -541,6 +551,14 @@ function summaryCategory() {
     Object.entries(categoryAmounts).forEach(([category, amount]) => {
         summaryCategoryList.append(createSummaryCategoryCard(category, amount));
     });
+}
+
+function summaryPercentage(typeAmount, incomeAmount) {
+    if(incomeAmount === 0) return "-";
+
+    const result = incomeAmount === 0 ? 0 : typeAmount / incomeAmount * 100;
+
+    return `${result.toFixed(2)}%`;
 }
 
 function createSummaryCategoryCard(category, amount) {
