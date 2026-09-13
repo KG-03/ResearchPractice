@@ -136,6 +136,60 @@ const CATEGORY_OPTIONS = {
     }
 };
 
+const TOAST = {
+    container: null,
+
+    init() {
+        if(!this.container) {
+            this.container = document.createElement("div");
+            this.container.classList.add("toast-container");
+            document.body.append(this.container);
+        }
+    },
+
+    show(message, transaction = null, duration = 5000) {
+        this.init();
+
+        const toast = document.createElement("div");
+        toast.classList.add("toast");
+
+        const messageText = document.createElement("span");
+        messageText.textContent = message;
+        toast.append(messageText);
+
+        if(transaction) {
+            toast.append(this.delete(transaction));
+        }
+
+        this.container.append(toast);
+
+        setTimeout(() => {
+            toast.classList.add("show");
+        }, 100);
+
+        setTimeout(() => {
+            toast.classList.remove("show");
+
+            toast.addEventListener("transitionend", () => {
+                toast.remove();
+            });
+        }, duration);
+    },
+
+    delete(transaction) {
+        const restoreBtn = document.createElement("button");
+        restoreBtn.textContent = "복원";
+        restoreBtn.classList.add("toast-restore-btn");
+
+        restoreBtn.addEventListener("click", () => {
+            restoreTransaction(transaction);
+            restoreBtn.disabled = true;
+        });
+        
+        return restoreBtn;
+    }
+};
+
 
 let transactions = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
@@ -225,6 +279,8 @@ editCancelBtn.addEventListener("click", () => {
     editingId = null;
     isEditing = false;
     resetInputForm();
+
+    TOAST.show("수정이 취소되었습니다!");
 });
 
 filterResetBtn.addEventListener("click", () => {
@@ -287,17 +343,36 @@ function addTransaction() {
     renderPage();
 
     resetInputForm();
+
+    TOAST.show("성공적으로 생성되었습니다!");
 }
 
 function deleteTransaction(targetTransaction) {
     if(targetTransaction === undefined) return;
 
     if(confirm("정말 삭제하시겠습니까?")) {
+        const typeValue = TYPE_OPTIONS[targetTransaction.type];
+        const categoryValue = CATEGORY_OPTIONS["input"][targetTransaction.type].find(
+            option => option.value === targetTransaction.category
+        );
+
         transactions = transactions.filter(transaction => transaction.id !== targetTransaction.id);
 
         saveTransactions();
         renderPage();
+
+        TOAST.show(`${typeValue}, ${categoryValue.label} 카테고리의 ${targetTransaction.amount.toLocaleString('ko-KR')} 원 거래를 삭제했습니다!`,
+                    targetTransaction);
     }
+}
+
+function restoreTransaction(targetTransaction) {
+    transactions.push(targetTransaction);
+
+    saveTransactions();
+    renderPage();
+
+    TOAST.show("성공적으로 복원되었습니다!");
 }
 
 function editStart(targetTransaction) {
@@ -345,6 +420,8 @@ function editEnd() {
     renderPage();
 
     resetInputForm();
+
+    TOAST.show("성공적으로 수정되었습니다!");
 }
 
 function createTransactionCard(transaction) {
@@ -697,3 +774,12 @@ renderPage();
  *          toISOString()   : Date 객체를 ISO 형식의 문자열로 변환. 2026-09-09T04:00:00.000Z와 같은 형태. T는 날짜/시간 구분선, Z는 UTC를 의미.
  *          substring(0,10) : 앞에서부터 10글자를 가져와서, 2026-09-09를 만들어낸다.
  */
+
+/* 14일차
+ * const로 TOAST 만드는 방법이 있었으므로 참조할 것.
+ * init()는 초기화 함수에 가까우므로 참고. 생성자와 비슷하지만 생성자처럼 바로 호출되는 함수는 아니다.
+ * 
+ * disabled = true  : 해당 요소를 비활성하겠다는 의미. '보이지만 사용할 수 없도록 설정'.
+ *                    style.display = "none"은 요소 자체를 화면에서 제거. '아예 보이지도 않게 설정'.
+ */
+
