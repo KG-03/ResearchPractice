@@ -1,6 +1,8 @@
 
 const todayDate = document.querySelector(".today-date");
 
+const exportBtn = document.querySelector(".export-btn");
+
 const summaryMonthList = document.querySelector(".summary-month-list");
 const summaryCategoryType = document.querySelector(".summary-category-type");
 const summaryCategoryList = document.querySelector(".summary-category-list");
@@ -207,6 +209,8 @@ let editingId = null;
 let isEditing = false;
 
 
+exportBtn.addEventListener("click", exportCSV);
+
 summaryCategoryType.addEventListener("change", () => {
     summaryCategory();
 });
@@ -320,7 +324,7 @@ searchFilterInput.addEventListener("input", () => {
     currentKeyword = searchFilterInput.value;
 
     renderPage();
-})
+});
 
 
 function addTransaction() {
@@ -707,6 +711,80 @@ function updateToday() {
 
     const offset = new Date().getTimezoneOffset() * 60000;
     dateInput.value = new Date(Date.now() - offset).toISOString().substring(0, 10);
+}
+
+//CSV function
+function exportCSV() {
+    if(!transactions.length) {
+        alert("내보낼 거래 내역이 없습니다!");
+        return;
+    }
+
+    if(!confirm("데이터를 내보내시겠습니까?")) return;
+
+    const rows = [
+        [
+            "id",
+            "date",
+            "amount",
+
+            "type",
+            "category",
+            "description",
+
+            "createdAt",
+            "updatedAt"
+        ]
+    ];
+
+    transactions.forEach(transaction => {
+        rows.push([
+            transaction.id,
+            transaction.date,
+            transaction.amount,
+
+            escapeCSV(transaction.type),
+            escapeCSV(transaction.category),
+            escapeCSV(transaction.description),
+
+            transaction.createdAt,
+            transaction.updatedAt
+        ]);
+    });
+
+    const csv = "\uFEFF" + rows.map(row => row.join(",")).join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download =
+        `budgetList-${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}.csv`;
+    a.click();
+
+    URL.revokeObjectURL(url);
+
+    TOAST.show("내보내기 성공!");
+}
+
+function escapeCSV(value) {
+    return `"${String(value ?? "")
+        .replace(/\r\n/g, "\\n")
+        .replace(/\n/g, "\\n")
+        .replace(/"/g, '""')}"`
+}
+
+function unescapeCSV(value) {
+    value = value.trim();
+
+    if(value.startsWith('"') && value.endsWith('"')) {
+        value = value.slice(1, -1);
+    }
+
+    return value
+        .replace(/""/g, '"')
+        .replace(/\\n/g, "\n");
 }
 
 updateCategoryOptions("input", currentTypeSelect, categorySelect);
