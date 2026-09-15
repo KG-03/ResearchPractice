@@ -13,6 +13,12 @@
         </header>
 
         <main>
+            <div class="CSV-area">
+                <button class="export-btn">📁내보내기</button>
+                <input type="file" class="import-csv-input" accept=".csv">
+                <button class="import-btn">📂불러오기</button>
+            </div>
+            
             <section class="summary-area">
                 <h2 class="selected-month">n년 n월 통계</h2>
 
@@ -70,7 +76,7 @@
                         <option value="">카테고리</option>
                     </select>
 
-                    <input class="description-input" placeholder="메모">
+                    <textarea class="description-input" rows="2" cols="30" placeholder="메모를 입력하세요!"></textarea>
 
                     <button class="add-btn">추가</button>
                     <button class="edit-cancel-btn">수정 취소</button>
