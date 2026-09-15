@@ -3,7 +3,11 @@ header {
     text-align: center;
 }
 
-.summary-area,
+.import-csv-input {
+    display: none;
+}
+
+.summary-area,s
 .input-area,
 .filter-area,
 .budget-list {
@@ -67,6 +71,8 @@ header {
     align-items: center;
 }
 
+.export-btn,
+.import-btn,
 .prev-month-btn,
 .now-month-btn,
 .next-month-btn {
@@ -78,6 +84,8 @@ header {
     background: #a4c4a7;
 }
 
+.export-btn:hover,
+.import-btn:hover,
 .prev-month-btn:hover,
 .now-month-btn:hover,
 .next-month-btn:hover {
@@ -175,6 +183,8 @@ header {
 
     background: white;
     border-radius: 5px;
+
+    white-space: pre-wrap;
 }
 
 .budget-card-date {
@@ -193,6 +203,11 @@ header {
     border-radius: 5px;
 
     background: #e3f0e5;
+}
+
+.budget-card-button:hover {
+    cursor: pointer;
+    background: #c1d1c3;
 }
 
 .toast-container {
@@ -234,3 +249,7 @@ header {
     background: #555;
     color: #fff;
 }
+
+/* 16일차
+ * white-space: pre-wrap;   : 텍스트에 들어 있는 줄바꿈을 유지해주면서, 화면 너비를 넘으면 자동으로 줄바꿈.
+ */
