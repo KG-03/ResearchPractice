@@ -2,6 +2,8 @@
 const todayDate = document.querySelector(".today-date");
 
 const exportBtn = document.querySelector(".export-btn");
+const importBtn = document.querySelector(".import-btn");
+const importCSVInput = document.querySelector(".import-csv-input");
 
 const summaryMonthList = document.querySelector(".summary-month-list");
 const summaryCategoryType = document.querySelector(".summary-category-type");
@@ -192,6 +194,19 @@ const TOAST = {
     }
 };
 
+const CSV = {
+    ID: 0,
+    DATE: 1,
+    AMOUNT: 2,
+
+    TYPE: 3,
+    CATEGORY: 4,
+    DESCRIPTION: 5,
+
+    CREATED_AT: 6,
+    UPDATED_AT: 7
+}
+
 
 let transactions = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
@@ -210,6 +225,12 @@ let isEditing = false;
 
 
 exportBtn.addEventListener("click", exportCSV);
+
+importBtn.addEventListener("click", () => {
+    importCSVInput.click();
+});
+
+importCSVInput.addEventListener("change", importCSV);
 
 summaryCategoryType.addEventListener("change", () => {
     summaryCategory();
@@ -720,7 +741,7 @@ function exportCSV() {
         return;
     }
 
-    if(!confirm("데이터를 내보내시겠습니까?")) return;
+    if(!confirm("데이터를 내보내시겠습니까? CSV 파일로 내보내집니다.")) return;
 
     const rows = [
         [
@@ -768,6 +789,55 @@ function exportCSV() {
     TOAST.show("내보내기 성공!");
 }
 
+function importCSV(event) {
+    const file = event.target.files[0];
+
+    if(!file) {
+        alert("파일이 선택되지 않았습니다!");
+        return;
+    }
+
+    const reader = new FileReader;
+
+    reader.onload = function(e) {
+        const csv = e.target.result;
+        const lines = csv.split(/\r?\n/);
+        lines.shift();
+
+        if(!validateCSV(lines)) {
+            return;
+        }
+
+        const importTransactions = [];
+
+        lines.forEach(line => {
+            if(!line.trim()) return;
+
+            const values = parseCSVLine(line);
+
+            importTransactions.push({
+                id: Number(values[CSV.ID]),
+                date: unescapeCSV(values[CSV.DATE]),
+                amount: Number(values[CSV.AMOUNT]),
+
+                type: unescapeCSV(values[CSV.TYPE]),
+                category: unescapeCSV(values[CSV.CATEGORY]),
+                description: unescapeCSV(values[CSV.DESCRIPTION]),
+
+                createdAt: Number(values[CSV.CREATED_AT]),
+                updatedAt: Number(values[CSV.UPDATED_AT])
+            });
+        });
+
+        transactions = importTransactions;
+        saveTransactions();
+        renderPage();
+        TOAST.show("불러오기 성공!");
+    };
+
+    reader.readAsText(file, "utf-8");
+}
+
 function escapeCSV(value) {
     return `"${String(value ?? "")
         .replace(/\r\n/g, "\\n")
@@ -785,6 +855,113 @@ function unescapeCSV(value) {
     return value
         .replace(/""/g, '"')
         .replace(/\\n/g, "\n");
+}
+
+function parseCSVLine(line) {
+    const values = [];
+
+    let current = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+
+        if(ch === '"') {
+            if(inQuotes && line[i + 1] === '"') {
+                current += '"';
+                i++;
+            } else {
+                inQuotes = !inQuotes;
+            }
+
+            continue;
+        }
+
+        if(ch === "," && !inQuotes) {
+            values.push(current);
+            current = "";
+            continue;
+        }
+
+        current += ch;
+    }
+
+    values.push(current);
+
+    return values;
+}
+
+function validateCSV(lines) {
+    for (const line of lines) {
+        if(!line.trim()) continue;
+
+        const values = parseCSVLine(line);
+
+        if(values.length !== Object.values(CSV).length) {
+            alert("CSV 형식이 올바르지 않습니다. 레이블 개수에 오류가 있습니다.");
+            return false;
+        }
+
+        if(!values[CSV.ID].trim()) {
+            alert("CSV 데이터 중, ID가 비어 있는 데이터가 있습니다.");
+            return false;
+        }
+
+        if(!values[CSV.DATE].trim()) {
+            alert("CSV 데이터 중, 거래 날짜가 비어 있는 데이터가 있습니다.");
+            return false;
+        }
+
+        if(!values[CSV.AMOUNT].trim()) {
+            alert("CSV 데이터 중, 거래 값이 비어 있는 데이터가 있습니다.");
+            return false;
+        }
+
+        if(!values[CSV.TYPE].trim()) {
+            alert("CSV 데이터 중, 거래 타입이 비어 있는 데이터가 있습니다.");
+            return false;
+        }
+
+        if(!values[CSV.CATEGORY].trim()) {
+            alert("CSV 데이터 중, 거래 카테고리가 비어 있는 데이터가 있습니다.");
+            return false;
+        }
+
+        if(isNaN(Number(values[CSV.ID]))) {
+            alert("CSV 데이터 중, ID 값이 숫자가 아닌 값이 있습니다.");
+            return false;
+        }
+
+        if(isNaN(Number(values[CSV.AMOUNT]))) {
+            alert("CSV 데이터 중, 거래 값이 숫자가 아닌 값이 있습니다.");
+            return false;
+        }
+
+        if(isNaN(Number(values[CSV.CREATED_AT]))) {
+            alert("CSV 데이터 중, 생성 날짜가 숫자가 아닌 값이 있습니다.");
+            return false;
+        }
+
+        if(isNaN(Number(values[CSV.UPDATED_AT]))) {
+            alert("CSV 데이터 중, 수정 날짜가 숫자가 아닌 값이 있습니다.");
+            return false;
+        }
+
+        const type = unescapeCSV(values[CSV.TYPE]);
+        if(!(type in TYPE_OPTIONS) || type === "all") {
+            alert("CSV 데이터 중, 거래 타입이 다른 데이터가 있습니다.");
+            return false;
+        }
+
+        const category = unescapeCSV(values[CSV.CATEGORY]);
+        const categoryExists = CATEGORY_OPTIONS.input[type]?.some( option => option.value === category );
+        if(!categoryExists) {
+            alert("CSV 데이터 중, 거래 카테고리가 다른 데이터가 있습니다.");
+            return false;
+        }
+    }
+
+    return true;
 }
 
 updateCategoryOptions("input", currentTypeSelect, categorySelect);
@@ -861,3 +1038,8 @@ renderPage();
  *                    style.display = "none"은 요소 자체를 화면에서 제거. '아예 보이지도 않게 설정'.
  */
 
+/* 16일차
+ * addEventlistener() 함수로 만약 addEventlistener("change", importCSV)를 작성했다면,
+ *      change에서 일어나는 이벤트들을 모아둔 이벤트 객체가 알아서 importCSV로 전달된다.
+ *      따라서 따로 (event) => importCSV(event)로 적지 않아도 괜찮다.
+ */
