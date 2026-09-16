@@ -649,9 +649,17 @@ function summaryCategory() {
     const targetTransactions = getTransactionsByMonth();
 
     const categoryAmounts = summarySumAmount(targetTransactions, "type", summaryCategoryType.value, "category");
+
+    const amounts = Object.values(categoryAmounts);
+    if(!amounts.length) {
+        summaryCategoryList.textContent = "해당 타입의 거래 내역이 없습니다.";
+        return;
+    }
+
+    const maxAmount = Math.max(...amounts);
     
     Object.entries(categoryAmounts).forEach(([category, amount]) => {
-        summaryCategoryList.append(createSummaryCategoryCard(category, amount));
+        summaryCategoryList.append(createSummaryCategoryCard(category, amount, maxAmount));
     });
 }
 
@@ -663,7 +671,7 @@ function summaryPercentage(typeAmount, incomeAmount) {
     return `${result.toFixed(2)}%`;
 }
 
-function createSummaryCategoryCard(category, amount) {
+function createSummaryCategoryCard(category, amount, maxAmount) {
     const card = document.createElement("div");
     card.classList.add("summary-category-card");
 
@@ -674,27 +682,34 @@ function createSummaryCategoryCard(category, amount) {
     const categoryLabelAmount = document.createElement("p");
     categoryLabelAmount.textContent = `${categoryOption.label}: ${amount.toLocaleString('ko-KR')}원`;
     card.append(categoryLabelAmount);
+
+    const width = maxAmount === 0 ? 0 : amount / maxAmount * 100;
+
+    const barChart = document.createElement("div");
+    barChart.classList.add("summaryCategory-bar");
+    barChart.style.width = `${width}%`;
+    card.append(barChart);
     
     return card;
 }
 
     //배열로 전달
-function summarySumAmount(targetTransaction, filterTarget, filterValue, reduceTarget) {
-    return targetTransaction
-        .filter(transaction => transaction[filterTarget] === filterValue)
-        .reduce((result, transaction) => {
-            result[transaction[reduceTarget]] = (result[transaction[reduceTarget]] || 0) + transaction.amount;
+    function summarySumAmount(targetTransaction, filterTarget, filterValue, reduceTarget) {
+        return targetTransaction
+            .filter(transaction => transaction[filterTarget] === filterValue)
+            .reduce((result, transaction) => {
+                result[transaction[reduceTarget]] = (result[transaction[reduceTarget]] || 0) + transaction.amount;
 
-            return result;
-        }, {});
-}
+                return result;
+            }, {});
+    }
 
     //값으로 전달
-function summaryTransactionAmount(targetTransaction, filterTarget, filterValue) {
-    return targetTransaction
-        .filter(transaction => transaction[filterTarget] === filterValue)
-        .reduce((result, transaction) => result + transaction.amount, 0);
-}
+    function summaryTransactionAmount(targetTransaction, filterTarget, filterValue) {
+        return targetTransaction
+            .filter(transaction => transaction[filterTarget] === filterValue)
+            .reduce((result, transaction) => result + transaction.amount, 0);
+    }
 
 //util function
 function saveTransactions() {
