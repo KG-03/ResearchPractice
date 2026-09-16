@@ -66,9 +66,19 @@ header {
 }
 
 .summary-category-card {
-    display: flex;
+    padding: 10px;
+    
     justify-content: center;
     align-items: center;
+}
+
+.summaryCategory-bar {
+    width: 100%;
+    height: 10px;
+
+    border-radius: 5px;
+
+    background: #8fb89a;
 }
 
 .export-btn,
