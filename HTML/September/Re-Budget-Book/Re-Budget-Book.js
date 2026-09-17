@@ -5,6 +5,9 @@ const exportBtn = document.querySelector(".export-btn");
 const importBtn = document.querySelector(".import-btn");
 const importCSVInput = document.querySelector(".import-csv-input");
 
+const summaryGrapeBtn = document.querySelector(".summary-grape-btn");
+const summaryGrapeList = document.querySelector(".summary-grape-list");
+
 const summaryMonthList = document.querySelector(".summary-month-list");
 const summaryCategoryType = document.querySelector(".summary-category-type");
 const summaryCategoryList = document.querySelector(".summary-category-list");
@@ -212,6 +215,10 @@ let transactions = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
 let today = new Date();
 let selectedMonthDate = new Date();
+let prevMonthDate = null;
+let nextMonthDate = null;
+
+let isSummaryGrape = false;
 
 let currentTypeSelect = "expense";
 
@@ -232,6 +239,12 @@ importBtn.addEventListener("click", () => {
 
 importCSVInput.addEventListener("change", importCSV);
 
+summaryGrapeBtn.addEventListener("click", () => {
+    isSummaryGrape = true;
+    summaryGrapeBtn.style.display = "none";
+    summaryGrape();
+});
+
 summaryCategoryType.addEventListener("change", () => {
     summaryCategory();
 });
@@ -242,13 +255,21 @@ prevMonthBtn.addEventListener("click", () => {
     const date = selectedMonthDate.getDate();
 
     selectedMonthDate = new Date(year, month-1, date);
+    prevMonthDate = new Date(year, month-2, date);
+    nextMonthDate = new Date(year, month, date);
 
     updateToday();
     renderPage();
 });
 
 nowMonthBtn.addEventListener("click", () => {
+    const year = selectedMonthDate.getFullYear();
+    const month = selectedMonthDate.getMonth();
+    const date = selectedMonthDate.getDate();
+
     selectedMonthDate = new Date(today);
+    prevMonthDate = new Date(year, month-1, date);
+    nextMonthDate = new Date(year, month+1, date);    
 
     updateToday();
     renderPage();
@@ -260,6 +281,8 @@ nextMonthBtn.addEventListener("click", () => {
     const date = selectedMonthDate.getDate();
 
     selectedMonthDate = new Date(year, month+1, date);
+    prevMonthDate = new Date(year, month, date);
+    nextMonthDate = new Date(year, month+2, date);
 
     updateToday();
     renderPage();
@@ -549,7 +572,7 @@ function renderPage() {
 
 //filter function
 function getVisibleTransactions() {
-    let filteredTransactions = getTransactionsByMonth();
+    let filteredTransactions = getTransactionsByMonth(selectedMonthDate);
 
     filteredTransactions = filterByType(filteredTransactions);
     filteredTransactions = filterByCategory(filteredTransactions);
@@ -559,13 +582,14 @@ function getVisibleTransactions() {
     return filteredTransactions;
 }
 
-function getTransactionsByMonth() {
+function getTransactionsByMonth(_targetDate) {
     return transactions.filter(transaction => {
         const dataDate = new Date(transaction.date);
+        const targetDate = new Date(_targetDate);
 
         return (
-            dataDate.getFullYear() === selectedMonthDate.getFullYear() &&
-            dataDate.getMonth() === selectedMonthDate.getMonth()
+            dataDate.getFullYear() === targetDate.getFullYear() &&
+            dataDate.getMonth() === targetDate.getMonth()
         );
     });
 }
@@ -621,17 +645,18 @@ function sortTransactions(filteredTransactions) {
 function renderSummary() {
     summaryMonth();
     summaryCategory();
+    if(isSummaryGrape === true) summaryGrape();
 }
 
 function summaryMonth() {
     summaryMonthList.innerHTML = "";
 
-    const targetTransactions = getTransactionsByMonth();
+    const targetTransactions = getTransactionsByMonth(selectedMonthDate);
 
-    const expenseAmount = summaryTransactionAmount(targetTransactions, "type", "expense", "type");
-    const incomeAmount = summaryTransactionAmount(targetTransactions, "type", "income", "type");
-    const savingAmount = summaryTransactionAmount(targetTransactions, "type", "saving", "type");
-    const investmentAmount = summaryTransactionAmount(targetTransactions, "type", "investment", "type");
+    const expenseAmount = summaryTransactionAmount(targetTransactions, "type", "expense");
+    const incomeAmount = summaryTransactionAmount(targetTransactions, "type", "income");
+    const savingAmount = summaryTransactionAmount(targetTransactions, "type", "saving");
+    const investmentAmount = summaryTransactionAmount(targetTransactions, "type", "investment");
     const balanceAmount = incomeAmount - expenseAmount - savingAmount - investmentAmount;
 
     summaryMonthList.innerHTML = `
@@ -646,7 +671,7 @@ function summaryMonth() {
 function summaryCategory() {
     summaryCategoryList.innerHTML = "";
 
-    const targetTransactions = getTransactionsByMonth();
+    const targetTransactions = getTransactionsByMonth(selectedMonthDate);
 
     const categoryAmounts = summarySumAmount(targetTransactions, "type", summaryCategoryType.value, "category");
 
@@ -672,6 +697,8 @@ function summaryPercentage(typeAmount, incomeAmount) {
 }
 
 function createSummaryCategoryCard(category, amount, maxAmount) {
+    const width = maxAmount === 0 ? 0 : amount / maxAmount * 100;
+
     const card = document.createElement("div");
     card.classList.add("summary-category-card");
 
@@ -679,17 +706,22 @@ function createSummaryCategoryCard(category, amount, maxAmount) {
         option => option.value === category
     );
 
+    const row = document.createElement("div");
+    row.classList.add("summary-grape-row");
+
     const categoryLabelAmount = document.createElement("p");
     categoryLabelAmount.textContent = `${categoryOption.label}: ${amount.toLocaleString('ko-KR')}원`;
-    card.append(categoryLabelAmount);
 
-    const width = maxAmount === 0 ? 0 : amount / maxAmount * 100;
+    const barTrack = document.createElement("div");
+    barTrack.classList.add("summary-grape-track");
 
     const barChart = document.createElement("div");
     barChart.classList.add("summaryCategory-bar");
     barChart.style.width = `${width}%`;
-    card.append(barChart);
+    barTrack.append(barChart);
+    row.append(categoryLabelAmount, barTrack);
     
+    card.append(row);
     return card;
 }
 
@@ -710,6 +742,91 @@ function createSummaryCategoryCard(category, amount, maxAmount) {
             .filter(transaction => transaction[filterTarget] === filterValue)
             .reduce((result, transaction) => result + transaction.amount, 0);
     }
+
+function summaryGrape() {
+    summaryGrapeList.style.display = "block";
+    summaryGrapeList.innerHTML = "";
+
+    const prevTransaction = getTransactionsByMonth(prevMonthDate);
+    const nowTransaction = getTransactionsByMonth(selectedMonthDate);
+    const nextTransaction = getTransactionsByMonth(nextMonthDate);
+
+    Object.keys(TYPE_OPTIONS)
+        .filter(type => type !== "all")
+        .forEach(type => {
+            summaryGrapeList.append(
+                summaryGrapeComparison(
+                    prevTransaction,
+                    nowTransaction,
+                    nextTransaction,
+                    type
+                )
+            );
+        });
+
+    const hideBtn = document.createElement("button");
+    hideBtn.textContent = "숨기기";
+
+    hideBtn.addEventListener("click", () => {
+        summaryGrapeList.style.display = "none";
+
+        isSummaryGrape = false;
+        summaryGrapeBtn.style.display = "inline";
+        hideBtn.remove();
+    });
+
+    summaryGrapeList.append(hideBtn);
+}
+
+function summaryGrapeComparison(prev, now, next, type) {
+    const prevAmount = summaryTransactionAmount(prev, "type", type);
+    const nowAmount = summaryTransactionAmount(now, "type", type);
+    const nextAmount = summaryTransactionAmount(next, "type", type);
+
+    const maxAmount = Math.max(
+        prevAmount,
+        nowAmount,
+        nextAmount
+    );
+
+    const grape = document.createElement("div");
+    grape.classList.add("summary-grape-group");
+
+    const title = document.createElement("h3");
+    title.textContent = `${TYPE_OPTIONS[type]} 비교`;
+    grape.append(title);
+
+    grape.append(
+        createComparisonRow("이전", prevAmount, maxAmount),
+        createComparisonRow("이번", nowAmount, maxAmount),
+        createComparisonRow("다음", nextAmount, maxAmount)
+    );
+
+    return grape;
+}
+
+function createComparisonRow(label, amount, maxAmount) {
+    const row = document.createElement("div");
+    row.classList.add("summary-grape-row");
+
+    const text = document.createElement("p");
+    text.textContent = `${label} ${amount.toLocaleString("ko-KR")}원`;
+
+    const barTrack = document.createElement("div");
+    barTrack.classList.add("summary-grape-track");
+
+    const bar = document.createElement("div");
+    bar.classList.add("summaryCategory-bar");
+
+    const width = maxAmount === 0 ? 0 : amount / maxAmount * 100;
+
+    bar.style.width = `${width}%`;
+
+    barTrack.append(bar);
+    row.append(text, barTrack);
+
+    return row;
+}
 
 //util function
 function saveTransactions() {
@@ -984,6 +1101,7 @@ updateCategoryOptions("filter", currentTypeFilter, categoryFilter);
 updateToday();
 
 renderPage();
+nowMonthBtn.click();
 
 
 /* 3일차
