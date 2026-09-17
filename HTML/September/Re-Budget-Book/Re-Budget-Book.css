@@ -7,7 +7,7 @@ header {
     display: none;
 }
 
-.summary-area,s
+.summary-area,
 .input-area,
 .filter-area,
 .budget-list {
@@ -20,6 +20,14 @@ header {
     text-align: center;
 
     background: #c8dbca;
+}
+
+.summary-grape-area {
+    margin-bottom: 10px;
+}
+
+.summaryGrapeList {
+    display: none;
 }
 
 .summary-sort {
@@ -72,13 +80,32 @@ header {
     align-items: center;
 }
 
+.summary-grape-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;    
+}
+
+.summary-grape-row p {
+    width: 150px;
+    margin: 0;
+    flex-shrink: 0;
+    text-align: right;
+}
+
+.summary-grape-track {
+    flex: 1;
+    height: 12px;
+    background: #eeeeee;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
 .summaryCategory-bar {
-    width: 100%;
-    height: 10px;
-
-    border-radius: 5px;
-
+    height: 100%;
     background: #8fb89a;
+    border-radius: 6px;
 }
 
 .export-btn,
