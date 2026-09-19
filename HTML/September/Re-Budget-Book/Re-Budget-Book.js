@@ -5,9 +5,6 @@ const exportBtn = document.querySelector(".export-btn");
 const importBtn = document.querySelector(".import-btn");
 const importCSVInput = document.querySelector(".import-csv-input");
 
-const summaryGrapeBtn = document.querySelector(".summary-grape-btn");
-const summaryGrapeList = document.querySelector(".summary-grape-list");
-
 const summaryMonthList = document.querySelector(".summary-month-list");
 const summaryCategoryType = document.querySelector(".summary-category-type");
 const summaryCategoryList = document.querySelector(".summary-category-list");
@@ -18,6 +15,12 @@ const nowMonthBtn = document.querySelector(".now-month-btn");
 const nextMonthBtn = document.querySelector(".next-month-btn");
 const dateShift = document.querySelector(".date-shift");
 const shiftMonthBtn = document.querySelector(".shift-month-btn");
+
+const summaryGrapeBtn = document.querySelector(".summary-grape-btn");
+const summaryGrapeList = document.querySelector(".summary-grape-list");
+
+const budgetComparisonBtn = document.querySelector(".budget-comparison-btn");
+const budgetComparisonList = document.querySelector(".budget-comparison-list");
 
 const dateInput = document.querySelector(".date-input");
 const amountInput = document.querySelector(".amount-input");
@@ -219,6 +222,7 @@ let prevMonthDate = null;
 let nextMonthDate = null;
 
 let isSummaryGrape = false;
+let isComparison = false;
 
 let currentTypeSelect = "expense";
 
@@ -226,6 +230,7 @@ let currentTypeFilter = "all";
 let currentCategoryFilter = "all";
 let currentSortFilter = "latest";
 let currentKeyword = "";
+let currentBudgetComparisonTransactions = [];
 
 let editingId = null;
 let isEditing = false;
@@ -238,12 +243,6 @@ importBtn.addEventListener("click", () => {
 });
 
 importCSVInput.addEventListener("change", importCSV);
-
-summaryGrapeBtn.addEventListener("click", () => {
-    isSummaryGrape = true;
-    summaryGrapeBtn.style.display = "none";
-    summaryGrape();
-});
 
 summaryCategoryType.addEventListener("change", () => {
     summaryCategory();
@@ -297,6 +296,18 @@ shiftMonthBtn.addEventListener("click", () => {
     renderPage();
 
     dateShift.value = "";
+});
+
+summaryGrapeBtn.addEventListener("click", () => {
+    isSummaryGrape = true;
+    summaryGrapeBtn.style.display = "none";
+    summaryGrape();
+});
+
+budgetComparisonBtn.addEventListener("click", () => {
+    isComparison = true;
+    budgetComparisonBtn.style.display = "none";
+    budgetComparison();
 });
 
 typeSelect.addEventListener("change", () => {
@@ -551,6 +562,7 @@ function createTransactionCard(transaction) {
 //render function
 function renderTransactions() {
     budgetList.innerHTML = "";
+    currentBudgetComparisonTransactions = [];
 
     const filteredTransactions = getVisibleTransactions();
 
@@ -562,6 +574,7 @@ function renderTransactions() {
         return;
     }
 
+    currentBudgetComparisonTransactions = filteredTransactions;
     filteredTransactions.forEach(transaction => budgetList.append(createTransactionCard(transaction)));
 }
 
@@ -646,6 +659,7 @@ function renderSummary() {
     summaryMonth();
     summaryCategory();
     if(isSummaryGrape === true) summaryGrape();
+    if(isComparison === true) budgetComparison();
 }
 
 function summaryMonth() {
@@ -716,7 +730,7 @@ function createSummaryCategoryCard(category, amount, maxAmount) {
     barTrack.classList.add("summary-grape-track");
 
     const barChart = document.createElement("div");
-    barChart.classList.add("summaryCategory-bar");
+    barChart.classList.add("summary-category-bar");
     barChart.style.width = `${width}%`;
     barTrack.append(barChart);
     row.append(categoryLabelAmount, barTrack);
@@ -743,6 +757,7 @@ function createSummaryCategoryCard(category, amount, maxAmount) {
             .reduce((result, transaction) => result + transaction.amount, 0);
     }
 
+//summary grape function
 function summaryGrape() {
     summaryGrapeList.style.display = "block";
     summaryGrapeList.innerHTML = "";
@@ -816,7 +831,7 @@ function createComparisonRow(label, amount, maxAmount) {
     barTrack.classList.add("summary-grape-track");
 
     const bar = document.createElement("div");
-    bar.classList.add("summaryCategory-bar");
+    bar.classList.add("summary-category-bar");
 
     const width = maxAmount === 0 ? 0 : amount / maxAmount * 100;
 
@@ -826,6 +841,56 @@ function createComparisonRow(label, amount, maxAmount) {
     row.append(text, barTrack);
 
     return row;
+}
+
+//budget comparison function
+function budgetComparison() {
+    budgetComparisonList.style.display = "block";
+    budgetComparisonList.innerHTML = "";
+
+    const budgetInput = document.createElement("input");
+    budgetInput.type = "number";
+    budgetInput.placeholder = "예산 입력";
+    budgetComparisonList.append(budgetInput);
+
+    const consume = summaryTransactionAmount(currentBudgetComparisonTransactions, "type", "expense");
+    const consumeText = document.createElement("p");
+    consumeText.textContent = `이번 달 지출: ${consume.toLocaleString('ko-KR')}원`;
+    budgetComparisonList.append(consumeText);
+
+    const budgetConsumeComparison = document.createElement("p");
+    budgetComparisonList.append(budgetConsumeComparison);
+
+    budgetInput.addEventListener("input", () => {
+        const budget = Number(budgetInput.value);
+        if(budget <= 0) {
+            budgetConsumeComparison.textContent = "예산을 입력해주세요!";
+            budgetConsumeComparison.classList.remove("budget-comparison-shortage");
+            return;
+        }
+
+        const comparison = Number(budgetInput.value) - consume;
+        if(comparison < 0) {
+            budgetConsumeComparison.classList.add("budget-comparison-shortage");
+            budgetConsumeComparison.textContent = `예산 초과: ${Math.abs(comparison).toLocaleString('ko-KR')}원`;
+        }
+        else {
+            budgetConsumeComparison.classList.remove("budget-comparison-shortage");
+            budgetConsumeComparison.textContent = `남은 예산: ${comparison.toLocaleString('ko-KR')}원`;
+        };
+    });
+
+    const hideBtn = document.createElement("button");
+    hideBtn.textContent = "숨기기";
+    hideBtn.addEventListener("click", () => {
+        budgetComparisonList.style.display = "none";
+
+        isComparison = false;
+        budgetComparisonBtn.style.display = "inline";
+        hideBtn.remove();
+    });
+
+    budgetComparisonList.append(hideBtn);
 }
 
 //util function
