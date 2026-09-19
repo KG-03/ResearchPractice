@@ -22,11 +22,6 @@
             <section class="summary-area">
                 <h2 class="selected-month">n년 n월 통계</h2>
 
-                <div class="summary-grape-area">
-                    <button class="summary-grape-btn">전달, 앞달과 비교하기</button>
-                    <div class="summary-grape-list"></div>
-                </div>
-
                 <div class="summary-sort">
                     <div class="summary-month-area">
                         <p><b>전체 통계(값, 백분율%)</b></p>
@@ -56,12 +51,23 @@
                 <button class="now-month-btn">이번 달</button>
                 <button class="next-month-btn">다음 달➡️</button>
 
-                <div>
+                <div class="date-shift-area">
                     <input class="date-shift" type="month">
                     <button class="shift-month-btn">이동</button>
                 </div>
-            </section>
 
+                <div class="summary-grape-area">
+                    <button class="summary-grape-btn">전달, 앞달과 비교하기</button>
+                    <div class="summary-grape-list"></div>
+                </div>
+
+                <section class="budget-comparison-area">
+                    <button class="budget-comparison-btn">🧮예산 넣고 측정하기</button>
+                    <div class="budget-comparison-list">
+                    </div>
+                </section>
+                
+            </section>
             
             <section class="input-area">
                 <h2>입력</h2>
@@ -120,7 +126,6 @@
 
             <section class="budget-list">
             </section>
-
         </main>
 
         <script src="Re-Budget-book.js"></script>
