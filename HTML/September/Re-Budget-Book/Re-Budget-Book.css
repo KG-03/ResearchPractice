@@ -22,14 +22,6 @@ header {
     background: #c8dbca;
 }
 
-.summary-grape-area {
-    margin-bottom: 10px;
-}
-
-.summaryGrapeList {
-    display: none;
-}
-
 .summary-sort {
     display: flex;
     justify-content: space-around;
@@ -80,6 +72,42 @@ header {
     align-items: center;
 }
 
+.export-btn,
+.import-btn,
+.prev-month-btn,
+.now-month-btn,
+.next-month-btn,
+.shift-month-btn {
+    padding: 5px;
+    margin: 5px;
+
+    border-radius: 5px;
+    border: none;
+    background: #a4c4a7;
+}
+
+.export-btn:hover,
+.import-btn:hover,
+.prev-month-btn:hover,
+.now-month-btn:hover,
+.next-month-btn:hover,
+.shift-month-btn:hover {
+    cursor: pointer;
+    background: #88ac8c;
+}
+
+.date-shift-area,
+.summary-grape-area,
+.budget-comparison-area {
+    margin-bottom: 10px;
+}
+
+.summary-grape-list,
+.budget-comparison-list {
+    display: none;
+}
+
+/*===== summary grape =====*/
 .summary-grape-row {
     display: flex;
     align-items: center;
@@ -102,32 +130,20 @@ header {
     overflow: hidden;
 }
 
-.summaryCategory-bar {
+.summary-category-bar {
     height: 100%;
     background: #8fb89a;
     border-radius: 6px;
 }
 
-.export-btn,
-.import-btn,
-.prev-month-btn,
-.now-month-btn,
-.next-month-btn {
-    padding: 5px;
-    margin: 5px;
-
-    border-radius: 5px;
-    border: none;
-    background: #a4c4a7;
+/*===== budget comparison =====*/
+.budget-comparison-area {
+    justify-content: center;
+    align-items: center;
 }
 
-.export-btn:hover,
-.import-btn:hover,
-.prev-month-btn:hover,
-.now-month-btn:hover,
-.next-month-btn:hover {
-    cursor: pointer;
-    background: #88ac8c;
+.budget-comparison-shortage {
+    color: red;
 }
 
 /*===== input area =====*/
