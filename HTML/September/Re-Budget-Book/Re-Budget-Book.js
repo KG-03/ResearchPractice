@@ -30,6 +30,10 @@ const descriptionInput = document.querySelector(".description-input");
 const addBtn = document.querySelector(".add-btn");
 const editCancelBtn = document.querySelector(".edit-cancel-btn");
 
+const categoryAddInput = document.querySelector(".category-add-input");
+const categoryAddBtn = document.querySelector(".category-add-btn");
+const categoryAddTypeSelect = document.querySelector(".category-add-type-select");
+
 const filterResetBtn = document.querySelector(".filter-reset-btn");
 const typeFilter = document.querySelector(".type-filter");
 const categoryFilter = document.querySelector(".category-filter");
@@ -50,100 +54,37 @@ const TYPE_OPTIONS = {
     investment: "투자"
 };
 
-const CATEGORY_OPTIONS = {
-    input: {
-        expense: [
-            {value: "food", label: "식비"},
-            {value: "traffic", label: "교통비"},
-            {value: "housing", label: "주거비"},
-            {value: "living", label: "생활비"},
+const DEFAULT_CATEGORY_OPTIONS = {
+    expense: [
+        {value: "food", label: "식비"},
+        {value: "traffic", label: "교통비"},
+        {value: "housing", label: "주거비"},
+        {value: "living", label: "생활비"},
 
-            {value: "medical", label: "의료/건강"},
-            {value: "shopping", label: "쇼핑/미용"},
-            {value: "leisure", label: "여가/관계"},
+        {value: "medical", label: "의료/건강"},
+        {value: "shopping", label: "쇼핑/미용"},
+        {value: "leisure", label: "여가/관계"},
 
-            {value: "etc", label: "기타"}
-        ],
+        {value: "etc", label: "기타"}
+    ],
 
-        income: [
-            {value: "salary", label: "급여"},
-            {value: "etc", label: "기타"}
-        ],
+    income: [
+        {value: "salary", label: "급여"},
+        {value: "etc", label: "기타"}
+    ],
 
-        saving: [
-            {value: "short-term", label: "단기저축"},
-            {value: "long-term", label: "장기저축"},
-            {value: "etc", label: "기타"}
-        ],
+    saving: [
+        {value: "short-term", label: "단기저축"},
+        {value: "long-term", label: "장기저축"},
+        {value: "etc", label: "기타"}
+    ],
 
-        investment: [
-            {value: "safe-haven-assets", label: "안전자산"},
-            {value: "invest-assets", label: "투자자산"},
-            {value: "real-assets", label: "실물/대체자산"},
-            {value: "etc", label: "기타"}
-        ]
-    },
-
-    filter: {
-        all: [
-            {value: "all", label: "전체"},
-
-            {value: "salary", label: "급여"},
-
-            {value: "food", label: "식비"},
-            {value: "traffic", label: "교통비"},
-            {value: "housing", label: "주거비"},
-            {value: "living", label: "생활비"},
-            {value: "medical", label: "의료/건강"},
-            {value: "shopping", label: "쇼핑/미용"},
-            {value: "leisure", label: "여가/관계"},
-            
-            {value: "short-term", label: "단기저축"},
-            {value: "long-term", label: "장기저축"},
-
-            {value: "safe-haven-assets", label: "안전자산"},
-            {value: "invest-assets", label: "투자자산"},
-            {value: "real-assets", label: "실물/대체자산"},
-
-            {value: "etc", label: "기타"}
-        ],
-
-        expense: [
-            {value: "all", label: "전체"},
-
-            {value: "food", label: "식비"},
-            {value: "traffic", label: "교통비"},
-            {value: "housing", label: "주거비"},
-            {value: "living", label: "생활비"},
-
-            {value: "medical", label: "의료/건강"},
-            {value: "shopping", label: "쇼핑/미용"},
-            {value: "leisure", label: "여가/관계"},
-
-            {value: "etc", label: "기타"}
-        ],
-
-        income: [
-            {value: "all", label: "전체"},
-            {value: "salary", label: "급여"},
-            {value: "etc", label: "기타"}
-        ],
-
-        saving: [
-            {value: "all", label: "전체"},
-            {value: "short-term", label: "단기저축"},
-            {value: "long-term", label: "장기저축"},
-            {value: "etc", label: "기타"}
-        ],
-
-        investment: [
-            {value: "all", label: "전체"},
-            {value: "safe-haven-assets", label: "안전자산"},
-            {value: "invest-assets", label: "투자자산"},
-            {value: "real-assets", label: "실물/대체자산"},
-            {value: "etc", label: "기타"}
-        ]
-    }
+    investment: [
+        {value: "safe-haven-assets", label: "안전자산"},
+        {value: "invest-assets", label: "투자자산"},
+        {value: "real-assets", label: "실물/대체자산"},
+        {value: "etc", label: "기타"}
+    ]
 };
 
 const TOAST = {
@@ -215,6 +156,7 @@ const CSV = {
 
 
 let transactions = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+let categoryOptions = JSON.parse(localStorage.getItem("CATEGORY_OPTIONS")) || structuredClone(DEFAULT_CATEGORY_OPTIONS);
 
 let today = new Date();
 let selectedMonthDate = new Date();
@@ -342,6 +284,15 @@ editCancelBtn.addEventListener("click", () => {
     TOAST.show("수정이 취소되었습니다!");
 });
 
+categoryAddBtn.addEventListener("click", () => {
+    if(!categoryAddInput.value) {
+        alert("입력된 카테고리명이 없습니다!");
+        return;
+    }
+
+    addCategoryOption();
+});
+
 filterResetBtn.addEventListener("click", () => {
     currentTypeFilter = "all";
     currentCategoryFilter = "all";
@@ -411,7 +362,7 @@ function deleteTransaction(targetTransaction) {
 
     if(confirm("정말 삭제하시겠습니까?")) {
         const typeValue = TYPE_OPTIONS[targetTransaction.type];
-        const categoryValue = CATEGORY_OPTIONS["input"][targetTransaction.type].find(
+        const categoryValue = categoryOptions[targetTransaction.type].find(
             option => option.value === targetTransaction.category
         );
 
@@ -500,7 +451,7 @@ function createTransactionCard(transaction) {
         type.classList.add(`budget-card-header-badge-${transaction.type}`);
         cardHeader.append(type);
 
-        const categoryOption = CATEGORY_OPTIONS["input"][transaction.type].find(
+        const categoryOption = categoryOptions[transaction.type].find(
             option => option.value === transaction.category
         );
         const category = document.createElement("p");
@@ -716,7 +667,7 @@ function createSummaryCategoryCard(category, amount, maxAmount) {
     const card = document.createElement("div");
     card.classList.add("summary-category-card");
 
-    const categoryOption = CATEGORY_OPTIONS["input"][summaryCategoryType.value].find(
+    const categoryOption = categoryOptions[summaryCategoryType.value].find(
         option => option.value === category
     );
 
@@ -898,6 +849,10 @@ function saveTransactions() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
 }
 
+function saveCategoryOption() {
+    localStorage.setItem("DEFAULT_CATEGORY_OPTIONS", JSON.stringify(categoryOptions));
+}
+
 function resetInputForm() {
     dateInput.value = "";
     amountInput.value = "";
@@ -911,10 +866,38 @@ function resetInputForm() {
     editCancelBtn.style.display = "none";
 }
 
+function getFilterCategoryOptions(type) {
+    if(type === "all") {
+        const allCategory = Object.values(categoryOptions).flat();
+
+        const uniqueCategories = [];
+        const values = new Set();
+
+        allCategory.forEach(category => {
+            if(!values.has(category.value)) {
+                values.add(category.value);
+                uniqueCategories.push(category);
+            }
+        });
+
+        return [
+            {value: "all", label: "전체"},
+            ...uniqueCategories
+        ];
+    }
+
+    return [
+        { value: "all", label: "전체" },
+        ...categoryOptions[type]
+    ];
+}
+
 function updateCategoryOptions(optionType, type, select) {
     select.innerHTML = "";
 
-    CATEGORY_OPTIONS[optionType][type].forEach(option => {
+    const options = optionType === "input" ? categoryOptions[type] : getFilterCategoryOptions(type);
+
+    options.forEach(option => {
         const categoryOption = document.createElement("option");
         categoryOption.value = option.value;
         categoryOption.textContent = option.label;
@@ -929,6 +912,13 @@ function updateToday() {
 
     const offset = new Date().getTimezoneOffset() * 60000;
     dateInput.value = new Date(Date.now() - offset).toISOString().substring(0, 10);
+}
+
+function addCategoryOption() {
+    console.log();
+    const category = {value: `custom-${DEFAULT_CATEGORY_OPTIONS["input"][categoryAddTypeSelect.value].length}`, label:categoryAddInput.value}
+
+    //saveCategoryOption();
 }
 
 //CSV function
@@ -1151,7 +1141,7 @@ function validateCSV(lines) {
         }
 
         const category = unescapeCSV(values[CSV.CATEGORY]);
-        const categoryExists = CATEGORY_OPTIONS.input[type]?.some( option => option.value === category );
+        const categoryExists = categoryOptions[type]?.some( option => option.value === category );
         if(!categoryExists) {
             alert("CSV 데이터 중, 거래 카테고리가 다른 데이터가 있습니다.");
             return false;
@@ -1241,3 +1231,38 @@ nowMonthBtn.click();
  *      change에서 일어나는 이벤트들을 모아둔 이벤트 객체가 알아서 importCSV로 전달된다.
  *      따라서 따로 (event) => importCSV(event)로 적지 않아도 괜찮다.
  */
+
+/* 21일차
+ * const categoryExists = categoryOptions[type]?.some( option => option.value === category );
+ *      categoryOptions[type]?.  : ?.의 의미는 optional shaining(옵셔널 체이닝).
+ *                                 앞의 값이 null이나 undefined가 아니라면 .some()을 실행하란 의미.
+ * 
+ *      some(option => option.value === category)   : .some()은 배열에서 쓰는 메서드.
+ *                                                    배열의 요소 중 조건을 만족하는 것이 하나라도 있는지 확인.
+ * 
+ * 
+ * const allCategory = Object.values(categoryOptions).flat();
+ * const uniqueCategories = [];
+ * const values = new Set();
+ *
+ * allCategory.forEach(category => {
+ *      if(!values.has(category.value)) {
+ *          values.add(category.value);
+ *          uniqueCategories.push(category);
+ *      }
+ * });
+ * 
+ * Object.values(categoryOptions).flat();   : categoryOptions의 모든 배열을 하나의 배열로 합친다.
+ *                                            categoryOptions 배열의 value(값)만 가져오고, flat()을 사용.
+ *                                            flat() 함수는 배열을 한 단계 평평하게 만든다. 배열 안에 배열이 들어있는 구조에서 배열만 있도록 수정하는 것.
+ *                                                  [ [ {...}, {...} ], [...] ] 구조에서 [ {...}, {...}, ... ] 구조로 만드는 것.
+ * 
+ * const values = new Set()                 : Set은 중복된 값을 저장하지 않는 자료구조. category.value가 이미 등장한 값인지 기억하기 위해 사용.
+ *                                            add("food")하고 add("food")하면 "food" 하나만 남는 형식.
+ * 
+ * values.has(category.value)               : .has() 함수는 Set에서 쓸 수 있는 것으로, 이 값이 Set 안에 이미 존재하는지 확인.
+ * values.add(category.value)               : .add() 함수는 Set에서 쓸 수 있는 것으로, () 안의 값을 Set에 기록.
+ *                                            if문에 의해 '현재 존재하지 않는 category.value 값을 기록'하는 용도로 사용된다.
+ * 
+ */
+
