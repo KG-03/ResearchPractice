@@ -158,6 +158,16 @@ header {
     display: none;
 }
 
+/*===== category add input area =====*/
+.category-add-input-area {
+    margin-left: 10px;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+
 /*===== budget card =====*/
 .budget-card {
     padding: 10px;
