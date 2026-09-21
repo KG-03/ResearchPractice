@@ -31,8 +31,9 @@ const addBtn = document.querySelector(".add-btn");
 const editCancelBtn = document.querySelector(".edit-cancel-btn");
 
 const categoryAddInput = document.querySelector(".category-add-input");
-const categoryAddBtn = document.querySelector(".category-add-btn");
-const categoryAddTypeSelect = document.querySelector(".category-add-type-select");
+const categoryAddOptionBtn = document.querySelector(".category-add-option-btn");
+const categoryDeleteOptionBtn = document.querySelector(".category-delete-option-btn");
+const categoryOptionSettingArea = document.querySelector(".category-option-setting-area");
 
 const filterResetBtn = document.querySelector(".filter-reset-btn");
 const typeFilter = document.querySelector(".type-filter");
@@ -51,7 +52,7 @@ const TYPE_OPTIONS = {
     expense: "지출",
     income: "수입",
     saving: "저축",
-    investment: "투자"
+    investment: "투자/재테크"
 };
 
 const DEFAULT_CATEGORY_OPTIONS = {
@@ -156,7 +157,7 @@ const CSV = {
 
 
 let transactions = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-let categoryOptions = JSON.parse(localStorage.getItem("CATEGORY_OPTIONS")) || structuredClone(DEFAULT_CATEGORY_OPTIONS);
+let categoryOptions = JSON.parse(localStorage.getItem("DEFAULT_CATEGORY_OPTIONS")) || structuredClone(DEFAULT_CATEGORY_OPTIONS);
 
 let today = new Date();
 let selectedMonthDate = new Date();
@@ -173,6 +174,8 @@ let currentCategoryFilter = "all";
 let currentSortFilter = "latest";
 let currentKeyword = "";
 let currentBudgetComparisonTransactions = [];
+let currentCategoryAddOptionSetting = false;
+let currentCategoryDeleteOptionSetting = false;
 
 let editingId = null;
 let isEditing = false;
@@ -284,13 +287,24 @@ editCancelBtn.addEventListener("click", () => {
     TOAST.show("수정이 취소되었습니다!");
 });
 
-categoryAddBtn.addEventListener("click", () => {
-    if(!categoryAddInput.value) {
-        alert("입력된 카테고리명이 없습니다!");
-        return;
-    }
+categoryAddOptionBtn.addEventListener("click", () => {
+    if(currentCategoryAddOptionSetting === true) return;
+    categoryOptionSettingArea.innerHTML = "";
+    currentCategoryDeleteOptionSetting = false;
 
-    addCategoryOption();
+    categoryOptionHTML("추가");
+
+    currentCategoryAddOptionSetting = true;
+});
+
+categoryDeleteOptionBtn.addEventListener("click", () => {
+    if(currentCategoryDeleteOptionSetting === true) return;
+    categoryOptionSettingArea.innerHTML = "";
+    currentCategoryAddOptionSetting = false;
+    
+    categoryOptionHTML("제거");
+
+    currentCategoryDeleteOptionSetting = true;
 });
 
 filterResetBtn.addEventListener("click", () => {
@@ -844,26 +858,114 @@ function budgetComparison() {
     budgetComparisonList.append(hideBtn);
 }
 
-//util function
-function saveTransactions() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+//category function
+function addCategoryOption(type, value, label) {
+    categoryOptions[type].push({value, label});
+    saveCategoryOption();
+
+    updateCategoryOptions("input", currentTypeSelect, categorySelect);
+    updateCategoryOptions("filter", currentTypeFilter, categoryFilter);
+
+    TOAST.show("카테고리가 추가되었습니다!");
 }
 
-function saveCategoryOption() {
-    localStorage.setItem("DEFAULT_CATEGORY_OPTIONS", JSON.stringify(categoryOptions));
+function deleteCategoryOption(type, categoryLabel) {
+    const categoryOption = categoryOptions[type].find(option => option.label === categoryLabel);
+    if(!categoryOption) return;
+
+    const categoryValue = categoryOption.value;
+    
+    const isUsed = transactions.some(transaction => transaction.type === type && transaction.category === categoryValue);
+    if(isUsed) {
+        alert("현재 거래에서 사용 중인 카테고리는 제거할 수 없습니다!");
+        return;
+    }
+
+    categoryOptions[type] = categoryOptions[type].filter(option => option.value !== categoryValue);
+
+    saveCategoryOption();
+
+    updateCategoryOptions("input", currentTypeSelect, categorySelect);
+    updateCategoryOptions("filter", currentTypeFilter, categoryFilter);
+
+    TOAST.show("카테고리가 제거되었습니다!");
 }
 
-function resetInputForm() {
-    dateInput.value = "";
-    amountInput.value = "";
-    typeSelect.value = "expense";
-        currentTypeSelect = typeSelect.value;
-        updateCategoryOptions("input", currentTypeSelect, categorySelect);
-    categorySelect.value = "food";
-    descriptionInput.value = "";
+function categoryOptionHTML(option) {
+    const header = document.createElement("p");
+    header.textContent = `카테고리 ${option}`;
+    categoryOptionSettingArea.append(header);
 
-    addBtn.textContent = "추가";
-    editCancelBtn.style.display = "none";
+    const categoryTypeSelect = document.createElement("select");
+    Object.entries(TYPE_OPTIONS).forEach(([value, label]) => {
+        if(value === "all") return;
+
+        const typeOption = document.createElement("option");
+        typeOption.value = value;
+        typeOption.textContent = label;
+
+        categoryTypeSelect.append(typeOption);
+    })
+    categoryOptionSettingArea.append(categoryTypeSelect);
+
+    const categoryInput = document.createElement("input");
+    categoryInput.type = "string";
+    categoryInput.placeholder = "카테고리명";
+    categoryOptionSettingArea.append(categoryInput);
+
+    const categoryBtn = document.createElement("button");
+    if(option === "추가") { categoryBtn.textContent = "추가"; }
+    else { categoryBtn.textContent = "제거"; }
+    categoryBtn.addEventListener("click", () => {
+        if(!categoryInput.value) {
+            alert("입력된 카테고리명이 없습니다!");
+            return;
+        }
+
+        const exists = categoryOptions[categoryTypeSelect.value].some(option => option.label === categoryInput.value);
+
+        if(option === "추가") {
+            if(exists) {
+                alert("이미 존재하는 카테고리입니다!");
+                return;
+            }
+
+            addCategoryOption(categoryTypeSelect.value, `custom-${Date.now()}`, categoryInput.value.toLowerCase().trim());
+        } else {
+            if(!exists) {
+                alert("존재하지 않는 카테고리입니다!");
+                return;
+            }
+
+            deleteCategoryOption(categoryTypeSelect.value, categoryInput.value.toLowerCase().trim());
+        }
+
+        categoryInput.value = "";
+        categoryTypeSelect.value = "expense";
+    });
+    categoryOptionSettingArea.append(categoryBtn);
+    
+    const categoryCancelBtn = document.createElement("button");
+    categoryCancelBtn.textContent = "입력 취소";
+    categoryCancelBtn.addEventListener("click", () => {
+        categoryOptionSettingArea.innerHTML = "";
+        currentCategoryAddOptionSetting = false;
+    });
+    categoryOptionSettingArea.append(categoryCancelBtn);
+}
+
+function updateCategoryOptions(optionType, type, select) {
+    select.innerHTML = "";
+
+    const options = optionType === "input" ? categoryOptions[type] : getFilterCategoryOptions(type);
+
+    options.forEach(option => {
+        const categoryOption = document.createElement("option");
+        categoryOption.value = option.value;
+        categoryOption.textContent = option.label;
+
+        select.append(categoryOption);
+    });
 }
 
 function getFilterCategoryOptions(type) {
@@ -892,18 +994,27 @@ function getFilterCategoryOptions(type) {
     ];
 }
 
-function updateCategoryOptions(optionType, type, select) {
-    select.innerHTML = "";
 
-    const options = optionType === "input" ? categoryOptions[type] : getFilterCategoryOptions(type);
+//util function
+function saveTransactions() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+}
 
-    options.forEach(option => {
-        const categoryOption = document.createElement("option");
-        categoryOption.value = option.value;
-        categoryOption.textContent = option.label;
+function saveCategoryOption() {
+    localStorage.setItem("DEFAULT_CATEGORY_OPTIONS", JSON.stringify(categoryOptions));
+}
 
-        select.append(categoryOption);
-    });
+function resetInputForm() {
+    dateInput.value = "";
+    amountInput.value = "";
+    typeSelect.value = "expense";
+        currentTypeSelect = typeSelect.value;
+        updateCategoryOptions("input", currentTypeSelect, categorySelect);
+    categorySelect.value = "food";
+    descriptionInput.value = "";
+
+    addBtn.textContent = "추가";
+    editCancelBtn.style.display = "none";
 }
 
 function updateToday() {
@@ -912,13 +1023,6 @@ function updateToday() {
 
     const offset = new Date().getTimezoneOffset() * 60000;
     dateInput.value = new Date(Date.now() - offset).toISOString().substring(0, 10);
-}
-
-function addCategoryOption() {
-    console.log();
-    const category = {value: `custom-${DEFAULT_CATEGORY_OPTIONS["input"][categoryAddTypeSelect.value].length}`, label:categoryAddInput.value}
-
-    //saveCategoryOption();
 }
 
 //CSV function
