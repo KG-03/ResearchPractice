@@ -158,8 +158,9 @@ header {
     display: none;
 }
 
-/*===== category add input area =====*/
-.category-add-input-area {
+/*===== category option input area =====*/
+.category-option-area,
+.category-option-setting-area {
     margin-left: 10px;
 
     display: flex;
