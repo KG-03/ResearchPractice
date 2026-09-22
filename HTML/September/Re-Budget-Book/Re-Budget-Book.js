@@ -32,6 +32,7 @@ const editCancelBtn = document.querySelector(".edit-cancel-btn");
 
 const categoryAddInput = document.querySelector(".category-add-input");
 const categoryAddOptionBtn = document.querySelector(".category-add-option-btn");
+const categoryEditOptionBtn = document.querySelector(".category-edit-option-btn");
 const categoryDeleteOptionBtn = document.querySelector(".category-delete-option-btn");
 const categoryOptionSettingArea = document.querySelector(".category-option-setting-area");
 
@@ -175,6 +176,7 @@ let currentSortFilter = "latest";
 let currentKeyword = "";
 let currentBudgetComparisonTransactions = [];
 let currentCategoryAddOptionSetting = false;
+let currentCategoryEditOptionSetting = false;
 let currentCategoryDeleteOptionSetting = false;
 
 let editingId = null;
@@ -289,7 +291,9 @@ editCancelBtn.addEventListener("click", () => {
 
 categoryAddOptionBtn.addEventListener("click", () => {
     if(currentCategoryAddOptionSetting === true) return;
+
     categoryOptionSettingArea.innerHTML = "";
+    currentCategoryEditOptionSetting = false;
     currentCategoryDeleteOptionSetting = false;
 
     categoryOptionHTML("추가");
@@ -297,9 +301,23 @@ categoryAddOptionBtn.addEventListener("click", () => {
     currentCategoryAddOptionSetting = true;
 });
 
+categoryEditOptionBtn.addEventListener("click", () => {
+    if(currentCategoryEditOptionSetting === true) return;
+
+    categoryOptionSettingArea.innerHTML = "";
+    currentCategoryAddOptionSetting = false;
+    currentCategoryDeleteOptionSetting = false;
+
+    categoryOptionHTML("수정");
+
+    currentCategoryEditOptionSetting = true;
+});
+
 categoryDeleteOptionBtn.addEventListener("click", () => {
     if(currentCategoryDeleteOptionSetting === true) return;
+
     categoryOptionSettingArea.innerHTML = "";
+    currentCategoryEditOptionSetting = false;
     currentCategoryAddOptionSetting = false;
     
     categoryOptionHTML("제거");
@@ -869,6 +887,21 @@ function addCategoryOption(type, value, label) {
     TOAST.show("카테고리가 추가되었습니다!");
 }
 
+function editCategoryOption(type, originalCategoryValue, categoryLabel) {
+    const categoryOption = categoryOptions[type].find(option => option.value === originalCategoryValue);
+    if(!categoryOption) return;
+    
+    categoryOption.label = categoryLabel;
+
+    saveCategoryOption();
+
+    updateCategoryOptions("input", currentTypeSelect, categorySelect);
+    updateCategoryOptions("filter", currentTypeFilter, categoryFilter);
+    renderPage();
+
+    TOAST.show("카테고리가 수정되었습니다!");
+}
+
 function deleteCategoryOption(type, categoryLabel) {
     const categoryOption = categoryOptions[type].find(option => option.label === categoryLabel);
     if(!categoryOption) return;
@@ -896,7 +929,7 @@ function categoryOptionHTML(option) {
     header.textContent = `카테고리 ${option}`;
     categoryOptionSettingArea.append(header);
 
-    const categoryTypeSelect = document.createElement("select");
+    const categoryOptionTypeSelect = document.createElement("select");
     Object.entries(TYPE_OPTIONS).forEach(([value, label]) => {
         if(value === "all") return;
 
@@ -904,44 +937,68 @@ function categoryOptionHTML(option) {
         typeOption.value = value;
         typeOption.textContent = label;
 
-        categoryTypeSelect.append(typeOption);
+        categoryOptionTypeSelect.append(typeOption);
     })
-    categoryOptionSettingArea.append(categoryTypeSelect);
+    categoryOptionSettingArea.append(categoryOptionTypeSelect);
+
+    const categoryOptionEditSelect = document.createElement("select");
+    if(option === "수정") {
+        categoryOptionTypeSelect.addEventListener("change", () => {
+            updateCategoryOptions("input", categoryOptionTypeSelect.value, categoryOptionEditSelect)
+        });
+        updateCategoryOptions("input", categoryOptionTypeSelect.value, categoryOptionEditSelect);
+        categoryOptionSettingArea.append(categoryOptionEditSelect);
+    }
 
     const categoryInput = document.createElement("input");
-    categoryInput.type = "string";
+    categoryInput.type = "text";
     categoryInput.placeholder = "카테고리명";
     categoryOptionSettingArea.append(categoryInput);
 
     const categoryBtn = document.createElement("button");
     if(option === "추가") { categoryBtn.textContent = "추가"; }
+    else if(option === "수정") { categoryBtn.textContent = "수정"}
     else { categoryBtn.textContent = "제거"; }
     categoryBtn.addEventListener("click", () => {
-        if(!categoryInput.value) {
+        const type = categoryOptionTypeSelect.value;
+        const newLabel = categoryInput.value.toLowerCase().trim();
+
+        if(!newLabel) {
             alert("입력된 카테고리명이 없습니다!");
             return;
         }
 
-        const exists = categoryOptions[categoryTypeSelect.value].some(option => option.label === categoryInput.value);
-
         if(option === "추가") {
+            const exists = categoryOptions[type].some(option => option.label === newLabel);
             if(exists) {
                 alert("이미 존재하는 카테고리입니다!");
                 return;
             }
 
-            addCategoryOption(categoryTypeSelect.value, `custom-${Date.now()}`, categoryInput.value.toLowerCase().trim());
+            addCategoryOption(type, `custom-${Date.now()}`, newLabel);
+        } else if(option === "수정") {
+            const originalValue = categoryOptionEditSelect.value;
+
+            const exists = categoryOptions[type].some(option => option.value !== originalValue && option.label === newLabel);
+            if(exists) {
+                alert("이미 존재하는 카테고리명입니다!")
+                return;
+            }
+
+            editCategoryOption(type, originalValue, newLabel);
+            updateCategoryOptions("input", categoryOptionTypeSelect.value, categoryOptionEditSelect);
         } else {
+            const exists = categoryOptions[type].some(option => option.label === newLabel);
             if(!exists) {
                 alert("존재하지 않는 카테고리입니다!");
                 return;
             }
 
-            deleteCategoryOption(categoryTypeSelect.value, categoryInput.value.toLowerCase().trim());
+            deleteCategoryOption(type, newLabel);
         }
 
         categoryInput.value = "";
-        categoryTypeSelect.value = "expense";
+        categoryOptionTypeSelect.value = "expense";
     });
     categoryOptionSettingArea.append(categoryBtn);
     
