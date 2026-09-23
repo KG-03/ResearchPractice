@@ -158,7 +158,7 @@ const CSV = {
 
 
 let transactions = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-let categoryOptions = JSON.parse(localStorage.getItem("DEFAULT_CATEGORY_OPTIONS")) || structuredClone(DEFAULT_CATEGORY_OPTIONS);
+let categoryOptions = JSON.parse(localStorage.getItem("CATEGORY_OPTIONS")) || structuredClone(DEFAULT_CATEGORY_OPTIONS);
 
 let today = new Date();
 let selectedMonthDate = new Date();
@@ -924,6 +924,12 @@ function deleteCategoryOption(type, categoryLabel) {
     TOAST.show("카테고리가 제거되었습니다!");
 }
 
+function findCategoryOption(type, label) {
+    const categoryOption = categoryOptions[type].find(option => option.label === label);
+    
+    return categoryOption.value;
+}
+
 function categoryOptionHTML(option) {
     const header = document.createElement("p");
     header.textContent = `카테고리 ${option}`;
@@ -985,12 +991,22 @@ function categoryOptionHTML(option) {
                 return;
             }
 
+            if(isDefaultCategoryOption(type, originalValue)) {
+                alert("기본 카테고리는 수정할 수 없습니다!");
+                return;
+            }
+
             editCategoryOption(type, originalValue, newLabel);
             updateCategoryOptions("input", categoryOptionTypeSelect.value, categoryOptionEditSelect);
         } else {
             const exists = categoryOptions[type].some(option => option.label === newLabel);
             if(!exists) {
                 alert("존재하지 않는 카테고리입니다!");
+                return;
+            }
+
+            if(isDefaultCategoryOption(type, findCategoryOption(type, categoryInput.value))) {
+                alert("기본 카테고리는 삭제할 수 없습니다!");
                 return;
             }
 
@@ -1051,6 +1067,9 @@ function getFilterCategoryOptions(type) {
     ];
 }
 
+function isDefaultCategoryOption(type, categoryValue) {
+    return DEFAULT_CATEGORY_OPTIONS[type]?.some(option => option.value === categoryValue);
+}
 
 //util function
 function saveTransactions() {
@@ -1058,7 +1077,7 @@ function saveTransactions() {
 }
 
 function saveCategoryOption() {
-    localStorage.setItem("DEFAULT_CATEGORY_OPTIONS", JSON.stringify(categoryOptions));
+    localStorage.setItem("CATEGORY_OPTIONS", JSON.stringify(categoryOptions));
 }
 
 function resetInputForm() {
