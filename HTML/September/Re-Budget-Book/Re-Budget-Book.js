@@ -841,14 +841,30 @@ function budgetComparison() {
     consumeText.textContent = `이번 달 지출: ${consume.toLocaleString('ko-KR')}원`;
     budgetComparisonList.append(consumeText);
 
-    const budgetConsumeComparison = document.createElement("p");
-    budgetComparisonList.append(budgetConsumeComparison);
+    const row = document.createElement("div");
+    row.classList.add("summary-grape-row");
+
+        const budgetConsumeComparison = document.createElement("p");
+
+        const barTrack = document.createElement("div");
+        barTrack.classList.add("summary-grape-track");
+
+        const barChart = document.createElement("div");
+        barChart.classList.add("summary-category-bar");
+
+        const bar = document.createElement("div");
+        bar.classList.add("summary-category-bar");
+        
+    barTrack.append(bar);
+    row.append(budgetConsumeComparison, barTrack);
+    budgetComparisonList.append(row);
 
     budgetInput.addEventListener("input", () => {
         const budget = Number(budgetInput.value);
         if(budget <= 0) {
             budgetConsumeComparison.textContent = "예산을 입력해주세요!";
             budgetConsumeComparison.classList.remove("budget-comparison-shortage");
+            bar.style.width = "0%";
             return;
         }
 
@@ -861,6 +877,9 @@ function budgetComparison() {
             budgetConsumeComparison.classList.remove("budget-comparison-shortage");
             budgetConsumeComparison.textContent = `남은 예산: ${comparison.toLocaleString('ko-KR')}원`;
         };
+
+        const width = consume / budget * 100;
+        bar.style.width = `${width}%`;
     });
 
     const hideBtn = document.createElement("button");
@@ -876,7 +895,7 @@ function budgetComparison() {
     budgetComparisonList.append(hideBtn);
 }
 
-//category function
+//category option function
 function addCategoryOption(type, value, label) {
     categoryOptions[type].push({value, label});
     saveCategoryOption();
