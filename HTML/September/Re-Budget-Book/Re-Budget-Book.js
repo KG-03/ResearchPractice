@@ -558,7 +558,43 @@ function renderTransactions() {
     }
 
     currentBudgetComparisonTransactions = filteredTransactions;
-    filteredTransactions.forEach(transaction => budgetList.append(createTransactionCard(transaction)));
+
+    const groupedTransactions = groupTransactionsByDate(filteredTransactions);
+    const sortedDates = Object.keys(groupedTransactions).sort((a, b) => {
+        if(currentSortFilter === "dates_desc") {
+            return new Date(b) - new Date(a);
+        }
+        return new Date(a) - new Date(b);
+    });
+
+    sortedDates.forEach(date => {
+        const dateGroup = document.createElement("div");
+        dateGroup.classList.add("grouping-budget-card");
+
+        const dateTitle = document.createElement("h3");
+        dateTitle.textContent = date;
+        dateGroup.append(dateTitle);
+
+        groupedTransactions[date].forEach(transaction => {
+            dateGroup.append(createTransactionCard(transaction))
+        });
+
+        budgetList.append(dateGroup);
+    });
+
+    //filteredTransactions.forEach(transaction => budgetList.append(createTransactionCard(transaction)));
+}
+
+function groupTransactionsByDate(targetTransactions) {
+    return targetTransactions.reduce((result, transaction) => {
+        if (!result[transaction.date]) {
+            result[transaction.date] = [];
+        }
+
+        result[transaction.date].push(transaction);
+
+        return result;
+    }, {});
 }
 
 function renderPage() {
