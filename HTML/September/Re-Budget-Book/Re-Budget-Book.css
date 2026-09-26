@@ -170,6 +170,14 @@ header {
 
 
 /*===== budget card =====*/
+.grouping-budget-card {
+    margin-bottom: 20px;
+}
+
+.grouping-budget-card h3 {
+    margin-bottom: 10px;
+}
+
 .budget-card {
     padding: 10px;
     margin-bottom: 10px;
