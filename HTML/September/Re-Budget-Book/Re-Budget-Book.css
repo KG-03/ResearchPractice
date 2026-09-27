@@ -178,6 +178,15 @@ header {
     margin-bottom: 10px;
 }
 
+.grouping-budget-card-subtotal {
+    display: flex;
+    gap: 20px;
+    margin-left: 20px;
+    margin-bottom: 30px;
+
+    line-height: 10px;
+}
+
 .budget-card {
     padding: 10px;
     margin-bottom: 10px;
