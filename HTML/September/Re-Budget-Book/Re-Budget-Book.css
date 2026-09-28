@@ -179,12 +179,15 @@ header {
 }
 
 .grouping-budget-card-subtotal {
-    display: flex;
-    gap: 20px;
     margin-left: 20px;
     margin-bottom: 30px;
 
     line-height: 10px;
+}
+
+.grouping-budget-card-type-subtotal {
+    display: flex;
+    gap: 20px;
 }
 
 .budget-card {
