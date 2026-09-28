@@ -567,6 +567,33 @@ function renderTransactions() {
         return new Date(a) - new Date(b);
     });
 
+    const calculationDates = Object.keys(groupedTransactions).sort((a, b) => new Date(a) - new Date(b));
+
+    let dailySubtotal = 0;
+    let dailySummary = {};
+
+    calculationDates.forEach(date => {
+        const dateTransactions = groupedTransactions[date];
+
+        const incomeAmount = summaryTransactionAmount(dateTransactions, "type", "income");
+        const expenseAmount = summaryTransactionAmount(groupedTransactions[date], "type", "expense");
+        const savingAmount = summaryTransactionAmount(groupedTransactions[date], "type", "saving");
+        const investmentAmount = summaryTransactionAmount(groupedTransactions[date], "type", "investment");
+        const subtotalAmount = incomeAmount - expenseAmount - savingAmount - investmentAmount;
+
+        dailySubtotal += subtotalAmount;
+
+        dailySummary[date] = {
+            incomeAmount,
+            expenseAmount,
+            savingAmount,
+            investmentAmount,
+            subtotalAmount,
+            dailySubtotal
+        };
+    });
+
+
     sortedDates.forEach(date => {
         const dateGroup = document.createElement("div");
         dateGroup.classList.add("grouping-budget-card");
@@ -579,28 +606,47 @@ function renderTransactions() {
             dateGroup.append(createTransactionCard(transaction));
         });
 
-        const groupSubtotal = document.createElement("div");
-        groupSubtotal.classList.add("grouping-budget-card-subtotal")
-            const incomeAmount = summaryTransactionAmount(groupedTransactions[date], "type", "income");
-            const expenseAmount = summaryTransactionAmount(groupedTransactions[date], "type", "expense");
-            const savingAmount = summaryTransactionAmount(groupedTransactions[date], "type", "saving");
-            const investmentAmount = summaryTransactionAmount(groupedTransactions[date], "type", "investment");
+        const {
+            incomeAmount,
+            expenseAmount,
+            savingAmount,
+            investmentAmount,
+            subtotalAmount,
+            dailySubtotal
+        } = dailySummary[date];
 
-            const incomeSubtotal = document.createElement("p");
-            incomeSubtotal.textContent = `수입 소계: ${incomeAmount.toLocaleString('ko-KR')}원`;
-            const expenseSubtotal = document.createElement("p");
-            expenseSubtotal.textContent = `지출 소계: ${expenseAmount.toLocaleString('ko-KR')}원`;
-            const savingSubtotal = document.createElement("p");
-            savingSubtotal.textContent = `저축 소계: ${savingAmount.toLocaleString('ko-KR')}원`;
-            const investmentSubtotal = document.createElement("p");
-            investmentSubtotal.textContent = `투자 소계: ${investmentAmount.toLocaleString('ko-KR')}원`;
-        groupSubtotal.append(incomeSubtotal, expenseSubtotal, savingSubtotal, investmentSubtotal);
+        const groupSubtotal = document.createElement("div");
+        groupSubtotal.classList.add("grouping-budget-card-subtotal");
+
+            const typeSubtotalArea = document.createElement("div");
+            typeSubtotalArea.classList.add("grouping-budget-card-type-subtotal");
+
+                const incomeSubtotal = document.createElement("p");
+                incomeSubtotal.textContent = `수입 소계: ${incomeAmount.toLocaleString('ko-KR')}원`;
+                const expenseSubtotal = document.createElement("p");
+                expenseSubtotal.textContent = `지출 소계: ${expenseAmount.toLocaleString('ko-KR')}원`;
+                const savingSubtotal = document.createElement("p");
+                savingSubtotal.textContent = `저축 소계: ${savingAmount.toLocaleString('ko-KR')}원`;
+                const investmentSubtotal = document.createElement("p");
+                investmentSubtotal.textContent = `투자 소계: ${investmentAmount.toLocaleString('ko-KR')}원`;
+
+            typeSubtotalArea.append(incomeSubtotal, expenseSubtotal, savingSubtotal, investmentSubtotal);
+
+            const dailySubtotalArea = document.createElement("div");
+
+                const dailyNetChange = document.createElement("p");
+                dailyNetChange.textContent = `일일 변동: ${subtotalAmount.toLocaleString('ko-KR')}원`;
+                const runningSubtotal = document.createElement("p");
+                runningSubtotal.textContent = `누적: ${dailySubtotal.toLocaleString('ko-KR')}원`;
+
+            dailySubtotalArea.append(dailyNetChange, runningSubtotal);
+
+        groupSubtotal.append(typeSubtotalArea, dailySubtotalArea);
+        
         dateGroup.append(groupSubtotal);
 
         budgetList.append(dateGroup);
     });
-
-    //filteredTransactions.forEach(transaction => budgetList.append(createTransactionCard(transaction)));
 }
 
 function groupTransactionsByDate(targetTransactions) {
