@@ -9,6 +9,8 @@ const summaryMonthList = document.querySelector(".summary-month-list");
 const summaryCategoryType = document.querySelector(".summary-category-type");
 const summaryCategoryList = document.querySelector(".summary-category-list");
 
+const monthlyCumulativeChangeChartGraph = document.querySelector(".monthly-cumulative-change-graph");
+
 const selectedMonth = document.querySelector(".selected-month");
 const prevMonthBtn = document.querySelector(".prev-month-btn");
 const nowMonthBtn = document.querySelector(".now-month-btn");
@@ -543,110 +545,87 @@ function createTransactionCard(transaction) {
 }
 
 //render function
-function renderTransactions() {
-    budgetList.innerHTML = "";
-    currentBudgetComparisonTransactions = [];
-
+function renderPage() {
     const filteredTransactions = getVisibleTransactions();
+    const groupedTransactions = groupTransactionsByDate(filteredTransactions);
+    const dailySummary = calculateDailySummary(groupedTransactions);
 
-    displayFilteredTransactionsNumber.textContent = `현재 표시되는 거래 내역은 ${filteredTransactions.length}건 입니다.`;
+    renderTransactions(filteredTransactions, groupedTransactions, dailySummary);
+    renderSummary();
+    renderBalanceChart(dailySummary);
+}
 
-    if(!filteredTransactions.length) {
-        const message = transactions.length === 0 ? "❌ 아직 등록된 거래가 없습니다!" : "❎ 조건에 맞는 거래가 없습니다!";
-        budgetList.innerHTML = message;
-        return;
-    }
+function renderTransactions(filteredTransactions, groupedTransactions, dailySummary) {
+    budgetList.innerHTML = "";
 
     currentBudgetComparisonTransactions = filteredTransactions;
 
-    const groupedTransactions = groupTransactionsByDate(filteredTransactions);
+    displayFilteredTransactionsNumber.textContent = `현재 표시되는 거래 내역은 ${filteredTransactions.length}건 입니다.`;
+
+    if (!filteredTransactions.length) {
+        const message = transactions.length === 0
+                ? "❌ 아직 등록된 거래가 없습니다!"
+                : "❎ 조건에 맞는 거래가 없습니다!";
+
+        budgetList.textContent = message;
+        return;
+    }
+
     const sortedDates = Object.keys(groupedTransactions).sort((a, b) => {
-        if(currentSortFilter === "dates_desc") {
-            return new Date(b) - new Date(a);
-        }
+        if (currentSortFilter === "dates_desc") { return new Date(b) - new Date(a); }
+
         return new Date(a) - new Date(b);
     });
 
-    const calculationDates = Object.keys(groupedTransactions).sort((a, b) => new Date(a) - new Date(b));
-
-    let dailySubtotal = 0;
-    let dailySummary = {};
-
-    calculationDates.forEach(date => {
-        const dateTransactions = groupedTransactions[date];
-
-        const incomeAmount = summaryTransactionAmount(dateTransactions, "type", "income");
-        const expenseAmount = summaryTransactionAmount(groupedTransactions[date], "type", "expense");
-        const savingAmount = summaryTransactionAmount(groupedTransactions[date], "type", "saving");
-        const investmentAmount = summaryTransactionAmount(groupedTransactions[date], "type", "investment");
-        const subtotalAmount = incomeAmount - expenseAmount - savingAmount - investmentAmount;
-
-        dailySubtotal += subtotalAmount;
-
-        dailySummary[date] = {
-            incomeAmount,
-            expenseAmount,
-            savingAmount,
-            investmentAmount,
-            subtotalAmount,
-            dailySubtotal
-        };
-    });
-
-
     sortedDates.forEach(date => {
-        const dateGroup = document.createElement("div");
-        dateGroup.classList.add("grouping-budget-card");
-
-        const dateTitle = document.createElement("h3");
-        dateTitle.textContent = date;
-        dateGroup.append(dateTitle);
-
-        groupedTransactions[date].forEach(transaction => {
-            dateGroup.append(createTransactionCard(transaction));
-        });
-
-        const {
-            incomeAmount,
-            expenseAmount,
-            savingAmount,
-            investmentAmount,
-            subtotalAmount,
-            dailySubtotal
-        } = dailySummary[date];
-
-        const groupSubtotal = document.createElement("div");
-        groupSubtotal.classList.add("grouping-budget-card-subtotal");
-
-            const typeSubtotalArea = document.createElement("div");
-            typeSubtotalArea.classList.add("grouping-budget-card-type-subtotal");
-
-                const incomeSubtotal = document.createElement("p");
-                incomeSubtotal.textContent = `수입 소계: ${incomeAmount.toLocaleString('ko-KR')}원`;
-                const expenseSubtotal = document.createElement("p");
-                expenseSubtotal.textContent = `지출 소계: ${expenseAmount.toLocaleString('ko-KR')}원`;
-                const savingSubtotal = document.createElement("p");
-                savingSubtotal.textContent = `저축 소계: ${savingAmount.toLocaleString('ko-KR')}원`;
-                const investmentSubtotal = document.createElement("p");
-                investmentSubtotal.textContent = `투자 소계: ${investmentAmount.toLocaleString('ko-KR')}원`;
-
-            typeSubtotalArea.append(incomeSubtotal, expenseSubtotal, savingSubtotal, investmentSubtotal);
-
-            const dailySubtotalArea = document.createElement("div");
-
-                const dailyNetChange = document.createElement("p");
-                dailyNetChange.textContent = `일일 변동: ${subtotalAmount.toLocaleString('ko-KR')}원`;
-                const runningSubtotal = document.createElement("p");
-                runningSubtotal.textContent = `누적: ${dailySubtotal.toLocaleString('ko-KR')}원`;
-
-            dailySubtotalArea.append(dailyNetChange, runningSubtotal);
-
-        groupSubtotal.append(typeSubtotalArea, dailySubtotalArea);
-        
-        dateGroup.append(groupSubtotal);
-
-        budgetList.append(dateGroup);
+        budgetList.append(renderSummarySubtotal(date, groupedTransactions[date], dailySummary));
     });
+}
+
+function renderSummarySubtotal(date, dateTransactions, dailySummary) {
+    const groupingCard = document.createElement("div");
+    groupingCard.classList.add("grouping-budget-card");
+
+    const dateTitle = document.createElement("h3");
+    dateTitle.textContent = date;
+    groupingCard.append(dateTitle);
+
+    dateTransactions.forEach(transaction => {
+        groupingCard.append(createTransactionCard(transaction));
+    });
+
+    const subtotal = dailySummary[date];
+
+    const subtotalContainer = document.createElement("div");
+    subtotalContainer.classList.add("grouping-budget-card-subtotal");
+
+    const subtotalTypeContainer = document.createElement("div");
+    subtotalTypeContainer.classList.add("grouping-budget-card-type-subtotal");
+
+        const incomeText = document.createElement("p");
+        incomeText.textContent = `수입: ${subtotal.incomeAmount.toLocaleString("ko-KR")}원`;
+
+        const expenseText = document.createElement("p");
+        expenseText.textContent = `지출: ${subtotal.expenseAmount.toLocaleString("ko-KR")}원`;
+
+        const savingText = document.createElement("p");
+        savingText.textContent = `저축: ${subtotal.savingAmount.toLocaleString("ko-KR")}원`;
+
+        const investmentText = document.createElement("p");
+        investmentText.textContent = `투자: ${subtotal.investmentAmount.toLocaleString("ko-KR")}원`;
+
+    subtotalTypeContainer.append(incomeText, expenseText, savingText, investmentText);
+
+    const dailyChangeText = document.createElement("p");
+    dailyChangeText.textContent = `일일 변동: ${subtotal.subtotalAmount.toLocaleString("ko-KR")}원`;
+
+    const cumulativeText = document.createElement("p");
+    cumulativeText.textContent = `누적: ${subtotal.cumulativeAmount.toLocaleString("ko-KR")}원`;
+
+    subtotalContainer.append(subtotalTypeContainer, dailyChangeText,cumulativeText);
+    groupingCard.append(subtotalContainer);
+
+    return groupingCard;
 }
 
 function groupTransactionsByDate(targetTransactions) {
@@ -661,10 +640,95 @@ function groupTransactionsByDate(targetTransactions) {
     }, {});
 }
 
-function renderPage() {
-    renderTransactions();
-    renderSummary();
+function renderBalanceChart(dailySummary) {
+    const width = 800;
+    const height = 400;
+    const padding = 40;
+
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    svg.classList.add("balance-chart");
+
+    const dates = Object.keys(dailySummary);
+    const values = dates.map(date => dailySummary[date].cumulativeAmount);
+
+    const maxValue = Math.max(...values, 0);
+    const minValue = Math.min(...values, 0);
+
+    const points = [];
+
+    dates.forEach((date, index) => {
+        const value = dailySummary[date].cumulativeAmount;
+
+        const x = balanceChartgetX(index, dates.length, width, padding);
+        const y = balanceChartgetY(value, minValue, maxValue, height, padding);
+
+        points.push(`${x},${y}`);
+
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("cx", x);
+        circle.setAttribute("cy", y);
+        circle.setAttribute("r", "4");
+
+        svg.append(circle);
+    });
+
+    const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+    polyline.setAttribute("points", points.join(" "));
+    polyline.setAttribute("fill", "none");
+    polyline.setAttribute("stroke", "black");
+    polyline.setAttribute("stroke-width", "2");
+
+    svg.append(polyline);
+
+    monthlyCumulativeChangeChartGraph.innerHTML = "";
+    monthlyCumulativeChangeChartGraph.append(svg);
 }
+
+    function balanceChartgetX(index, count, width, padding) {
+        if (count === 1) return width / 2;
+
+        return padding
+            + index / (count - 1)
+            * (width - padding * 2);
+    }
+
+    function balanceChartgetY(value, minValue, maxValue, height, padding) {
+        if (maxValue === minValue) return height / 2;
+
+        return height - padding
+            - ((value - minValue) / (maxValue - minValue))
+            * (height - padding * 2);
+    }
+
+function calculateDailySummary(groupedTransactions) {
+    const calculationDates = Object.keys(groupedTransactions).sort((a, b) => new Date(a) - new Date(b));
+
+    let cumulativeAmount = 0;
+
+    const dailySummary = {};
+
+    calculationDates.forEach(date => {
+        const dateTransactions = groupedTransactions[date];
+        const dateSubtotal = calculateDateSubtotal(dateTransactions);
+
+        cumulativeAmount += dateSubtotal.subtotalAmount;
+
+        dailySummary[date] = { ...dateSubtotal, cumulativeAmount };
+    });
+
+    return dailySummary;
+}
+
+    function calculateDateSubtotal(dateTransactions) {
+        const incomeAmount = summaryTransactionAmount(dateTransactions, "type", "income");
+        const expenseAmount = summaryTransactionAmount(dateTransactions, "type", "expense");
+        const savingAmount = summaryTransactionAmount(dateTransactions, "type", "saving");
+        const investmentAmount = summaryTransactionAmount(dateTransactions, "type", "investment");
+        const subtotalAmount = incomeAmount - expenseAmount - savingAmount - investmentAmount;
+
+        return { incomeAmount, expenseAmount, savingAmount, investmentAmount, subtotalAmount };
+    }
 
 //filter function
 function getVisibleTransactions() {
@@ -840,7 +904,7 @@ function createSummaryCategoryCard(category, amount, maxAmount) {
             .reduce((result, transaction) => result + transaction.amount, 0);
     }
 
-//summary grape function
+//grape function
 function summaryGrape() {
     summaryGrapeList.style.display = "block";
     summaryGrapeList.innerHTML = "";
@@ -1565,3 +1629,52 @@ nowMonthBtn.click();
  * 
  */
 
+/* 29일차
+ * renderBalanceChart() 함수
+ * svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); : svg 요소를 만든다.
+ *                                                                        svg 네임스페이스에 속하는 <svg> 요소를 만들어라.
+ *                                                                        html과 svg는 브라우저에서 서로 다른 네임스페이스를 사용하기 때문에 NS를 사용.
+ *          document.createElementNS(네임스페이스, 요소이름)    : 이 네임스페이스에 속하는 이 이름의 요소를 만들어달라는 의미.
+ *          "http://www.w3.org/2000/svg"    : svg 네임스페이스. 브라우저에게 '지금 만들려는 요소가 svg에 속한 요소다'라는 것을 알려주는 것.
+ *          "svg"                           : 만들 요소의 이름.
+ *
+ * svg.setAttribute("viewBox", `0 0 ${width} ${height}`);   : svg의 좌표 영역을 지정한다. 내부 좌표계를 설정하는 것.
+ *                                                            viewBox="0 0 widht, height" 를 한 것.
+ * 
+ * const values = dates.map(date => dailySummary[date].cumulativeAmount);   : 각 날짜의 누적 금액만 가져온다.
+ * 
+ * dates.forEach((date, index) => { ... }   : date는 다루려는 날짜, index는 몇 번째 날짜인지를 표시.
+ * 
+ * const x = balanceChartgetX(index, dates.length, width, padding); : 몇 번째 날짜인지, 그래프의 가로축에서 몇 px 위치인지를 가져온다.
+ * const y = balanceChartgetY(value, minValue, maxValue, height, padding);  : 금액이 얼마인지, 그래프의 세로축에서 몇 px 위치인지를 가져온다.
+ *                                                                            단, 금액이 클 수록 Y값은 작아져야 위쪽에 표시된다.
+ * 
+ * const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle"); : 각 데이터 위치에 점을 생성.
+ * circle.setAttribute("r", "4");   : r은 반지름. 4px짜리 점을 생성.
+ * 
+ * const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");     : 여러 좌표를 직선으로 연결하는 svg 요소.
+ * polyline.setAttribute("points", points.join(" "));       : points가 ["40,300", "400,200", "760,100"] 이라면,
+ *                                                            <polyline points="40,300 400,200 760,100"> 이 된다.
+ * polyline.setAttribute("stroke", "black");    : 선 색상
+ * polyline.setAttribute("stroke-width", "2");  : 선 굵기
+ * 
+ * 
+ * balanceChartgetX(index, count, width, padding)   : index로 현재 데이터가 몇 번째인지 확인.
+ *                                                    count로 전체 데이터 개수 확인.
+ *                                                    width로 svg 전체 가로 길이 확인.
+ *                                                    padding으로 svg 양쪽에 확보해둔 여백 확인.
+ *      if (count === 1) return width / 2;   : 데이터가 1개밖에 없다면 가운데에 점을 찍겠다는 의미.
+ *      return padding + index / (count - 1) * (width - padding * 2);    :
+ *          index / (count - 1) : 현재 데이터가 전체 구간에서 어느 정도 위치에 있는지를 구한다.
+ *                                개수가 5개일 때, index에 따라 값이 0/4=0, 1/4=0.25, 2/4=0.5 ... 이런 형식.
+ *          width - padding * 2 : 실제로 점을 배치할 수 있는 가로 공간. 양쪽 여백을 제거.
+ *          위의 두 개를 곱하면 '현재 데이터 위치 비율 * 실제 그래프 가로 길이'.
+ *          여기서 padding을 더하는 것은 여백만큼 띄우고 시작해야 하기 때문.
+ * 
+ * 
+ * balanceChartgetY(value, minValue, maxValue, height, padding) : 위와 비슷하게 동작. 다만 svg는 y값이 커질수록 아래로 배치된다.
+ *      if (maxValue === minValue) return height / 2;   : 최댓값 === 최솟값 < 이 의미는 모든 데이터의 금액이 같다는 의미. 가운데에 배치하기 위해 height/2.
+ *      return height - padding - ((value - minValue) / (maxValue - minValue)) * (height - padding * 2);    :
+ *          height - padding    : 그래프의 아래쪽에 배치하기 위한 형태. 그 뒤의 코드(계산된 거리)만큼 위로 올라간다.
+ *          (value - minValue) / (maxValue - minValue)  : 현재 값이 최솟값~최댓값 사이에서 어디에 있는지를 비율로 계산.
+ */
