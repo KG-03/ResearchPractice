@@ -72,6 +72,23 @@ header {
     align-items: center;
 }
 
+.monthly-cumulative-change-chart-graph {
+    position: relative;
+    overflow: visible;
+}
+
+.balance-chart-tooltip {
+    position: absolute;
+    z-index: 10;
+    pointer-events: none;
+
+    padding: 6px 10px;
+    border-radius: 5px;
+
+    background: white;
+    white-space: nowrap;
+}
+
 .export-btn,
 .import-btn,
 .prev-month-btn,
