@@ -9,7 +9,7 @@ const summaryMonthList = document.querySelector(".summary-month-list");
 const summaryCategoryType = document.querySelector(".summary-category-type");
 const summaryCategoryList = document.querySelector(".summary-category-list");
 
-const monthlyCumulativeChangeChartGraph = document.querySelector(".monthly-cumulative-change-graph");
+const monthlyCumulativeChangeChartGraph = document.querySelector(".monthly-cumulative-change-chart-graph");
 
 const selectedMonth = document.querySelector(".selected-month");
 const prevMonthBtn = document.querySelector(".prev-month-btn");
@@ -643,7 +643,7 @@ function groupTransactionsByDate(targetTransactions) {
 function renderBalanceChart(dailySummary) {
     const width = 800;
     const height = 400;
-    const padding = 40;
+    const padding = 60;
 
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
@@ -657,6 +657,22 @@ function renderBalanceChart(dailySummary) {
 
     const points = [];
 
+    //0원 기준선
+    const zeroY = balanceChartgetY(0, minValue, maxValue, height, padding);
+    const zeroLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    zeroLine.setAttribute("x1", padding);
+    zeroLine.setAttribute("x2", width - padding);
+    zeroLine.setAttribute("y1", zeroY);
+    zeroLine.setAttribute("y2", zeroY);
+    zeroLine.setAttribute("stroke", "black");
+    zeroLine.setAttribute("stroke-width", "1");
+    svg.append(zeroLine);
+
+    const tooltip = document.createElement("div");
+    tooltip.classList.add("balance-chart-tooltip");
+    tooltip.style.display = "none";
+
+    //날짜별 점
     dates.forEach((date, index) => {
         const value = dailySummary[date].cumulativeAmount;
 
@@ -669,7 +685,27 @@ function renderBalanceChart(dailySummary) {
         circle.setAttribute("cx", x);
         circle.setAttribute("cy", y);
         circle.setAttribute("r", "4");
-
+        circle.addEventListener("mouseenter", () => {
+            tooltip.textContent = `${date}: ${value.toLocaleString("ko-KR")}원`;
+            tooltip.style.display = "block";
+        });
+        circle.addEventListener("mousemove", event => {
+            const rect = monthlyCumulativeChangeChartGraph.getBoundingClientRect();
+            const left = event.clientX - rect.left + 10;
+            const top = event.clientY - rect.top + 10;
+            tooltip.style.left = `${left}px`;
+            tooltip.style.top = `${top}px`;
+            if (index === dates.length - 1) {
+                tooltip.style.left = `${left - 10}px`;
+                tooltip.style.transform = "translateX(-100%)";
+            } else {
+                tooltip.style.left = `${left + 10}px`;
+                tooltip.style.transform = "translateX(0)";
+            }
+        });
+        circle.addEventListener("mouseleave", () => {
+            tooltip.style.display = "none";
+        });
         svg.append(circle);
     });
 
@@ -682,7 +718,7 @@ function renderBalanceChart(dailySummary) {
     svg.append(polyline);
 
     monthlyCumulativeChangeChartGraph.innerHTML = "";
-    monthlyCumulativeChangeChartGraph.append(svg);
+    monthlyCumulativeChangeChartGraph.append(svg, tooltip);
 }
 
     function balanceChartgetX(index, count, width, padding) {
