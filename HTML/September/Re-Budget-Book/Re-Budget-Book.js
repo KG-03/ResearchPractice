@@ -10,6 +10,7 @@ const summaryCategoryType = document.querySelector(".summary-category-type");
 const summaryCategoryList = document.querySelector(".summary-category-list");
 
 const monthlyCumulativeChangeChartGraph = document.querySelector(".monthly-cumulative-change-chart-graph");
+const monthlyDailyChangeChartGraph = document.querySelector(".monthly-daily-change-chart-graph");
 
 const selectedMonth = document.querySelector(".selected-month");
 const prevMonthBtn = document.querySelector(".prev-month-btn");
@@ -553,6 +554,7 @@ function renderPage() {
     renderTransactions(filteredTransactions, groupedTransactions, dailySummary);
     renderSummary();
     renderBalanceChart(dailySummary);
+    renderDailyChangeChart(dailySummary);
 }
 
 function renderTransactions(filteredTransactions, groupedTransactions, dailySummary) {
@@ -640,6 +642,7 @@ function groupTransactionsByDate(targetTransactions) {
     }, {});
 }
 
+//render area balance chart function
 function renderBalanceChart(dailySummary) {
     const width = 800;
     const height = 400;
@@ -691,8 +694,8 @@ function renderBalanceChart(dailySummary) {
         });
         circle.addEventListener("mousemove", event => {
             const rect = monthlyCumulativeChangeChartGraph.getBoundingClientRect();
-            const left = event.clientX - rect.left + 10;
-            const top = event.clientY - rect.top + 10;
+            const left = event.clientX - rect.left;
+            const top = event.clientY - rect.top;
             tooltip.style.left = `${left}px`;
             tooltip.style.top = `${top}px`;
             if (index === dates.length - 1) {
@@ -702,6 +705,7 @@ function renderBalanceChart(dailySummary) {
                 tooltip.style.left = `${left + 10}px`;
                 tooltip.style.transform = "translateX(0)";
             }
+            tooltip.style.top = `${top + 10}px`;
         });
         circle.addEventListener("mouseleave", () => {
             tooltip.style.display = "none";
@@ -765,6 +769,95 @@ function calculateDailySummary(groupedTransactions) {
 
         return { incomeAmount, expenseAmount, savingAmount, investmentAmount, subtotalAmount };
     }
+
+//render area grape function
+function renderDailyChangeChart(dailySummary) {
+    const width = 800;
+    const height = 400;
+    const padding = 60;
+
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    svg.classList.add("daily-change-chart");
+
+    const dates = Object.keys(dailySummary);
+    const values = dates.map(date => dailySummary[date].subtotalAmount);
+    const maxValue = Math.max(...values, 0);
+    const minValue = Math.min(...values, 0);
+    const zeroY = balanceChartgetY(0, minValue, maxValue, height, padding);
+
+    const zeroLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    zeroLine.setAttribute("x1", padding);
+    zeroLine.setAttribute("x2", width - padding);
+    zeroLine.setAttribute("y1", zeroY);
+    zeroLine.setAttribute("y2", zeroY);
+    zeroLine.setAttribute("stroke", "black");
+    zeroLine.setAttribute("stroke-width", "1");
+    svg.append(zeroLine);
+
+    const tooltip = document.createElement("div");
+    tooltip.classList.add("balance-chart-tooltip");
+    tooltip.style.display = "none";
+
+    dates.forEach((date, index) => {
+        const value = dailySummary[date].subtotalAmount;
+        const x = balanceChartgetX(index, dates.length, width, padding);
+        const y = balanceChartgetY(value, minValue, maxValue, height, padding);
+
+        const barY = value >= 0 ? y : zeroY;
+        const barHeight = Math.abs(y - zeroY);
+
+        const bar = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        bar.setAttribute("x", x - 7);
+        bar.setAttribute("y", barY);
+        bar.setAttribute("width", "14");
+        bar.setAttribute("height", barHeight);
+        bar.addEventListener("mouseenter", () => {
+            tooltip.textContent = `${date}: ${value.toLocaleString("ko-KR")}원`;
+            tooltip.style.display = "block";
+        });
+        bar.addEventListener("mousemove", event => {
+            const rect = monthlyDailyChangeChartGraph.getBoundingClientRect();
+            const left = event.clientX - rect.left;
+            const top = event.clientY - rect.top;
+            tooltip.style.left = `${left}px`;
+            tooltip.style.top = `${top}px`;
+            if (index === dates.length - 1) {
+                tooltip.style.left = `${left - 10}px`;
+                tooltip.style.transform = "translateX(-100%)";
+            } else {
+                tooltip.style.left = `${left + 10}px`;
+                tooltip.style.transform = "translateX(0)";
+            }
+            tooltip.style.top = `${top + 10}px`;
+        });
+        bar.addEventListener("mouseleave", () => {
+            tooltip.style.display = "none";
+        });
+        svg.append(bar);
+
+        if(shouldShowDateLabel(index, dates)) {
+            const dateText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            dateText.setAttribute("x", x);
+            dateText.setAttribute("y", height - 10);
+            dateText.setAttribute("text-anchor", "middle");
+            dateText.setAttribute("font-size", "12px");
+            dateText.textContent = formatChartDate(date);
+            svg.append(dateText);
+        }
+    });
+
+    monthlyDailyChangeChartGraph.innerHTML = "";
+    monthlyDailyChangeChartGraph.append(svg, tooltip);
+}
+
+function shouldShowDateLabel(index, dates) {
+    if (dates.length < 15) return true;
+
+    const interval = Math.ceil(dates.length / 7);
+
+    return index % interval === 0 || index === dates.length - 1;
+}
 
 //filter function
 function getVisibleTransactions() {
@@ -1320,6 +1413,13 @@ function updateToday() {
     dateInput.value = new Date(Date.now() - offset).toISOString().substring(0, 10);
 }
 
+function formatChartDate(date) {
+    const month = Number(date.slice(5, 7));
+    const day = Number(date.slice(8, 10));
+
+    return `${month}/${day}`;
+}
+
 //CSV function
 function exportCSV() {
     if(!transactions.length) {
@@ -1713,4 +1813,10 @@ nowMonthBtn.click();
  *      return height - padding - ((value - minValue) / (maxValue - minValue)) * (height - padding * 2);    :
  *          height - padding    : 그래프의 아래쪽에 배치하기 위한 형태. 그 뒤의 코드(계산된 거리)만큼 위로 올라간다.
  *          (value - minValue) / (maxValue - minValue)  : 현재 값이 최솟값~최댓값 사이에서 어디에 있는지를 비율로 계산.
+ */
+
+/* 32일차
+ * Math.ceil(dates.length / 7);     : Math.ceil()는 소수점을 올림해서 정수로 만드는 함수.
+ *                                    날짜 개수를 7로 나누고 소수점이 생기면 올림으로 만든다.
+ *                                    반대로 Math.floor()는 소수점을 내림해서 정수로 만드는 함수.
  */
