@@ -332,11 +332,13 @@ filterResetBtn.addEventListener("click", () => {
     currentTypeFilter = "all";
     currentCategoryFilter = "all";
     currentSortFilter = "latest";
+    currentKeyword = "";
 
     typeFilter.value = currentTypeFilter;
         updateCategoryOptions("filter", currentTypeFilter, categoryFilter);
     categoryFilter.value = currentCategoryFilter;
     sortFilter.value = currentSortFilter;
+    searchFilterInput.value = currentKeyword;
 
     renderPage();
 });
@@ -662,14 +664,7 @@ function renderBalanceChart(dailySummary) {
 
     //0원 기준선
     const zeroY = balanceChartgetY(0, minValue, maxValue, height, padding);
-    const zeroLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    zeroLine.setAttribute("x1", padding);
-    zeroLine.setAttribute("x2", width - padding);
-    zeroLine.setAttribute("y1", zeroY);
-    zeroLine.setAttribute("y2", zeroY);
-    zeroLine.setAttribute("stroke", "black");
-    zeroLine.setAttribute("stroke-width", "1");
-    svg.append(zeroLine);
+    createZeroLine(svg, zeroY, padding, width);
 
     const tooltip = document.createElement("div");
     tooltip.classList.add("balance-chart-tooltip");
@@ -689,28 +684,23 @@ function renderBalanceChart(dailySummary) {
         circle.setAttribute("cy", y);
         circle.setAttribute("r", "4");
         circle.addEventListener("mouseenter", () => {
-            tooltip.textContent = `${date}: ${value.toLocaleString("ko-KR")}원`;
+            tooltip.textContent = `${formatChartDate(date)}: ${value.toLocaleString("ko-KR")}원`;
             tooltip.style.display = "block";
         });
         circle.addEventListener("mousemove", event => {
             const rect = monthlyCumulativeChangeChartGraph.getBoundingClientRect();
             const left = event.clientX - rect.left;
             const top = event.clientY - rect.top;
-            tooltip.style.left = `${left}px`;
-            tooltip.style.top = `${top}px`;
-            if (index === dates.length - 1) {
-                tooltip.style.left = `${left - 10}px`;
-                tooltip.style.transform = "translateX(-100%)";
-            } else {
-                tooltip.style.left = `${left + 10}px`;
-                tooltip.style.transform = "translateX(0)";
-            }
-            tooltip.style.top = `${top + 10}px`;
+            setupChartTooltip(tooltip, left, top, index === date.length - 1);
         });
         circle.addEventListener("mouseleave", () => {
             tooltip.style.display = "none";
         });
         svg.append(circle);
+
+        if(shouldShowDateLabel(index, dates)) {
+            svg.append(createDateText(x, height, date));
+        }
     });
 
     const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
@@ -784,16 +774,9 @@ function renderDailyChangeChart(dailySummary) {
     const values = dates.map(date => dailySummary[date].subtotalAmount);
     const maxValue = Math.max(...values, 0);
     const minValue = Math.min(...values, 0);
-    const zeroY = balanceChartgetY(0, minValue, maxValue, height, padding);
 
-    const zeroLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    zeroLine.setAttribute("x1", padding);
-    zeroLine.setAttribute("x2", width - padding);
-    zeroLine.setAttribute("y1", zeroY);
-    zeroLine.setAttribute("y2", zeroY);
-    zeroLine.setAttribute("stroke", "black");
-    zeroLine.setAttribute("stroke-width", "1");
-    svg.append(zeroLine);
+    const zeroY = balanceChartgetY(0, minValue, maxValue, height, padding);
+    createZeroLine(svg, zeroY, padding, width);
 
     const tooltip = document.createElement("div");
     tooltip.classList.add("balance-chart-tooltip");
@@ -813,23 +796,14 @@ function renderDailyChangeChart(dailySummary) {
         bar.setAttribute("width", "14");
         bar.setAttribute("height", barHeight);
         bar.addEventListener("mouseenter", () => {
-            tooltip.textContent = `${date}: ${value.toLocaleString("ko-KR")}원`;
+            tooltip.textContent = `${formatChartDate(date)}: ${value.toLocaleString("ko-KR")}원`;
             tooltip.style.display = "block";
         });
         bar.addEventListener("mousemove", event => {
             const rect = monthlyDailyChangeChartGraph.getBoundingClientRect();
             const left = event.clientX - rect.left;
             const top = event.clientY - rect.top;
-            tooltip.style.left = `${left}px`;
-            tooltip.style.top = `${top}px`;
-            if (index === dates.length - 1) {
-                tooltip.style.left = `${left - 10}px`;
-                tooltip.style.transform = "translateX(-100%)";
-            } else {
-                tooltip.style.left = `${left + 10}px`;
-                tooltip.style.transform = "translateX(0)";
-            }
-            tooltip.style.top = `${top + 10}px`;
+            setupChartTooltip(tooltip, left, top, index === date.length - 1);
         });
         bar.addEventListener("mouseleave", () => {
             tooltip.style.display = "none";
@@ -837,13 +811,7 @@ function renderDailyChangeChart(dailySummary) {
         svg.append(bar);
 
         if(shouldShowDateLabel(index, dates)) {
-            const dateText = document.createElementNS("http://www.w3.org/2000/svg", "text");
-            dateText.setAttribute("x", x);
-            dateText.setAttribute("y", height - 10);
-            dateText.setAttribute("text-anchor", "middle");
-            dateText.setAttribute("font-size", "12px");
-            dateText.textContent = formatChartDate(date);
-            svg.append(dateText);
+            svg.append(createDateText(x, height, date));
         }
     });
 
@@ -851,12 +819,46 @@ function renderDailyChangeChart(dailySummary) {
     monthlyDailyChangeChartGraph.append(svg, tooltip);
 }
 
+//render area grape util function
 function shouldShowDateLabel(index, dates) {
     if (dates.length < 15) return true;
 
     const interval = Math.ceil(dates.length / 7);
 
     return index % interval === 0 || index === dates.length - 1;
+}
+
+function createZeroLine(svg, zeroY, padding, width) {
+    const zeroLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    zeroLine.setAttribute("x1", padding);
+    zeroLine.setAttribute("x2", width - padding);
+    zeroLine.setAttribute("y1", zeroY);
+    zeroLine.setAttribute("y2", zeroY);
+    zeroLine.setAttribute("stroke", "black");
+    zeroLine.setAttribute("stroke-width", "1");
+    svg.append(zeroLine);
+}
+
+function setupChartTooltip(tooltip, left, top, isLast) {
+    if(isLast) {
+        tooltip.style.left = `${left - 10}px`;
+        tooltip.style.transform = "translateX(-100%)";
+    } else {
+        tooltip.style.left = `${left + 10}px`;
+        tooltip.style.transform = "translateX(0)";
+    }
+
+    tooltip.style.top = `${top + 10}px`;
+}
+
+function createDateText(x, height, date) {
+    const dateText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    dateText.setAttribute("x", x);
+    dateText.setAttribute("y", height - 10);
+    dateText.setAttribute("text-anchor", "middle");
+    dateText.setAttribute("font-size", "12px");
+    dateText.textContent = formatChartDate(date);
+    return dateText;
 }
 
 //filter function
