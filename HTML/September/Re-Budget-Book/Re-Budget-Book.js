@@ -11,6 +11,7 @@ const summaryCategoryList = document.querySelector(".summary-category-list");
 
 const monthlyCumulativeChangeChartGraph = document.querySelector(".monthly-cumulative-change-chart-graph");
 const monthlyDailyChangeChartGraph = document.querySelector(".monthly-daily-change-chart-graph");
+const monthlySpendingInsights = document.querySelector(".monthly-spending-insights");
 
 const selectedMonth = document.querySelector(".selected-month");
 const prevMonthBtn = document.querySelector(".prev-month-btn");
@@ -553,10 +554,15 @@ function renderPage() {
     const groupedTransactions = groupTransactionsByDate(filteredTransactions);
     const dailySummary = calculateDailySummary(groupedTransactions);
 
+    const monthTransactions = getTransactionsByMonth(selectedMonthDate);
+    const monthGroupedTransactions = groupTransactionsByDate(monthTransactions);
+    const monthDailySummary = calculateDailySummary(monthGroupedTransactions);
+
     renderTransactions(filteredTransactions, groupedTransactions, dailySummary);
     renderSummary();
     renderBalanceChart(dailySummary);
     renderDailyChangeChart(dailySummary);
+    renderSpendingInsights(monthDailySummary);
 }
 
 function renderTransactions(filteredTransactions, groupedTransactions, dailySummary) {
@@ -644,10 +650,10 @@ function groupTransactionsByDate(targetTransactions) {
     }, {});
 }
 
-//render area balance chart function
+//monthly grape function
 function renderBalanceChart(dailySummary) {
     const width = 800;
-    const height = 400;
+    const height = 300;
     const padding = 60;
 
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -691,7 +697,7 @@ function renderBalanceChart(dailySummary) {
             const rect = monthlyCumulativeChangeChartGraph.getBoundingClientRect();
             const left = event.clientX - rect.left;
             const top = event.clientY - rect.top;
-            setupChartTooltip(tooltip, left, top, index === date.length - 1);
+            setupChartTooltip(tooltip, left, top, index === dates.length - 1);
         });
         circle.addEventListener("mouseleave", () => {
             tooltip.style.display = "none";
@@ -715,55 +721,9 @@ function renderBalanceChart(dailySummary) {
     monthlyCumulativeChangeChartGraph.append(svg, tooltip);
 }
 
-    function balanceChartgetX(index, count, width, padding) {
-        if (count === 1) return width / 2;
-
-        return padding
-            + index / (count - 1)
-            * (width - padding * 2);
-    }
-
-    function balanceChartgetY(value, minValue, maxValue, height, padding) {
-        if (maxValue === minValue) return height / 2;
-
-        return height - padding
-            - ((value - minValue) / (maxValue - minValue))
-            * (height - padding * 2);
-    }
-
-function calculateDailySummary(groupedTransactions) {
-    const calculationDates = Object.keys(groupedTransactions).sort((a, b) => new Date(a) - new Date(b));
-
-    let cumulativeAmount = 0;
-
-    const dailySummary = {};
-
-    calculationDates.forEach(date => {
-        const dateTransactions = groupedTransactions[date];
-        const dateSubtotal = calculateDateSubtotal(dateTransactions);
-
-        cumulativeAmount += dateSubtotal.subtotalAmount;
-
-        dailySummary[date] = { ...dateSubtotal, cumulativeAmount };
-    });
-
-    return dailySummary;
-}
-
-    function calculateDateSubtotal(dateTransactions) {
-        const incomeAmount = summaryTransactionAmount(dateTransactions, "type", "income");
-        const expenseAmount = summaryTransactionAmount(dateTransactions, "type", "expense");
-        const savingAmount = summaryTransactionAmount(dateTransactions, "type", "saving");
-        const investmentAmount = summaryTransactionAmount(dateTransactions, "type", "investment");
-        const subtotalAmount = incomeAmount - expenseAmount - savingAmount - investmentAmount;
-
-        return { incomeAmount, expenseAmount, savingAmount, investmentAmount, subtotalAmount };
-    }
-
-//render area grape function
 function renderDailyChangeChart(dailySummary) {
     const width = 800;
-    const height = 400;
+    const height = 300;
     const padding = 60;
 
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -803,7 +763,7 @@ function renderDailyChangeChart(dailySummary) {
             const rect = monthlyDailyChangeChartGraph.getBoundingClientRect();
             const left = event.clientX - rect.left;
             const top = event.clientY - rect.top;
-            setupChartTooltip(tooltip, left, top, index === date.length - 1);
+            setupChartTooltip(tooltip, left, top, index === dates.length - 1);
         });
         bar.addEventListener("mouseleave", () => {
             tooltip.style.display = "none";
@@ -819,7 +779,98 @@ function renderDailyChangeChart(dailySummary) {
     monthlyDailyChangeChartGraph.append(svg, tooltip);
 }
 
-//render area grape util function
+function renderSpendingInsights(monthDailySummary) {
+    monthlySpendingInsights.innerHTML = "";
+
+    if(getTransactionsByMonth(selectedMonthDate).length === 0) {
+        const message = "거래가 존재하지 않습니다!";
+        monthlySpendingInsights.append(message);
+        return;
+    }
+
+    const dates = Object.keys(monthDailySummary);
+    const expenseValues = dates.map(date => monthDailySummary[date].expenseAmount);
+    const incomeValues = dates.map(date => monthDailySummary[date].incomeAmount);
+
+    const maxExpense = document.createElement("p");
+    const maxExpenseAmount = Math.max(...expenseValues, 0);
+    if(maxExpenseAmount === 0) {
+        maxExpense.textContent = "이번 달 지출이 없습니다!";
+    } else {
+        const maxExpenseDate = dates.find(date => monthDailySummary[date].expenseAmount === maxExpenseAmount);
+        maxExpense.textContent = `가장 많은 지출: ${formatChartDate(maxExpenseDate)}, (${maxExpenseAmount.toLocaleString('ko-KR')}원)`;
+    }
+
+    const maxExpenseCategory = document.createElement("p");
+    const expenseTransactions = getTransactionsByMonth(selectedMonthDate);
+    const expenseCategoryAmounts = summarySumAmount(expenseTransactions, "type", "expense", "category");
+    const maxExpenseCategoryAmount = Math.max(...Object.values(expenseCategoryAmounts), 0);
+    if(maxExpenseCategoryAmount === 0) {
+        maxExpenseCategory.textContent = "가장 많은 지출 카테고리: 없음";
+    } else {
+        const maxExpenseCategoryValue = Object.keys(expenseCategoryAmounts).find(category => expenseCategoryAmounts[category] === maxExpenseCategoryAmount);
+        const maxExpenseCategoryOption = categoryOptions.expense.find(option => option.value === maxExpenseCategoryValue);
+        maxExpenseCategory.textContent = `가장 많은 지출 카테고리: ${maxExpenseCategoryOption?.label ?? "-"} (${maxExpenseCategoryAmount.toLocaleString('ko-KR')}원)`;
+    }
+
+    const maxIncome = document.createElement("p");
+    const maxIncomeAmount = Math.max(...incomeValues, 0);
+    if(maxIncomeAmount === 0) {
+        maxIncome.textContent = "이번 달 수입이 없습니다!";
+    } else {
+        const maxIncomeDate = dates.find(date => monthDailySummary[date].incomeAmount === maxIncomeAmount);
+        maxIncome.textContent = `가장 많은 수입: ${formatChartDate(maxIncomeDate)}, (${maxIncomeAmount.toLocaleString('ko-KR')}원)`;
+    }
+
+    monthlySpendingInsights.append(maxExpense, maxExpenseCategory, maxIncome);
+}
+
+//monthly grape util function
+function balanceChartgetX(index, count, width, padding) {
+    if (count === 1) return width / 2;
+
+    return padding
+        + index / (count - 1)
+        * (width - padding * 2);
+}
+
+function balanceChartgetY(value, minValue, maxValue, height, padding) {
+    if (maxValue === minValue) return height / 2;
+
+    return height - padding
+        - ((value - minValue) / (maxValue - minValue))
+        * (height - padding * 2);
+}
+
+function calculateDailySummary(groupedTransactions) {
+    const calculationDates = Object.keys(groupedTransactions).sort((a, b) => new Date(a) - new Date(b));
+
+    let cumulativeAmount = 0;
+
+    const dailySummary = {};
+
+    calculationDates.forEach(date => {
+        const dateTransactions = groupedTransactions[date];
+        const dateSubtotal = calculateDateSubtotal(dateTransactions);
+
+        cumulativeAmount += dateSubtotal.subtotalAmount;
+
+        dailySummary[date] = { ...dateSubtotal, cumulativeAmount };
+    });
+
+    return dailySummary;
+}
+
+    function calculateDateSubtotal(dateTransactions) {
+        const incomeAmount = summaryTransactionAmount(dateTransactions, "type", "income");
+        const expenseAmount = summaryTransactionAmount(dateTransactions, "type", "expense");
+        const savingAmount = summaryTransactionAmount(dateTransactions, "type", "saving");
+        const investmentAmount = summaryTransactionAmount(dateTransactions, "type", "investment");
+        const subtotalAmount = incomeAmount - expenseAmount - savingAmount - investmentAmount;
+
+        return { incomeAmount, expenseAmount, savingAmount, investmentAmount, subtotalAmount };
+    }
+
 function shouldShowDateLabel(index, dates) {
     if (dates.length < 15) return true;
 
@@ -1028,7 +1079,6 @@ function createSummaryCategoryCard(category, amount, maxAmount) {
             }, {});
     }
 
-    //값으로 전달
     function summaryTransactionAmount(targetTransaction, filterTarget, filterValue) {
         return targetTransaction
             .filter(transaction => transaction[filterTarget] === filterValue)
