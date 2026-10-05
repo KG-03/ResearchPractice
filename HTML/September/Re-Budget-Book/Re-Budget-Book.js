@@ -472,6 +472,24 @@ function editEnd() {
     TOAST.show("성공적으로 수정되었습니다!");
 }
 
+function copyTransaction(targetTransaction) {
+    const now = Date.now();
+
+    const copiedTransaction = {
+        ...targetTransaction,
+        id: now,
+        createdAt: now,
+        updatedAt: now
+    };
+
+    transactions.push(copiedTransaction);
+
+    saveTransactions();
+    renderPage();
+
+    TOAST.show("성공적으로 복제했습니다!");
+}
+
 function createTransactionCard(transaction) {
     const card = document.createElement("div");
     card.classList.add("budget-card");
@@ -538,12 +556,17 @@ function createTransactionCard(transaction) {
     editBtn.classList.add("budget-card-button");
     card.append(editBtn);
 
+    const copyBtn = document.createElement("button");
+    copyBtn.textContent = "📄 복제";
+    copyBtn.addEventListener("click", () => { copyTransaction(transaction); });
+    copyBtn.classList.add("budget-card-button");
+    card.append(copyBtn);
+
     const delBtn = document.createElement("button");
     delBtn.textContent = "❌ 삭제";
     delBtn.addEventListener("click", () => { deleteTransaction(transaction) });
     delBtn.classList.add("budget-card-button");
     card.append(delBtn);
-
 
     return card;
 }
