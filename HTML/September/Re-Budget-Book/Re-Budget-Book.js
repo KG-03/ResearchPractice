@@ -9,6 +9,8 @@ const summaryMonthList = document.querySelector(".summary-month-list");
 const summaryCategoryType = document.querySelector(".summary-category-type");
 const summaryCategoryList = document.querySelector(".summary-category-list");
 
+const monthltyGraphBtn = document.querySelector(".monthlty-graph-btn");
+const monthlyGraphList = document.querySelector(".monthly-graph-list");
 const monthlyCumulativeChangeChartGraph = document.querySelector(".monthly-cumulative-change-chart-graph");
 const monthlyDailyChangeChartGraph = document.querySelector(".monthly-daily-change-chart-graph");
 const monthlySpendingInsights = document.querySelector(".monthly-spending-insights");
@@ -20,8 +22,8 @@ const nextMonthBtn = document.querySelector(".next-month-btn");
 const dateShift = document.querySelector(".date-shift");
 const shiftMonthBtn = document.querySelector(".shift-month-btn");
 
-const summaryGrapeBtn = document.querySelector(".summary-grape-btn");
-const summaryGrapeList = document.querySelector(".summary-grape-list");
+const summaryGraphBtn = document.querySelector(".summary-graph-btn");
+const summaryGraphList = document.querySelector(".summary-graph-list");
 
 const budgetComparisonBtn = document.querySelector(".budget-comparison-btn");
 const budgetComparisonList = document.querySelector(".budget-comparison-list");
@@ -169,7 +171,8 @@ let selectedMonthDate = new Date();
 let prevMonthDate = null;
 let nextMonthDate = null;
 
-let isSummaryGrape = false;
+let isMonthltyGraph = false;
+let isSummaryGraph = false;
 let isComparison = false;
 
 let currentTypeSelect = "expense";
@@ -178,7 +181,6 @@ let currentTypeFilter = "all";
 let currentCategoryFilter = "all";
 let currentSortFilter = "latest";
 let currentKeyword = "";
-let currentBudgetComparisonTransactions = [];
 let currentCategoryAddOptionSetting = false;
 let currentCategoryEditOptionSetting = false;
 let currentCategoryDeleteOptionSetting = false;
@@ -249,10 +251,28 @@ shiftMonthBtn.addEventListener("click", () => {
     dateShift.value = "";
 });
 
-summaryGrapeBtn.addEventListener("click", () => {
-    isSummaryGrape = true;
-    summaryGrapeBtn.style.display = "none";
-    summaryGrape();
+monthltyGraphBtn.addEventListener("click", () => {
+    monthltyGraphBtn.style.display = "none";
+
+    monthlyGraphList.style.display = "block";
+
+    const hideBtn = document.createElement("button");
+    hideBtn.textContent = "숨기기";
+    hideBtn.classList.add("css-btn");
+    hideBtn.addEventListener("click", () => {
+        monthlyGraphList.style.display = "none";
+
+        monthltyGraphBtn.style.display = "inline";
+        hideBtn.remove();
+    });
+
+    monthlyGraphList.append(hideBtn);
+})
+
+summaryGraphBtn.addEventListener("click", () => {
+    isSummaryGraph = true;
+    summaryGraphBtn.style.display = "none";
+    summaryGraph();
 });
 
 budgetComparisonBtn.addEventListener("click", () => {
@@ -591,8 +611,6 @@ function renderPage() {
 function renderTransactions(filteredTransactions, groupedTransactions, dailySummary) {
     budgetList.innerHTML = "";
 
-    currentBudgetComparisonTransactions = filteredTransactions;
-
     displayFilteredTransactionsNumber.textContent = `현재 표시되는 거래 내역은 ${filteredTransactions.length}건 입니다.`;
 
     if (!filteredTransactions.length) {
@@ -673,7 +691,7 @@ function groupTransactionsByDate(targetTransactions) {
     }, {});
 }
 
-//monthly grape function
+//monthly graph function
 function renderBalanceChart(dailySummary) {
     const width = 800;
     const height = 300;
@@ -848,7 +866,7 @@ function renderSpendingInsights(monthDailySummary) {
     monthlySpendingInsights.append(maxExpense, maxExpenseCategory, maxIncome);
 }
 
-//monthly grape util function
+//monthly graph util function
 function balanceChartgetX(index, count, width, padding) {
     if (count === 1) return width / 2;
 
@@ -1010,7 +1028,7 @@ function sortTransactions(filteredTransactions) {
 function renderSummary() {
     summaryMonth();
     summaryCategory();
-    if(isSummaryGrape === true) summaryGrape();
+    if(isSummaryGraph === true) summaryGraph();
     if(isComparison === true) budgetComparison();
 }
 
@@ -1073,13 +1091,13 @@ function createSummaryCategoryCard(category, amount, maxAmount) {
     );
 
     const row = document.createElement("div");
-    row.classList.add("summary-grape-row");
+    row.classList.add("summary-graph-row");
 
     const categoryLabelAmount = document.createElement("p");
     categoryLabelAmount.textContent = `${categoryOption.label}: ${amount.toLocaleString('ko-KR')}원`;
 
     const barTrack = document.createElement("div");
-    barTrack.classList.add("summary-grape-track");
+    barTrack.classList.add("summary-graph-track");
 
     const barChart = document.createElement("div");
     barChart.classList.add("summary-category-bar");
@@ -1108,10 +1126,10 @@ function createSummaryCategoryCard(category, amount, maxAmount) {
             .reduce((result, transaction) => result + transaction.amount, 0);
     }
 
-//grape function
-function summaryGrape() {
-    summaryGrapeList.style.display = "block";
-    summaryGrapeList.innerHTML = "";
+//graph function
+function summaryGraph() {
+    summaryGraphList.style.display = "block";
+    summaryGraphList.innerHTML = "";
 
     const prevTransaction = getTransactionsByMonth(prevMonthDate);
     const nowTransaction = getTransactionsByMonth(selectedMonthDate);
@@ -1120,8 +1138,8 @@ function summaryGrape() {
     Object.keys(TYPE_OPTIONS)
         .filter(type => type !== "all")
         .forEach(type => {
-            summaryGrapeList.append(
-                summaryGrapeComparison(
+            summaryGraphList.append(
+                summaryGraphComparison(
                     prevTransaction,
                     nowTransaction,
                     nextTransaction,
@@ -1132,19 +1150,19 @@ function summaryGrape() {
 
     const hideBtn = document.createElement("button");
     hideBtn.textContent = "숨기기";
-
+    hideBtn.classList.add("css-btn");
     hideBtn.addEventListener("click", () => {
-        summaryGrapeList.style.display = "none";
+        summaryGraphList.style.display = "none";
 
-        isSummaryGrape = false;
-        summaryGrapeBtn.style.display = "inline";
+        isSummaryGraph = false;
+        summaryGraphBtn.style.display = "inline";
         hideBtn.remove();
     });
 
-    summaryGrapeList.append(hideBtn);
+    summaryGraphList.append(hideBtn);
 }
 
-function summaryGrapeComparison(prev, now, next, type) {
+function summaryGraphComparison(prev, now, next, type) {
     const prevAmount = summaryTransactionAmount(prev, "type", type);
     const nowAmount = summaryTransactionAmount(now, "type", type);
     const nextAmount = summaryTransactionAmount(next, "type", type);
@@ -1155,31 +1173,31 @@ function summaryGrapeComparison(prev, now, next, type) {
         nextAmount
     );
 
-    const grape = document.createElement("div");
-    grape.classList.add("summary-grape-group");
+    const graph = document.createElement("div");
+    graph.classList.add("summary-graph-group");
 
     const title = document.createElement("h3");
     title.textContent = `${TYPE_OPTIONS[type]} 비교`;
-    grape.append(title);
+    graph.append(title);
 
-    grape.append(
+    graph.append(
         createComparisonRow("이전", prevAmount, maxAmount),
         createComparisonRow("이번", nowAmount, maxAmount),
         createComparisonRow("다음", nextAmount, maxAmount)
     );
 
-    return grape;
+    return graph;
 }
 
 function createComparisonRow(label, amount, maxAmount) {
     const row = document.createElement("div");
-    row.classList.add("summary-grape-row");
+    row.classList.add("summary-graph-row");
 
     const text = document.createElement("p");
     text.textContent = `${label} ${amount.toLocaleString("ko-KR")}원`;
 
     const barTrack = document.createElement("div");
-    barTrack.classList.add("summary-grape-track");
+    barTrack.classList.add("summary-graph-track");
 
     const bar = document.createElement("div");
     bar.classList.add("summary-category-bar");
@@ -1199,35 +1217,56 @@ function budgetComparison() {
     budgetComparisonList.style.display = "block";
     budgetComparisonList.innerHTML = "";
 
+    const targetTransactions = getTransactionsByMonth(selectedMonthDate);
+
     const budgetInput = document.createElement("input");
     budgetInput.type = "number";
     budgetInput.placeholder = "예산 입력";
     budgetComparisonList.append(budgetInput);
 
-    const consume = summaryTransactionAmount(currentBudgetComparisonTransactions, "type", "expense");
+    const budgetCategorySelect = document.createElement("select");
+    updateCategoryOptions("filter", "expense", budgetCategorySelect);
+    budgetComparisonList.append(budgetCategorySelect);
+
     const consumeText = document.createElement("p");
-    consumeText.textContent = `이번 달 지출: ${consume.toLocaleString('ko-KR')}원`;
-    budgetComparisonList.append(consumeText);
+    let categoryLabel;
+    let consume = 0;
 
     const row = document.createElement("div");
-    row.classList.add("summary-grape-row");
+    row.classList.add("summary-graph-row");
 
         const budgetConsumeComparison = document.createElement("p");
 
         const barTrack = document.createElement("div");
-        barTrack.classList.add("summary-grape-track");
-
-        const barChart = document.createElement("div");
-        barChart.classList.add("summary-category-bar");
+        barTrack.classList.add("summary-graph-track");
 
         const bar = document.createElement("div");
-        bar.classList.add("summary-category-bar");
-        
-    barTrack.append(bar);
-    row.append(budgetConsumeComparison, barTrack);
-    budgetComparisonList.append(row);
+        bar.classList.add("summary-category-bar");    
+        barTrack.append(bar);
 
-    budgetInput.addEventListener("input", () => {
+    row.append(budgetConsumeComparison, barTrack);
+    budgetComparisonList.append(consumeText, row);
+
+    function updateComsumeText() {
+        const selectedCategory = budgetCategorySelect.value;
+
+        if (selectedCategory === "all") {
+            categoryLabel = "전체";
+            consume = summaryTransactionAmount(targetTransactions, "type", "expense");
+        } else {
+            const category = categoryOptions.expense.find(option => option.value === selectedCategory);
+
+            categoryLabel = category?.label ?? "-";
+            consume = targetTransactions
+                .filter(transaction => transaction.type === "expense" && transaction.category === selectedCategory)
+                .reduce((result, transaction) => result + transaction.amount, 0);
+        }
+
+        consumeText.textContent = `현재 ${categoryLabel} 지출: ${consume.toLocaleString("ko-KR")}원`;
+        updateBudgetComparison();
+    }
+
+    function updateBudgetComparison() {
         const budget = Number(budgetInput.value);
         if(budget <= 0) {
             budgetConsumeComparison.textContent = "예산을 입력해주세요!";
@@ -1246,12 +1285,19 @@ function budgetComparison() {
             budgetConsumeComparison.textContent = `남은 예산: ${comparison.toLocaleString('ko-KR')}원`;
         };
 
-        const width = consume / budget * 100;
+        const width = Math.min(consume / budget * 100, 100);
         bar.style.width = `${width}%`;
-    });
+    }
+
+    updateComsumeText();
+
+    budgetCategorySelect.addEventListener("change", updateComsumeText);
+
+    budgetInput.addEventListener("input", updateBudgetComparison);
 
     const hideBtn = document.createElement("button");
     hideBtn.textContent = "숨기기";
+    hideBtn.classList.add("css-btn");
     hideBtn.addEventListener("click", () => {
         budgetComparisonList.style.display = "none";
 
