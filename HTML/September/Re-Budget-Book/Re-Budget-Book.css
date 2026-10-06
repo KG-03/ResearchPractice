@@ -72,16 +72,6 @@ header {
     align-items: center;
 }
 
-.monthly-cumulative-change-chart-graph,
-.monthly-daily-change-chart-graph {
-    position: relative;
-    overflow: visible;
-
-    border-radius: 5px;
-
-    background: white;
-}
-
 .balance-chart-tooltip {
     position: absolute;
     z-index: 10;
@@ -99,7 +89,11 @@ header {
 .prev-month-btn,
 .now-month-btn,
 .next-month-btn,
-.shift-month-btn {
+.shift-month-btn,
+.monthlty-graph-btn,
+.summary-graph-btn,
+.budget-comparison-btn,
+.css-btn {
     padding: 5px;
     margin: 5px;
 
@@ -113,38 +107,63 @@ header {
 .prev-month-btn:hover,
 .now-month-btn:hover,
 .next-month-btn:hover,
-.shift-month-btn:hover {
+.shift-month-btn:hover,
+.monthlty-graph-btn:hover,
+.summary-graph-btn:hover,
+.budget-comparison-btn:hover,
+.css-btn:hover {
     cursor: pointer;
     background: #88ac8c;
 }
 
 .date-shift-area,
-.summary-grape-area,
+.monthly-graph-area,
+.summary-graph-area,
 .budget-comparison-area {
     margin-bottom: 10px;
 }
 
-.summary-grape-list,
+.monthly-graph-list,
+.summary-graph-list,
 .budget-comparison-list {
     display: none;
+
+    padding: 10px;
+    border-radius: 5px;
+
+    background: white;
+}
+
+.monthly-cumulative-change-chart-graph,
+.monthly-daily-change-chart-graph,
+.monthly-spending-insights {
+    position: relative;
+    overflow: visible;
+
+    padding: 5px;
+    margin: 5px;
+
+    border-radius: 5px;
+
+    background: #e6eee7;
 }
 
 /*===== summary grape =====*/
-.summary-grape-row {
+.summary-graph-row {
     display: flex;
     align-items: center;
     gap: 10px;
     margin-bottom: 8px;    
 }
 
-.summary-grape-row p {
+.summary-graph-row p {
     width: 150px;
     margin: 0;
     flex-shrink: 0;
     text-align: right;
 }
 
-.summary-grape-track {
+.summary-graph-track {
     flex: 1;
     height: 12px;
     background: #eeeeee;
