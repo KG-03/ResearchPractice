@@ -12,6 +12,7 @@ const summaryCategoryList = document.querySelector(".summary-category-list");
 const monthltyGraphBtn = document.querySelector(".monthlty-graph-btn");
 const monthlyGraphList = document.querySelector(".monthly-graph-list");
 const monthlyCumulativeChangeChartGraph = document.querySelector(".monthly-cumulative-change-chart-graph");
+const monthlyCumulativeChangeStartingBalance = document.querySelector(".monthly-cumulative-change-starting-balance");
 const monthlyDailyChangeChartGraph = document.querySelector(".monthly-daily-change-chart-graph");
 const monthlySpendingInsights = document.querySelector(".monthly-spending-insights");
 
@@ -267,7 +268,9 @@ monthltyGraphBtn.addEventListener("click", () => {
     });
 
     monthlyGraphList.append(hideBtn);
-})
+});
+
+monthlyCumulativeChangeStartingBalance.addEventListener("change", renderPage);
 
 summaryGraphBtn.addEventListener("click", () => {
     isSummaryGraph = true;
@@ -597,15 +600,18 @@ function renderPage() {
     const groupedTransactions = groupTransactionsByDate(filteredTransactions);
     const dailySummary = calculateDailySummary(groupedTransactions);
 
+    renderTransactions(filteredTransactions, groupedTransactions, dailySummary);
+    renderSummary();
+    renderDailyChangeChart(dailySummary);
+
     const monthTransactions = getTransactionsByMonth(selectedMonthDate);
     const monthGroupedTransactions = groupTransactionsByDate(monthTransactions);
     const monthDailySummary = calculateDailySummary(monthGroupedTransactions);
+    const startingBalance = Number(monthlyCumulativeChangeStartingBalance.value);
+    const balanceSummary = calculateBalanceSummary(monthDailySummary, startingBalance);
 
-    renderTransactions(filteredTransactions, groupedTransactions, dailySummary);
-    renderSummary();
-    renderBalanceChart(dailySummary);
-    renderDailyChangeChart(dailySummary);
     renderSpendingInsights(monthDailySummary);
+    renderBalanceChart(balanceSummary);
 }
 
 function renderTransactions(filteredTransactions, groupedTransactions, dailySummary) {
@@ -692,7 +698,7 @@ function groupTransactionsByDate(targetTransactions) {
 }
 
 //monthly graph function
-function renderBalanceChart(dailySummary) {
+function renderBalanceChart(balanceSummary) {
     const width = 800;
     const height = 300;
     const padding = 60;
@@ -701,8 +707,8 @@ function renderBalanceChart(dailySummary) {
     svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
     svg.classList.add("balance-chart");
 
-    const dates = Object.keys(dailySummary);
-    const values = dates.map(date => dailySummary[date].cumulativeAmount);
+    const dates = Object.keys(balanceSummary);
+    const values = dates.map(date => balanceSummary[date]);
 
     const maxValue = Math.max(...values, 0);
     const minValue = Math.min(...values, 0);
@@ -719,7 +725,7 @@ function renderBalanceChart(dailySummary) {
 
     //날짜별 점
     dates.forEach((date, index) => {
-        const value = dailySummary[date].cumulativeAmount;
+        const value = balanceSummary[date];
 
         const x = balanceChartgetX(index, dates.length, width, padding);
         const y = balanceChartgetY(value, minValue, maxValue, height, padding);
@@ -910,6 +916,16 @@ function calculateDailySummary(groupedTransactions) {
         const subtotalAmount = incomeAmount - expenseAmount - savingAmount - investmentAmount;
 
         return { incomeAmount, expenseAmount, savingAmount, investmentAmount, subtotalAmount };
+    }
+
+    function calculateBalanceSummary(dailySummary, startingBalance) {
+        const balanceSummary = {};
+
+        Object.keys(dailySummary).forEach(date => {
+            balanceSummary[date] = startingBalance + dailySummary[date].cumulativeAmount;
+        });
+
+        return balanceSummary;
     }
 
 function shouldShowDateLabel(index, dates) {
@@ -1120,6 +1136,7 @@ function createSummaryCategoryCard(category, amount, maxAmount) {
             }, {});
     }
 
+    //값으로 전달
     function summaryTransactionAmount(targetTransaction, filterTarget, filterValue) {
         return targetTransaction
             .filter(transaction => transaction[filterTarget] === filterValue)
