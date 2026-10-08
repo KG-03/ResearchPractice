@@ -54,6 +54,7 @@ const budgetList = document.querySelector(".budget-list");
 
 
 const STORAGE_KEY = "reBudgetTransactions";
+const MONTHLY_STARTING_BALANCES = "monthly-starting-balances";
 
 const TYPE_OPTIONS = {
     all: "전체",
@@ -166,6 +167,7 @@ const CSV = {
 
 let transactions = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 let categoryOptions = JSON.parse(localStorage.getItem("CATEGORY_OPTIONS")) || structuredClone(DEFAULT_CATEGORY_OPTIONS);
+let monthlyStartingBalances = JSON.parse(localStorage.getItem(MONTHLY_STARTING_BALANCES)) || {};
 
 let today = new Date();
 let selectedMonthDate = new Date();
@@ -270,7 +272,14 @@ monthltyGraphBtn.addEventListener("click", () => {
     monthlyGraphList.append(hideBtn);
 });
 
-monthlyCumulativeChangeStartingBalance.addEventListener("change", renderPage);
+monthlyCumulativeChangeStartingBalance.addEventListener("change", () => {
+    const monthKey = getMonthKey(selectedMonthDate);
+    const startingBalance = Number(monthlyCumulativeChangeStartingBalance.value);
+
+    monthlyStartingBalances[monthKey] = startingBalance;
+    saveMonthlyStartingBalance();
+    renderPage();
+});
 
 summaryGraphBtn.addEventListener("click", () => {
     isSummaryGraph = true;
@@ -607,7 +616,8 @@ function renderPage() {
     const monthTransactions = getTransactionsByMonth(selectedMonthDate);
     const monthGroupedTransactions = groupTransactionsByDate(monthTransactions);
     const monthDailySummary = calculateDailySummary(monthGroupedTransactions);
-    const startingBalance = Number(monthlyCumulativeChangeStartingBalance.value);
+    const startingBalance = getMonthlyStartingBalance(selectedMonthDate);
+    monthlyCumulativeChangeStartingBalance.value = startingBalance;
     const balanceSummary = calculateBalanceSummary(monthDailySummary, startingBalance);
 
     renderSpendingInsights(monthDailySummary);
@@ -967,6 +977,11 @@ function createDateText(x, height, date) {
     dateText.setAttribute("font-size", "12px");
     dateText.textContent = formatChartDate(date);
     return dateText;
+}
+
+function getMonthlyStartingBalance(targetDate) {
+    const monthKey = getMonthKey(targetDate);
+    return monthlyStartingBalances[monthKey] ?? 0;
 }
 
 //filter function
@@ -1522,12 +1537,22 @@ function isDefaultCategoryOption(type, categoryValue) {
 }
 
 //util function
+function saveData() {
+    saveTransactions();
+    saveCategoryOption();
+    saveMonthlyStartingBalance();
+}
+
 function saveTransactions() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
 }
 
 function saveCategoryOption() {
     localStorage.setItem("CATEGORY_OPTIONS", JSON.stringify(categoryOptions));
+}
+
+function saveMonthlyStartingBalance() {
+    localStorage.setItem(MONTHLY_STARTING_BALANCES, JSON.stringify(monthlyStartingBalances));
 }
 
 function resetInputForm() {
@@ -1556,6 +1581,12 @@ function formatChartDate(date) {
     const day = Number(date.slice(8, 10));
 
     return `${month}/${day}`;
+}
+
+function getMonthKey(targetDate) {
+    const date = new Date(targetDate);
+
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
 //CSV function
