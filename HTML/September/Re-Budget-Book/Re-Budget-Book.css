@@ -27,6 +27,8 @@ header {
     justify-content: space-around;
     align-items: center;
     text-align: center;
+
+    margin-bottom: 20px;
     gap: 10px;
 }
 
@@ -93,6 +95,7 @@ header {
 .monthlty-graph-btn,
 .summary-graph-btn,
 .budget-comparison-btn,
+.monthly-cumulative-change-starting-balance-reset-btn,
 .css-btn {
     padding: 5px;
     margin: 5px;
@@ -111,6 +114,7 @@ header {
 .monthlty-graph-btn:hover,
 .summary-graph-btn:hover,
 .budget-comparison-btn:hover,
+.monthly-cumulative-change-starting-balance-reset-btn:hover,
 .css-btn:hover {
     cursor: pointer;
     background: #88ac8c;
@@ -146,6 +150,14 @@ header {
     border-radius: 5px;
 
     background: #e6eee7;
+}
+
+.monthly-cumulative-change-starting-balance-area {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    gap: 10px;
 }
 
 /*===== summary grape =====*/
@@ -373,6 +385,11 @@ header {
 
     background: #555;
     color: #fff;
+}
+
+.explain {
+    font-size: 14px;
+    color:gray;
 }
 
 /* 16일차
