@@ -13,6 +13,7 @@ const monthltyGraphBtn = document.querySelector(".monthlty-graph-btn");
 const monthlyGraphList = document.querySelector(".monthly-graph-list");
 const monthlyCumulativeChangeChartGraph = document.querySelector(".monthly-cumulative-change-chart-graph");
 const monthlyCumulativeChangeStartingBalance = document.querySelector(".monthly-cumulative-change-starting-balance");
+const monthlyCumulativeChangeStartingBalanceResetBtn = document.querySelector(".monthly-cumulative-change-starting-balance-reset-btn");
 const monthlyDailyChangeChartGraph = document.querySelector(".monthly-daily-change-chart-graph");
 const monthlySpendingInsights = document.querySelector(".monthly-spending-insights");
 
@@ -280,6 +281,8 @@ monthlyCumulativeChangeStartingBalance.addEventListener("change", () => {
     saveMonthlyStartingBalance();
     renderPage();
 });
+
+monthlyCumulativeChangeStartingBalanceResetBtn.addEventListener("click", resetMonthlyStartingBalance);
 
 summaryGraphBtn.addEventListener("click", () => {
     isSummaryGraph = true;
@@ -979,9 +982,62 @@ function createDateText(x, height, date) {
     return dateText;
 }
 
+//월별 시작 잔액을 가져오는 함수
 function getMonthlyStartingBalance(targetDate) {
     const monthKey = getMonthKey(targetDate);
-    return monthlyStartingBalances[monthKey] ?? 0;
+    if (Object.prototype.hasOwnProperty.call(monthlyStartingBalances, monthKey)) {
+        return Number(monthlyStartingBalances[monthKey]);
+    }
+
+    //최초로 기록한 달 이전에는 기준 잔액을 0원으로 가정
+    const earliestMonthKey = getEarliestTrackedMonthKey();
+    if (!earliestMonthKey || monthKey <= earliestMonthKey) return 0;
+
+    //저장된 시작 잔액이 없다면 이전 달의 마지막 잔액을 이어받기
+    const prevMonthDate = new Date(targetDate.getFullYear(), targetDate.getMonth() - 1, 1);
+    return getMonthlyEndingBalance(prevMonthDate);
+}
+
+//기록이 시작된 가장 이른 달을 찾는 함수
+function getEarliestTrackedMonthKey() {
+    //최초 기준점 확인
+    const transactionMonthKeys = transactions.map(transaction => getMonthKey(transaction.date));
+    const savedMonthKey = Object.keys(monthlyStartingBalances);
+
+    const monthKeys = [ ...transactionMonthKeys, ...savedMonthKey ].sort();
+
+    return monthKeys[0] ?? null;
+}
+
+//이전 달의 마지막 잔액을 계산하는 함수
+function getMonthlyEndingBalance(targetDate) {
+    //시작 잔액 + 해당 월의 누적 변동액
+    const startingBalance = getMonthlyStartingBalance(targetDate);
+
+    const monthTransactions = getTransactionsByMonth(targetDate);
+    const groupedTransactions = groupTransactionsByDate(monthTransactions);
+    const dailySummary = calculateDailySummary(groupedTransactions);
+
+    const dates = Object.keys(dailySummary).sort();
+
+    const lastCumulativeChange = dates.length > 0
+        ? dailySummary[dates[dates.length - 1]].cumulativeAmount
+        : 0;
+
+    return startingBalance + lastCumulativeChange;
+}
+
+function resetMonthlyStartingBalance() {
+    const monthKey = getMonthKey(selectedMonthDate);
+
+    //선택한 달에 저장된 시작 잔액을 제거
+    delete monthlyStartingBalances[monthKey];
+
+    //변경된 월별 시작 잔액을 저장
+    localStorage.setItem(MONTHLY_STARTING_BALANCES, JSON.stringify(monthlyStartingBalances));
+
+    //이전 달의 마지막 잔액을 기준으로 다시 계산
+    renderPage();
 }
 
 //filter function
@@ -1988,4 +2044,27 @@ nowMonthBtn.click();
  * Math.ceil(dates.length / 7);     : Math.ceil()는 소수점을 올림해서 정수로 만드는 함수.
  *                                    날짜 개수를 7로 나누고 소수점이 생기면 올림으로 만든다.
  *                                    반대로 Math.floor()는 소수점을 내림해서 정수로 만드는 함수.
+ */
+
+/* 41일차
+ * if (Object.prototype.hasOwnProperty.call(monthlyStartingBalances, monthKey)) {
+ *       return Number(monthlyStartingBalances[monthKey]);
+ *   }
+ *      : 저장된 시작 잔액이 있는지 확인하는 코드.
+ *        Object.prototype.hasOwnProperty.call(monthlyStartingBalances, monthKey)으로 monthlyStartingBalances 객체에 monthKey라는 이름의 항목이 실제로 존재하는지 확인.
+ *        return Number(monthlyStartingBalances[monthKey])으로 객체에서 해당 월의 시작 잔액을 가져와서 숫자로 변환한 뒤, 반환.
+ * 
+ * const lastCumulativeChange = dates.length > 0
+ *      ? dailySummary[dates[dates.length - 1]].cumulativeAmount
+ *      : 0;
+ *          : 해당 월의 마지막 누적 변동액을 구하는 코드.
+ *            해당 월의 거래 기록을 날짜순으로 살펴보고, 가장 마지막 날짜에 계산된 누적 변동액을 가져온다.
+ *            해당 월에 거래 기록이 하나도 없으면 0을 이용.
+ * 
+ *            const dates = Object.keys(dailySummary).sort();로 dates를 만드는데, dailySummary가 여기서 날짜순으로 정렬된다.
+ *            그리고 dates.length > 0으로 배열에 날짜가 한 개 이상 있는지 확인한다.
+ *            배열에 날짜가 한 개 이상 존재한다면 dailySummary[dates[dates.length - 1]].cumulativeAmount을 실행한다.
+ *                  dates[dates.length - 1]는 배열에서 가장 마지막 날짜를 가져오라는 의미.
+ *                  따라서 dates[dates.length - 1]으로 마지막 날짜를 찾고, dailySummary[해당 날짜]로 해당 날짜의 요약 데이터를 찾아서, 해당 날짜까지의 누적된 변동액(cumulativeAmount)을 가져온다.
+ *            만약 배열에 날짜가 하나라도 없다면 0을 사용한다.
  */
