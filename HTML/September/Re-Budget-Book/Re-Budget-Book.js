@@ -1123,6 +1123,8 @@ function summaryMonth() {
     summaryMonthList.innerHTML = "";
 
     const targetTransactions = getTransactionsByMonth(selectedMonthDate);
+    const prevMonthDate = new Date(selectedMonthDate.getFullYear(), selectedMonthDate.getMonth() - 1, 1);
+    const prevTargetTransactions = getTransactionsByMonth(prevMonthDate);
 
     const expenseAmount = summaryTransactionAmount(targetTransactions, "type", "expense");
     const incomeAmount = summaryTransactionAmount(targetTransactions, "type", "income");
@@ -1130,13 +1132,93 @@ function summaryMonth() {
     const investmentAmount = summaryTransactionAmount(targetTransactions, "type", "investment");
     const balanceAmount = incomeAmount - expenseAmount - savingAmount - investmentAmount;
 
-    summaryMonthList.innerHTML = `
-        <p>이번 달 수입: ${incomeAmount.toLocaleString('ko-KR')}원</p>
-        <p>이번 달 지출: ${expenseAmount.toLocaleString('ko-KR')}원, ${summaryPercentage(expenseAmount, incomeAmount)}</p>
-        <p>이번 달 저축: ${savingAmount.toLocaleString('ko-KR')}원, ${summaryPercentage(savingAmount, incomeAmount)}</p>
-        <p>이번 달 투자: ${investmentAmount.toLocaleString('ko-KR')}원, ${summaryPercentage(investmentAmount, incomeAmount)}</p>
-        <p>잔액: ${balanceAmount.toLocaleString('ko-KR')}원</p>
-    `;
+    const prevExpenseAmount = summaryTransactionAmount(prevTargetTransactions, "type", "expense");
+    const prevIncomeAmount = summaryTransactionAmount(prevTargetTransactions, "type", "income");
+    const prevSavingAmount = summaryTransactionAmount(prevTargetTransactions, "type", "saving");
+    const prevInvestmentAmount = summaryTransactionAmount(prevTargetTransactions, "type", "investment");
+    const prevBalanceAmount = prevIncomeAmount - prevExpenseAmount - prevSavingAmount - prevInvestmentAmount;
+
+    const incomeAmountTextArea = document.createElement("div");
+    incomeAmountTextArea.classList.add("summary-month-compare-area");
+    const incomeAmountText = document.createElement("p");
+    incomeAmountText.textContent = `이번 달 수입: ${incomeAmount.toLocaleString('ko-KR')}원`;
+        const incomeAmountTextCompared = document.createElement("p");
+        incomeAmountTextCompared.textContent = `전월 대비: ${(incomeAmount - prevIncomeAmount).toLocaleString('ko-KR')}원`;
+        incomeAmountTextCompared.classList.add("summary-month-compare");
+        incomeAmountTextArea.append(incomeAmountText, incomeAmountTextCompared);
+
+        if(incomeAmount - prevIncomeAmount > 0) incomeAmountTextArea.classList.add("summary-month-inc");
+        else if(incomeAmount - prevIncomeAmount < 0) incomeAmountTextArea.classList.add("summary-month-dec");
+        else {
+            incomeAmountTextCompared.textContent = "전월 대비 동일";
+            incomeAmountTextArea.classList.remove("summary-month-inc", "summary-month-dec");
+        }
+
+    const expenseAmountTextArea = document.createElement("div");
+    expenseAmountTextArea.classList.add("summary-month-compare-area");
+    const expenseAmountText = document.createElement("p");
+    expenseAmountText.textContent = `이번 달 지출: ${expenseAmount.toLocaleString('ko-KR')}원, ${summaryPercentage(expenseAmount, incomeAmount)}`;
+        const expenseAmountTextCompared = document.createElement("p");
+        expenseAmountTextCompared.textContent = `전월 대비: ${(expenseAmount - prevExpenseAmount).toLocaleString('ko-KR')}원`;
+        expenseAmountTextCompared.classList.add("summary-month-compare");
+        expenseAmountTextArea.append(expenseAmountText, expenseAmountTextCompared);
+
+        if(expenseAmount - prevExpenseAmount < 0) expenseAmountTextArea.classList.add("summary-month-inc");
+        else if(expenseAmount - prevExpenseAmount > 0) expenseAmountTextArea.classList.add("summary-month-dec");
+        else {
+            expenseAmountTextCompared.textContent = "전월 대비 동일";
+            expenseAmountTextArea.classList.remove("summary-month-inc", "summary-month-dec");
+        }
+
+    const savingAmountTextArea = document.createElement("div");
+    savingAmountTextArea.classList.add("summary-month-compare-area");
+    const savingAmountText = document.createElement("p");
+    savingAmountText.textContent = `이번 달 저축: ${savingAmount.toLocaleString('ko-KR')}원, ${summaryPercentage(savingAmount, incomeAmount)}`;
+        const savingAmountTextCompared = document.createElement("p");
+        savingAmountTextCompared.textContent = `전월 대비: ${(savingAmount - prevSavingAmount).toLocaleString('ko-KR')}원`;
+        savingAmountTextCompared.classList.add("summary-month-compare");
+        savingAmountTextArea.append(savingAmountText, savingAmountTextCompared);
+
+        if(savingAmount - prevSavingAmount > 0) savingAmountTextArea.classList.add("summary-month-inc");
+        else if(savingAmount - prevSavingAmount < 0) savingAmountTextArea.classList.add("summary-month-dec");
+        else {
+            savingAmountTextCompared.textContent = "전월 대비 동일";
+            savingAmountTextArea.classList.remove("summary-month-inc", "summary-month-dec");
+        }
+
+    const investmentAmountTextArea = document.createElement("div");
+    investmentAmountTextArea.classList.add("summary-month-compare-area");
+    const investmentAmountText = document.createElement("p");
+    investmentAmountText.textContent = `이번 달 투자: ${investmentAmount.toLocaleString('ko-KR')}원, ${summaryPercentage(investmentAmount, incomeAmount)}`;
+        const investmentAmountTextCompared = document.createElement("p");
+        investmentAmountTextCompared.textContent = `전월 대비: ${(investmentAmount - prevInvestmentAmount).toLocaleString('ko-KR')}원`;
+        investmentAmountTextCompared.classList.add("summary-month-compare");
+        investmentAmountTextArea.append(investmentAmountText, investmentAmountTextCompared);
+
+        if(investmentAmount - prevInvestmentAmount > 0) investmentAmountTextArea.classList.add("summary-month-inc");
+        else if(investmentAmount - prevInvestmentAmount < 0) investmentAmountTextArea.classList.add("summary-month-dec");
+        else {
+            investmentAmountTextCompared.textContent = "전월 대비 동일";
+            investmentAmountTextArea.classList.remove("summary-month-inc", "summary-month-dec");
+        }
+
+    const balanceAmountTextArea = document.createElement("div");
+    balanceAmountTextArea.classList.add("summary-month-compare-area");
+    const balanceAmountText = document.createElement("p");
+    balanceAmountText.textContent = `이번 달 가용 금액 변동: ${balanceAmount.toLocaleString('ko-KR')}원`;
+        const balanceAmountTextCompared = document.createElement("p");
+        balanceAmountTextCompared.textContent = `전월 대비: ${(balanceAmount - prevBalanceAmount).toLocaleString('ko-KR')}원`;
+        balanceAmountTextCompared.classList.add("summary-month-compare");
+        balanceAmountTextArea.append(balanceAmountText, balanceAmountTextCompared);
+
+        if(balanceAmount - prevBalanceAmount > 0) balanceAmountTextArea.classList.add("summary-month-inc");
+        else if(balanceAmount - prevBalanceAmount < 0) balanceAmountTextArea.classList.add("summary-month-dec");
+        else {
+            balanceAmountTextCompared.textContent = "전월 대비 동일";
+            balanceAmountTextArea.classList.remove("summary-month-inc", "summary-month-dec");
+        }
+
+    summaryMonthList.append(incomeAmountTextArea, expenseAmountTextArea, savingAmountTextArea, investmentAmountTextArea, balanceAmountTextArea);
 }
 
 function summaryCategory() {
