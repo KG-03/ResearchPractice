@@ -38,6 +38,7 @@ header {
 
     background: white;
     border-radius: 10px;
+    padding-bottom: 10px;
 }
 
 .summary-month-area {
@@ -45,12 +46,28 @@ header {
     text-align: center;
 }
 
+.summary-month-compare-area {
+    line-height: 15px;   
+}
+
+.summary-month-compare {
+    font-size: 12px;
+    margin-top: -10px;
+}
+
+.summary-month-inc {
+    color: green;
+}
+
+.summary-month-dec {
+    color: red;
+}
+
 .summary-category-area {
     justify-content: center;
     text-align: center;
 
     gap: 10px;
-    margin-bottom: 10px;
 }
 
 .summary-category-option {
@@ -162,21 +179,21 @@ header {
 
 /*===== summary grape =====*/
 .summary-graph-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 2fr) 60px;
     align-items: center;
     gap: 10px;
-    margin-bottom: 8px;    
+    margin-bottom: 8px;
 }
 
 .summary-graph-row p {
-    width: 150px;
     margin: 0;
-    flex-shrink: 0;
-    text-align: right;
 }
 
 .summary-graph-track {
-    flex: 1;
+    width: 100%;
+    min-width: 0;
+
     height: 12px;
     background: #eeeeee;
     border-radius: 6px;
@@ -187,6 +204,12 @@ header {
     height: 100%;
     background: #8fb89a;
     border-radius: 6px;
+}
+
+.summary-category-percentage {
+    width: 60px;
+    text-align: right;
+    white-space: nowrap;
 }
 
 /*===== budget comparison =====*/
