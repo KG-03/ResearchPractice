@@ -1235,9 +1235,13 @@ function summaryCategory() {
     }
 
     const maxAmount = Math.max(...amounts);
+    const totalAmount = amounts.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
     
-    Object.entries(categoryAmounts).forEach(([category, amount]) => {
-        summaryCategoryList.append(createSummaryCategoryCard(category, amount, maxAmount));
+    const sortCategoryAmounts = Object.entries(categoryAmounts)
+                                .sort(([, amountA], [,amountB]) => amountB - amountA);
+    
+    sortCategoryAmounts.forEach(([category, amount]) => {
+        summaryCategoryList.append(createSummaryCategoryCard(category, amount, maxAmount, totalAmount));
     });
 }
 
@@ -1249,21 +1253,21 @@ function summaryPercentage(typeAmount, incomeAmount) {
     return `${result.toFixed(2)}%`;
 }
 
-function createSummaryCategoryCard(category, amount, maxAmount) {
+function createSummaryCategoryCard(category, amount, maxAmount, totalAmount) {
     const width = maxAmount === 0 ? 0 : amount / maxAmount * 100;
 
     const card = document.createElement("div");
     card.classList.add("summary-category-card");
 
-    const categoryOption = categoryOptions[summaryCategoryType.value].find(
-        option => option.value === category
-    );
+    const options = categoryOptions[summaryCategoryType.value] ?? [];
+    const categoryOption = options.find(option => option.value === category);
+    const categoryLabel = categoryOption?.label ?? category;
 
     const row = document.createElement("div");
     row.classList.add("summary-graph-row");
 
     const categoryLabelAmount = document.createElement("p");
-    categoryLabelAmount.textContent = `${categoryOption.label}: ${amount.toLocaleString('ko-KR')}원`;
+    categoryLabelAmount.textContent = `${categoryLabel} ${amount.toLocaleString('ko-KR')}원`;
 
     const barTrack = document.createElement("div");
     barTrack.classList.add("summary-graph-track");
@@ -1273,6 +1277,11 @@ function createSummaryCategoryCard(category, amount, maxAmount) {
     barChart.style.width = `${width}%`;
     barTrack.append(barChart);
     row.append(categoryLabelAmount, barTrack);
+
+    const percentage = document.createElement("p");
+    const percentageAmount = summaryPercentage(amount, totalAmount);
+    percentage.textContent = `${percentageAmount}`;
+    row.append(percentage);
     
     card.append(row);
     return card;
