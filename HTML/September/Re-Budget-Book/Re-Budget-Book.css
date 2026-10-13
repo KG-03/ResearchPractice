@@ -25,7 +25,7 @@ header {
 .summary-sort {
     display: flex;
     justify-content: space-around;
-    align-items: center;
+    align-items: flex-start;
     text-align: center;
 
     margin-bottom: 20px;
@@ -82,13 +82,6 @@ header {
     width: 120px;
     height: 30px;
     text-align: center;
-}
-
-.summary-category-card {
-    padding: 10px;
-    
-    justify-content: center;
-    align-items: center;
 }
 
 .balance-chart-tooltip {
@@ -177,13 +170,37 @@ header {
     gap: 10px;
 }
 
-/*===== summary grape =====*/
+/*===== summary category card =====*/
+.summary-category-card {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.summary-category-card h3, 
+.summary-category-card p {
+    margin: 0;
+}
+
+.summary-category-header,
+.summary-category-compare {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
 .summary-graph-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 2fr) 60px;
+    display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 8px;
+    width: 100%;
 }
 
 .summary-graph-row p {
@@ -191,22 +208,24 @@ header {
 }
 
 .summary-graph-track {
-    width: 100%;
+    flex: 1;
     min-width: 0;
-
     height: 12px;
+    overflow: hidden;
+
     background: #eeeeee;
     border-radius: 6px;
-    overflow: hidden;
 }
 
 .summary-category-bar {
     height: 100%;
+    max-width: 100%;
     background: #8fb89a;
     border-radius: 6px;
 }
 
 .summary-category-percentage {
+    flex-shrink: 0;
     width: 60px;
     text-align: right;
     white-space: nowrap;
