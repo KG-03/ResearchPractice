@@ -1263,11 +1263,37 @@ function createSummaryCategoryCard(category, amount, maxAmount, totalAmount) {
     const categoryOption = options.find(option => option.value === category);
     const categoryLabel = categoryOption?.label ?? category;
 
+    const categoryHeaderDiv = document.createElement("div");
+    categoryHeaderDiv.classList.add("summary-category-header");
+    categoryHeaderDiv.style.fontSize = "18px";
+        const categoryHeaderLabel = document.createElement("p");
+        categoryHeaderLabel.style.fontWeight = 'bold';
+        categoryHeaderLabel.textContent = `${categoryLabel}`;
+
+        const categoryHeaderAmount = document.createElement("p");
+        categoryHeaderAmount.textContent = `${amount.toLocaleString('ko-KR')}원`;
+    categoryHeaderDiv.append(categoryHeaderLabel, categoryHeaderAmount);
+
+    const categoryCompareDiv = document.createElement("div");
+    categoryCompareDiv.classList.add("summary-category-compare");
+    categoryCompareDiv.style.fontSize = "14px";
+        const categoryCompareLabel = document.createElement("p");
+        categoryCompareLabel.textContent = "전월 대비";
+
+        const categoryCompareAmount = document.createElement("p");
+        const prevMonthDate = new Date(selectedMonthDate.getFullYear(), selectedMonthDate.getMonth() - 1, 1);
+        const prevTargetTransactions = getTransactionsByMonth(prevMonthDate);
+        const prevAmount = summaryTransactionAmount(prevTargetTransactions, "category", category);
+        const difference = amount - prevAmount;
+        categoryCompareAmount.textContent = `${difference > 0 ? "+" : ""}${difference.toLocaleString("ko-KR")}원`;
+        if(difference !== 0) {
+            const isImprovement = summaryCategoryType.value === "expense" ? difference < 0 : difference > 0;
+            categoryCompareDiv.classList.add(isImprovement ? "summary-month-inc" : "summary-month-dec");
+        }
+    categoryCompareDiv.append(categoryCompareLabel, categoryCompareAmount);
+
     const row = document.createElement("div");
     row.classList.add("summary-graph-row");
-
-    const categoryLabelAmount = document.createElement("p");
-    categoryLabelAmount.textContent = `${categoryLabel} ${amount.toLocaleString('ko-KR')}원`;
 
     const barTrack = document.createElement("div");
     barTrack.classList.add("summary-graph-track");
@@ -1276,14 +1302,14 @@ function createSummaryCategoryCard(category, amount, maxAmount, totalAmount) {
     barChart.classList.add("summary-category-bar");
     barChart.style.width = `${width}%`;
     barTrack.append(barChart);
-    row.append(categoryLabelAmount, barTrack);
+    row.append(barTrack);
 
     const percentage = document.createElement("p");
     const percentageAmount = summaryPercentage(amount, totalAmount);
     percentage.textContent = `${percentageAmount}`;
     row.append(percentage);
     
-    card.append(row);
+    card.append(categoryHeaderDiv, categoryCompareDiv, row);
     return card;
 }
 
