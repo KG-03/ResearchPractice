@@ -56,6 +56,7 @@ const budgetList = document.querySelector(".budget-list");
 
 const STORAGE_KEY = "reBudgetTransactions";
 const MONTHLY_STARTING_BALANCES = "monthly-starting-balances";
+const SUMMARY_CATEGORY_BUDGET = "summary-category-budget";
 
 const TYPE_OPTIONS = {
     all: "전체",
@@ -169,6 +170,7 @@ const CSV = {
 let transactions = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 let categoryOptions = JSON.parse(localStorage.getItem("CATEGORY_OPTIONS")) || structuredClone(DEFAULT_CATEGORY_OPTIONS);
 let monthlyStartingBalances = JSON.parse(localStorage.getItem(MONTHLY_STARTING_BALANCES)) || {};
+let summaryCategoryBudgets = JSON.parse(localStorage.getItem(SUMMARY_CATEGORY_BUDGET)) || {};
 
 let today = new Date();
 let selectedMonthDate = new Date();
@@ -1256,12 +1258,12 @@ function summaryPercentage(typeAmount, incomeAmount) {
 function createSummaryCategoryCard(category, amount, maxAmount, totalAmount) {
     const width = maxAmount === 0 ? 0 : amount / maxAmount * 100;
 
-    const card = document.createElement("div");
-    card.classList.add("summary-category-card");
-
     const options = categoryOptions[summaryCategoryType.value] ?? [];
     const categoryOption = options.find(option => option.value === category);
     const categoryLabel = categoryOption?.label ?? category;
+
+    const card = document.createElement("div");
+    card.classList.add("summary-category-card");
 
     const categoryHeaderDiv = document.createElement("div");
     categoryHeaderDiv.classList.add("summary-category-header");
@@ -1308,8 +1310,43 @@ function createSummaryCategoryCard(category, amount, maxAmount, totalAmount) {
     const percentageAmount = summaryPercentage(amount, totalAmount);
     percentage.textContent = `${percentageAmount}`;
     row.append(percentage);
+
+    const budgetInputDiv = document.createElement("div");
+    budgetInputDiv.classList.add("summary-category-budget");
+        const budgetInputLabel = document.createElement("p");
+        budgetInputLabel.textContent = `${categoryLabel}의 예산`;
+        const monthKey = getMonthKey(selectedMonthDate);
+        const budgetInput = document.createElement("input");
+        budgetInput.type = "number";
+        budgetInput.min = 0;
+        budgetInput.step = "1000";
+        budgetInput.classList.add("summary-category-budget");
+        budgetInput.value = summaryCategoryBudgets[monthKey]?.[category] ?? "";
+        budgetInput.addEventListener("change", () => {
+            const inputValue = budgetInput.value.trim();
+
+            if(inputValue === "") {
+                if(summaryCategoryBudgets[monthKey]) {
+                    delete summaryCategoryBudgets[monthKey][category];
+
+                    if((Object.keys(summaryCategoryBudgets[monthKey]).length === 0)) delete summaryCategoryBudgets[monthKey];
+                }
+            } else {
+                const monthBudget = Number(inputValue);
+
+                if(!Number.isFinite(monthBudget) || monthBudget < 0) return;
+
+                if(!summaryCategoryBudgets[monthKey]) summaryCategoryBudgets[monthKey] = {};
+
+                summaryCategoryBudgets[monthKey][category] = monthBudget;
+            }
+
+            saveSummaryCategoryBudget();
+            renderPage();
+        });
+    budgetInputDiv.append(budgetInputLabel, budgetInput);
     
-    card.append(categoryHeaderDiv, categoryCompareDiv, row);
+    card.append(categoryHeaderDiv, categoryCompareDiv, row, budgetInputDiv);
     return card;
 }
 
@@ -1714,6 +1751,7 @@ function saveData() {
     saveTransactions();
     saveCategoryOption();
     saveMonthlyStartingBalance();
+    saveSummaryCategoryBudget();
 }
 
 function saveTransactions() {
@@ -1726,6 +1764,10 @@ function saveCategoryOption() {
 
 function saveMonthlyStartingBalance() {
     localStorage.setItem(MONTHLY_STARTING_BALANCES, JSON.stringify(monthlyStartingBalances));
+}
+
+function saveSummaryCategoryBudget() {
+    localStorage.setItem(SUMMARY_CATEGORY_BUDGET, JSON.stringify(summaryCategoryBudgets));
 }
 
 function resetInputForm() {
