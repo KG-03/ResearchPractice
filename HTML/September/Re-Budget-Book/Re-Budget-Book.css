@@ -189,7 +189,8 @@ header {
 }
 
 .summary-category-header,
-.summary-category-compare {
+.summary-category-compare,
+.summary-category-budget {
     display: flex;
     align-items: center;
     justify-content: space-between;
