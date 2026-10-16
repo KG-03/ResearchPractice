@@ -1276,52 +1276,21 @@ function createSummaryCategoryCard(category, amount, maxAmount, totalAmount) {
         categoryHeaderAmount.textContent = `${amount.toLocaleString('ko-KR')}원`;
     categoryHeaderDiv.append(categoryHeaderLabel, categoryHeaderAmount);
 
-    const categoryCompareDiv = document.createElement("div");
-    categoryCompareDiv.classList.add("summary-category-compare");
-    categoryCompareDiv.style.fontSize = "14px";
-        const categoryCompareLabel = document.createElement("p");
-        categoryCompareLabel.textContent = "전월 대비";
-
-        const categoryCompareAmount = document.createElement("p");
-        const prevMonthDate = new Date(selectedMonthDate.getFullYear(), selectedMonthDate.getMonth() - 1, 1);
-        const prevTargetTransactions = getTransactionsByMonth(prevMonthDate);
-        const prevAmount = summaryTransactionAmount(prevTargetTransactions, "category", category);
-        const difference = amount - prevAmount;
-        categoryCompareAmount.textContent = `${difference > 0 ? "+" : ""}${difference.toLocaleString("ko-KR")}원`;
-        if(difference !== 0) {
-            const isImprovement = summaryCategoryType.value === "expense" ? difference < 0 : difference > 0;
-            categoryCompareDiv.classList.add(isImprovement ? "summary-month-inc" : "summary-month-dec");
-        }
-    categoryCompareDiv.append(categoryCompareLabel, categoryCompareAmount);
-
-    const row = document.createElement("div");
-    row.classList.add("summary-graph-row");
-
-    const barTrack = document.createElement("div");
-    barTrack.classList.add("summary-graph-track");
-
-    const barChart = document.createElement("div");
-    barChart.classList.add("summary-category-bar");
-    barChart.style.width = `${width}%`;
-    barTrack.append(barChart);
-    row.append(barTrack);
-
-    const percentage = document.createElement("p");
-    const percentageAmount = summaryPercentage(amount, totalAmount);
-    percentage.textContent = `${percentageAmount}`;
-    row.append(percentage);
-
     const budgetInputDiv = document.createElement("div");
     budgetInputDiv.classList.add("summary-category-budget");
         const budgetInputLabel = document.createElement("p");
         budgetInputLabel.textContent = `${categoryLabel}의 예산`;
+
         const monthKey = getMonthKey(selectedMonthDate);
+        const savedBudget = summaryCategoryBudgets[monthKey]?.[category];
+
         const budgetInput = document.createElement("input");
         budgetInput.type = "number";
         budgetInput.min = 0;
         budgetInput.step = "1000";
         budgetInput.classList.add("summary-category-budget");
-        budgetInput.value = summaryCategoryBudgets[monthKey]?.[category] ?? "";
+        budgetInput.value = savedBudget;
+
         budgetInput.addEventListener("change", () => {
             const inputValue = budgetInput.value.trim();
 
@@ -1344,10 +1313,90 @@ function createSummaryCategoryCard(category, amount, maxAmount, totalAmount) {
             saveSummaryCategoryBudget();
             renderPage();
         });
-    budgetInputDiv.append(budgetInputLabel, budgetInput);
-    
-    card.append(categoryHeaderDiv, categoryCompareDiv, row, budgetInputDiv);
+    budgetInputDiv.append(budgetInputLabel, budgetInput);    
+
+    const categoryCompareDiv = document.createElement("div");
+    categoryCompareDiv.classList.add("summary-category-compare");
+    categoryCompareDiv.style.fontSize = "14px";
+        const categoryCompareLabel = document.createElement("p");
+        categoryCompareLabel.textContent = "전월 대비";
+
+        const categoryCompareAmount = document.createElement("p");
+        const prevMonthDate = new Date(selectedMonthDate.getFullYear(), selectedMonthDate.getMonth() - 1, 1);
+        const prevTargetTransactions = getTransactionsByMonth(prevMonthDate);
+        const prevAmount = summaryTransactionAmount(prevTargetTransactions, "category", category);
+        const difference = amount - prevAmount;
+        categoryCompareAmount.textContent = `${difference > 0 ? "+" : ""}${difference.toLocaleString("ko-KR")}원`;
+        if(difference !== 0) {
+            const isImprovement = summaryCategoryType.value === "expense" ? difference < 0 : difference > 0;
+            categoryCompareDiv.classList.add(isImprovement ? "summary-month-inc" : "summary-month-dec");
+        }
+    categoryCompareDiv.append(categoryCompareLabel, categoryCompareAmount);
+
+    const categoryExpenseComparisonRowDiv = document.createElement("div");
+    categoryExpenseComparisonRowDiv.style.gap = "5px";
+    categoryExpenseComparisonRowDiv.style.marginTop = "10px";
+    categoryExpenseComparisonRowDiv.append(createRow("카테고리별 지출 비교", width, totalAmount));
+
+    const budgetUtilizationRateRowDiv = document.createElement("div");
+    budgetUtilizationRateRowDiv.style.gap = "5px";
+    budgetUtilizationRateRowDiv.style.marginTop = "10px";
+        const remainingBudgetDiv = document.createElement("div");
+        remainingBudgetDiv.classList.add("summary-category-remain-budget");
+        remainingBudgetDiv.style.fontSize = "14px";
+            const remainingBudgetLabel = document.createElement("p");            
+            const remainingBudgetAmount = document.createElement("p");
+
+            //유효한 예산이 설정되어 있는지 판단
+            const hasBudget = savedBudget !== undefined && savedBudget > 0;
+            //설정된 예산 금액
+            const budgetAmount = hasBudget ? Number(savedBudget) : 0;
+            //예산 사용률%
+            const budgetUtilizationRate = hasBudget ? (amount / budgetAmount) * 100 : null;
+            //예산에서 실제 지출을 뺀 금액
+            const remainingBudget = hasBudget ? budgetAmount - amount : null;
+
+            if(hasBudget) {
+                remainingBudgetLabel.textContent = remainingBudget >= 0 ? "남은 예산" : "예산 초과";
+                remainingBudgetAmount.textContent = `${Math.abs(remainingBudget).toLocaleString('ko-KR')}원`;
+            } else {
+                remainingBudgetLabel.textContent = "예산 상태";
+                remainingBudgetAmount.textContent = "예산 미설정";
+            }
+        remainingBudgetDiv.append(remainingBudgetLabel, remainingBudgetAmount);
+    budgetUtilizationRateRowDiv.append(createRow("예산 사용률", budgetUtilizationRate ?? 0, hasBudget ? budgetAmount : 0), remainingBudgetDiv);
+        
+    card.append(categoryHeaderDiv, budgetInputDiv, categoryCompareDiv, categoryExpenseComparisonRowDiv, budgetUtilizationRateRowDiv);
     return card;
+
+    function createRow(label, width, percentageBase) {
+        const div = document.createElement("div");
+
+            const barLabel = document.createElement("p");
+            barLabel.textContent = label;
+            barLabel.style.textAlign = "left";
+            barLabel.style.fontSize = "14px";
+
+            const row = document.createElement("div");
+            row.classList.add("summary-graph-row");
+
+            const barTrack = document.createElement("div");
+            barTrack.classList.add("summary-graph-track");
+
+            const barChart = document.createElement("div");
+            barChart.classList.add("summary-category-bar");
+            barChart.style.width = `${Math.min(Math.max(width, 0), 100)}%`;
+            barTrack.append(barChart);
+            row.append(barTrack);
+
+            const percentage = document.createElement("p");
+            percentage.textContent = summaryPercentage(amount, percentageBase);
+            row.append(percentage);
+
+        div.append(barLabel, row);
+        
+        return div;
+    }
 }
 
     //배열로 전달
