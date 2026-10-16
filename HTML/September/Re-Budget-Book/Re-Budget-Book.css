@@ -180,7 +180,7 @@ header {
     width: 100%;
     box-sizing: border-box;
     padding: 10px;
-    margin-bottom: 10px;
+    margin-bottom: 30px;
 }
 
 .summary-category-card h3, 
@@ -190,7 +190,8 @@ header {
 
 .summary-category-header,
 .summary-category-compare,
-.summary-category-budget {
+.summary-category-budget,
+.summary-category-remain-budget {
     display: flex;
     align-items: center;
     justify-content: space-between;
