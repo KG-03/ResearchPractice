@@ -177,10 +177,20 @@ header {
     align-items: stretch;
     gap: 10px;
 
-    width: 100%;
     box-sizing: border-box;
     padding: 10px;
+    margin: 15px;
     margin-bottom: 30px;
+
+    border: 2px solid #8fb89a;
+    border-radius: 5px;
+    border-style: dashed;
+}
+
+.category-summary-rank {
+    width: 100%;
+    height: 5px;
+    background: #8fb89a;
 }
 
 .summary-category-card h3, 
@@ -196,6 +206,37 @@ header {
     align-items: center;
     justify-content: space-between;
     gap: 10px;
+}
+
+.summary-category-amount {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.summary-category-summary-state-label {
+    padding: 5px;
+
+    border-radius: 5px;
+    background: #cccccc;
+
+    font-size: 14px;
+}
+
+.not-set {
+    background: #cccccc;
+}
+
+.budget-leeway {
+    background: #b0d8b4;
+}
+
+.budget-caution {
+    background: #d8cdb0;
+}
+
+.budget-over {
+    background: #d8b0b0;
 }
 
 .summary-graph-row {
@@ -222,7 +263,6 @@ header {
 .summary-category-bar {
     height: 100%;
     max-width: 100%;
-    background: #8fb89a;
     border-radius: 6px;
 }
 
