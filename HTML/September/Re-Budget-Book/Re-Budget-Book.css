@@ -83,6 +83,17 @@ header {
     height: 30px;
     text-align: center;
 }
+.summary-category-total-budget-area {
+    text-align: left;
+    line-height: 10px;
+    padding: 20px;
+}
+
+.summary-category-total-budget-summary-div {
+    display: flex;
+
+    gap: 20px;
+}
 
 .balance-chart-tooltip {
     position: absolute;
