@@ -1241,10 +1241,43 @@ function summaryCategory() {
     const maxAmount = Math.max(...amounts);
     const totalAmount = amounts.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
     
+    const monthKey = getMonthKey(selectedMonthDate);
+    const selectedType = summaryCategoryType.value;
+
+    const typeBudgets = summaryCategoryBudgets[monthKey]?.[selectedType] ?? {};
+
     const sortCategoryAmounts = Object.entries(categoryAmounts)
-                                .sort(([, amountA], [,amountB]) => amountB - amountA);
+                                .map(([category, amount]) => {
+                                    const saveBudget = typeBudgets[category];
+                                    const budget = Number(saveBudget);
+
+                                    const hasBudget = saveBudget !== undefined &&
+                                                        saveBudget !== null &&
+                                                        saveBudget !== "" &&
+                                                        Number.isFinite(budget) &&
+                                                        budget > 0;
+
+                                    const utilizationRate = hasBudget ? amount / budget * 100 : null;
+                                    
+                                    let statusRank;
+
+                                    if(!hasBudget) statusRank = 3;
+                                    else if(utilizationRate >= 100) statusRank = 0;
+                                    else if(utilizationRate >= 80) statusRank = 1;
+                                    else statusRank = 2;
+
+                                    return { category, amount, hasBudget, utilizationRate, statusRank };
+                                }).sort((a, b) => {
+                                    //예산 상태순
+                                    if(a.statusRank !== b.statusRank) return a.statusRank - b.statusRank;
+
+                                    //같은 상태에서는 예산 사용률 높은 순
+                                    if(a.hasBudget && a.hasBudget) return a.utilizationRate - b.utilizationRate;
+
+                                    return b.amount - a.amount;
+                                });
     
-    sortCategoryAmounts.forEach(([category, amount]) => {
+    sortCategoryAmounts.forEach(({category, amount}) => {
         summaryCategoryList.append(createSummaryCategoryCard(category, amount, maxAmount, totalAmount));
     });
 }
@@ -1287,7 +1320,8 @@ function createSummaryCategoryCard(category, amount, maxAmount, totalAmount) {
         budgetInputLabel.textContent = `${categoryLabel}의 예산`;
 
         const monthKey = getMonthKey(selectedMonthDate);
-        const savedBudget = summaryCategoryBudgets[monthKey]?.[category];
+        const selectedType = summaryCategoryType.value;
+        const savedBudget = summaryCategoryBudgets[monthKey]?.[selectedType]?.[category];
 
         const budgetInput = document.createElement("input");
         budgetInput.type = "number";
@@ -1311,9 +1345,11 @@ function createSummaryCategoryCard(category, amount, maxAmount, totalAmount) {
 
                 if(!Number.isFinite(monthBudget) || monthBudget < 0) return;
 
+                //월의 예산 객체가 없으면, 선택된 거래 유형 객체가 없으면.
                 if(!summaryCategoryBudgets[monthKey]) summaryCategoryBudgets[monthKey] = {};
+                if(!summaryCategoryBudgets[monthKey][selectedType]) summaryCategoryBudgets[monthKey][selectedType] = {};
 
-                summaryCategoryBudgets[monthKey][category] = monthBudget;
+                summaryCategoryBudgets[monthKey][selectedType][category] = monthBudget;
             }
 
             saveSummaryCategoryBudget();
@@ -1463,11 +1499,12 @@ function createSummaryCategoryTotalCard() {
     summaryCategoryTotalBudgetArea.innerHTML = "";
 
     const monthKey = getMonthKey(selectedMonthDate);
-    const monthlyBudgets = summaryCategoryBudgets[monthKey] ?? {};
     const selectedType = summaryCategoryType.value;
+    const monthlyBudgets = summaryCategoryBudgets[monthKey] ?? {};
+    const typeBudget = monthlyBudgets[selectedType] ?? {};
     const typeCategories = categoryOptions[selectedType] ?? [];
     const totalBudget = typeCategories.reduce((sum, option) => {
-        const savedBudget = monthlyBudgets[option.value];
+        const savedBudget = typeBudget[option.value];
         
         if(savedBudget === undefined || savedBudget === null || savedBudget === "") return sum;
 
@@ -1482,23 +1519,39 @@ function createSummaryCategoryTotalCard() {
     const remainingBudget = totalBudget - currentTypeAmount ;
     const budgetUtilizationRate = totalBudget > 0 ? currentTypeAmount  / totalBudget * 100 : null;
 
-    const header = document.createElement("h4");
+    const header = document.createElement("h3");
     header.textContent = "이번 달 예산 현황";
 
-    const totalSummary = document.createElement("p");
-    totalSummary.textContent = `전체 예산: ${totalBudget.toLocaleString('ko-KR')}원`;
+    const summaryDiv = document.createElement("div");
+    summaryDiv.classList.add("summary-category-total-budget-summary-div");
+    summaryDiv.style.fontWeight = "bold";
 
-    const currentSummary = document.createElement("p");
-    currentSummary.textContent = `현재 지출: ${currentTypeAmount .toLocaleString('ko-KR')}원`;
+        const totalSummary = document.createElement("p");
+        totalSummary.textContent = `전체 예산: ${totalBudget.toLocaleString('ko-KR')}원`;
 
-    const remainingExpense = document.createElement("p");
-    if(totalBudget > 0) remainingExpense.textContent = `${remainingBudget >= 0 ? "남은 예산" : "예산 초과"}: ` + `${Math.abs(remainingBudget).toLocaleString('ko-KR')}원`;
-    else remainingExpense.textContent = "예산 미설정";
+        const currentSummary = document.createElement("p");
+        currentSummary.textContent = `현재 지출: ${currentTypeAmount .toLocaleString('ko-KR')}원`;
+
+    summaryDiv.append(totalSummary, currentSummary,);
 
     const rowDiv = document.createElement("div");
-    rowDiv.append(createRow("예산 사용률", budgetUtilizationRate ?? 0, totalBudget, currentTypeAmount, hasBudget, "budgetUtilization"));
+        const remainingExpenseDiv = document.createElement("div");
+        remainingExpenseDiv.classList.add("summary-category-remain-budget");
+        remainingExpenseDiv.style.fontSize = "14px";
+            const remainingExpenseLabel = document.createElement("p");
+            const remainingExpenseAmount = document.createElement("p"); 
+            if(totalBudget > 0) {
+                remainingExpenseLabel.textContent = `${remainingBudget >= 0 ? "남은 예산" : "예산 초과"}: `
+                remainingExpenseAmount.textContent = `${Math.abs(remainingBudget).toLocaleString('ko-KR')}원`;
+            }
+            else {
+                remainingExpenseLabel.textContent = "예산 미설정";
+                remainingExpenseAmount.textContent = "";
+            }
+        remainingExpenseDiv.append(remainingExpenseLabel, remainingExpenseAmount);
+        rowDiv.append(createRow("예산 사용률", budgetUtilizationRate ?? 0, totalBudget, currentTypeAmount, hasBudget, "budgetUtilization"), remainingExpenseDiv);
 
-    summaryCategoryTotalBudgetArea.append(header, totalSummary, currentSummary, remainingExpense, rowDiv);
+    summaryCategoryTotalBudgetArea.append(header, summaryDiv, rowDiv);
 }
 
     //배열로 전달
