@@ -1228,26 +1228,23 @@ function summaryMonth() {
 function summaryCategory() {
     summaryCategoryList.innerHTML = "";
 
-    const targetTransactions = getTransactionsByMonth(selectedMonthDate);
-
-    const categoryAmounts = summarySumAmount(targetTransactions, "type", summaryCategoryType.value, "category");
-
-    const amounts = Object.values(categoryAmounts);
-    if(!amounts.length) {
-        summaryCategoryList.textContent = "해당 타입의 거래 내역이 없습니다.";
-        return;
-    }
-
-    const maxAmount = Math.max(...amounts);
-    const totalAmount = amounts.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-    
     const monthKey = getMonthKey(selectedMonthDate);
     const selectedType = summaryCategoryType.value;
-
     const typeBudgets = summaryCategoryBudgets[monthKey]?.[selectedType] ?? {};
 
-    const sortCategoryAmounts = Object.entries(categoryAmounts)
-                                .map(([category, amount]) => {
+    const targetTransactions = getTransactionsByMonth(selectedMonthDate);
+    const categoryAmounts = summarySumAmount(targetTransactions, "type", summaryCategoryType.value, "category");
+    const amounts = Object.values(categoryAmounts);
+    const maxAmount = amounts.length > 0 ? Math.max(...amounts) : 0;
+    const totalAmount = amounts.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+
+    const categories = categoryOptions[summaryCategoryType.value] ?? [];
+
+    const sortCategoryAmounts = categories
+                                .map(option => {
+                                    const category = option.value;
+                                    const amount = categoryAmounts[category] ?? 0;
+
                                     const saveBudget = typeBudgets[category];
                                     const budget = Number(saveBudget);
 
@@ -1276,7 +1273,7 @@ function summaryCategory() {
 
                                     return b.amount - a.amount;
                                 });
-    
+
     sortCategoryAmounts.forEach(({category, amount}) => {
         summaryCategoryList.append(createSummaryCategoryCard(category, amount, maxAmount, totalAmount));
     });
@@ -1639,21 +1636,28 @@ function createComparisonRow(label, amount, maxAmount) {
     const row = document.createElement("div");
     row.classList.add("summary-graph-row");
 
-    const text = document.createElement("p");
-    text.textContent = `${label} ${amount.toLocaleString("ko-KR")}원`;
+    const rowTextDiv = document.createElement("div");
+    rowTextDiv.classList.add("summary-text-area");
+        const rowLabel = document.createElement("p");
+        rowLabel.textContent = `${label}`;
+
+        const rowAmount = document.createElement("p");
+        rowAmount.textContent = `${amount.toLocaleString("ko-KR")}원`;
+    rowTextDiv.append(rowLabel, rowAmount);
 
     const barTrack = document.createElement("div");
     barTrack.classList.add("summary-graph-track");
 
     const bar = document.createElement("div");
     bar.classList.add("summary-category-bar");
+    bar.style.background = "#8fb89a";
 
     const width = maxAmount === 0 ? 0 : amount / maxAmount * 100;
 
     bar.style.width = `${width}%`;
 
     barTrack.append(bar);
-    row.append(text, barTrack);
+    row.append(rowTextDiv, barTrack);
 
     return row;
 }
