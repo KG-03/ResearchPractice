@@ -41,6 +41,13 @@ header {
     padding-bottom: 10px;
 }
 
+.summary-category-list {
+    max-height: 350px;
+
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
 .summary-month-area {
     justify-content: center;
     text-align: center;
@@ -282,6 +289,12 @@ header {
     width: 60px;
     text-align: right;
     white-space: nowrap;
+}
+
+.summary-text-area {
+    display: flex;
+    width: 200px;
+    gap: 15px;
 }
 
 /*===== budget comparison =====*/
