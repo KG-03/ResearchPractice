@@ -535,15 +535,53 @@ function createTransactionCard(transaction) {
     const cardHeader = document.createElement("div");
     cardHeader.classList.add("budget-card-header");
 
-        const date = document.createElement("p");
-        date.textContent = transaction.date;
-        date.classList.add("budget-card-header-date");
-        cardHeader.append(date);
+        const dateDiv = document.createElement("div");
+        dateDiv.classList.add("budget-card-new-date-card");
+            const dateLable = document.createElement("p");
+            dateLable.textContent = transaction.date;
+            dateLable.classList.add("budget-card-header-date");
+        dateDiv.addEventListener("click", () => {
+            //이미 이 창이 있다면 중복 생성하지 않도록.
+            if(dateDiv.querySelector("input[type='date']")) return;
+
+            const dateSelectDiv = document.createElement("div");
+
+            const newDateSelect = document.createElement("input");
+            newDateSelect.type = "date";
+            newDateSelect.value = transaction.date;
+
+            const doneBtn = document.createElement("button");
+            doneBtn.textContent = "완료";
+            doneBtn.addEventListener("click", (event) => {
+                event.stopPropagation();
+                
+                if(!newDateSelect.value) return;
+
+                transaction.date = newDateSelect.value;
+
+                saveTransactions();
+                renderPage();
+            })
+
+            const cancelBtn = document.createElement("button");
+            cancelBtn.textContent = "취소";
+            cancelBtn.addEventListener("click", (event) => {
+                event.stopPropagation();
+                dateSelectDiv.remove();
+            });
+
+            dateSelectDiv.addEventListener("click", (event) => {
+                event.stopPropagation();
+            });
+            
+            dateSelectDiv.append(newDateSelect, doneBtn, cancelBtn);
+            dateDiv.append(dateSelectDiv);
+        });
+        dateDiv.append(dateLable);
 
         const type = document.createElement("p");
         type.textContent = TYPE_OPTIONS[transaction.type];
         type.classList.add(`budget-card-header-badge-${transaction.type}`);
-        cardHeader.append(type);
 
         const categoryOption = categoryOptions[transaction.type].find(
             option => option.value === transaction.category
@@ -551,7 +589,8 @@ function createTransactionCard(transaction) {
         const category = document.createElement("p");
         category.textContent = categoryOption.label;
         category.classList.add("budget-card-header-badge");
-        cardHeader.append(category);
+
+        cardHeader.append(dateDiv, type, category);
 
     card.append(cardHeader);
 
@@ -584,7 +623,6 @@ function createTransactionCard(transaction) {
             updatedDate.textContent = `수정일: ${new Date(transaction.updatedAt).toLocaleString('ko-KR')}`;
             cardDate.append(updatedDate);
         }
-
 
     card.append(cardDate);
 
@@ -1979,7 +2017,8 @@ function saveSummaryCategoryBudget() {
 }
 
 function resetInputForm() {
-    dateInput.value = "";
+    const offset = new Date().getTimezoneOffset() * 60000;
+    dateInput.value = new Date(Date.now() - offset).toISOString().substring(0, 10);
     amountInput.value = "";
     typeSelect.value = "expense";
         currentTypeSelect = typeSelect.value;
@@ -2434,4 +2473,9 @@ nowMonthBtn.click();
  *                  dates[dates.length - 1]는 배열에서 가장 마지막 날짜를 가져오라는 의미.
  *                  따라서 dates[dates.length - 1]으로 마지막 날짜를 찾고, dailySummary[해당 날짜]로 해당 날짜의 요약 데이터를 찾아서, 해당 날짜까지의 누적된 변동액(cumulativeAmount)을 가져온다.
  *            만약 배열에 날짜가 하나라도 없다면 0을 사용한다.
+ */
+
+/* 52일차
+ * stopPropagation()    : 현재 이벤트가 캡처링/버블링 단계에서 더이상 전파되지 않도록 방지한다.
+ *                        입력창 내부 클릭이 바깥 클릭처럼 처리되지 않도록 하는 것.
  */
