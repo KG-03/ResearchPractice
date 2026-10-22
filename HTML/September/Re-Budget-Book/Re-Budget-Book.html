@@ -90,28 +90,44 @@
                 </div>                
             </section>
             
+            <h2>입력</h2>
             <section class="input-area">
-                <h2>입력</h2>
                 <div class="input">
                     <input class="date-input" type="date">
                 
-                    <input class="amount-input" type="number" placeholder="금액">
-                    
-                    <select class="type-select">
-                        <option value="expense">지출</option>
-                        <option value="income">수입</option>
-                        <option value="saving">저축</option>
-                        <option value="investment">투자/재테크</option>
-                    </select>
+                    <div class="input-subcategory">
+                        <p>금액: </p>
+                        <input class="amount-input" type="number" placeholder="금액">
+                    </div>
 
-                    <select class="category-select">
-                        <option value="">카테고리</option>
-                    </select>
+                    <div class="input-subcategory">
+                        <p>옵션:</p>
+                        <select class="type-select">
+                            <option value="expense">지출</option>
+                            <option value="income">수입</option>
+                            <option value="saving">저축</option>
+                            <option value="investment">투자/재테크</option>
+                        </select>
 
-                    <textarea class="description-input" rows="2" cols="30" placeholder="메모를 입력하세요!"></textarea>
+                        <select class="category-select">
+                            <option value="">카테고리</option>
+                        </select>
+                    </div>
 
-                    <button class="add-btn">추가</button>
-                    <button class="edit-cancel-btn">수정 취소</button>
+                    <div class="input-subcategory">
+                        <p>메모: </p>
+                        <textarea class="description-input" rows="2" cols="30" placeholder="메모를 입력하세요!"></textarea>
+                    </div>
+
+                    <div class="input-subcategory">
+                        <p>반복되는 가계인가요? </p>
+                        <input class="repeat-select", type="checkbox">
+                    </div>
+
+                    <div class="input-subcategory">
+                        <button class="add-btn">추가</button>
+                        <button class="edit-cancel-btn">수정 취소</button>
+                    </div>
                 </div>
 
                 <div class="input-option">
