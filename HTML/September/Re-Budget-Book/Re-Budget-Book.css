@@ -15,6 +15,10 @@ header {
     margin-bottom: 10px;
 }
 
+.input-area {
+    display: flex;
+}
+
 .summary-area {
     justify-content: center;
     text-align: center;
@@ -310,9 +314,20 @@ header {
 /*===== input area =====*/
 .input {
     display: flex;
+    align-items:flex-start;
+    flex-direction: column;
+
+    padding: 10px;
+    border-radius: 10px;
+    background: #c8dbca;
+}
+
+.input-subcategory {
+    display: flex;
     align-items: center;
 
     gap: 10px;
+    line-height: 10px;
 }
 
 .edit-cancel-btn {
