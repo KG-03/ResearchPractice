@@ -36,6 +36,7 @@ const amountInput = document.querySelector(".amount-input");
 const typeSelect = document.querySelector(".type-select");
 const categorySelect = document.querySelector(".category-select");
 const descriptionInput = document.querySelector(".description-input");
+const repeatSelect = document.querySelector(".repeat-select");
 const addBtn = document.querySelector(".add-btn");
 const editCancelBtn = document.querySelector(".edit-cancel-btn");
 
@@ -172,6 +173,11 @@ let transactions = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 let categoryOptions = JSON.parse(localStorage.getItem("CATEGORY_OPTIONS")) || structuredClone(DEFAULT_CATEGORY_OPTIONS);
 let monthlyStartingBalances = JSON.parse(localStorage.getItem(MONTHLY_STARTING_BALANCES)) || {};
 let summaryCategoryBudgets = JSON.parse(localStorage.getItem(SUMMARY_CATEGORY_BUDGET)) || {};
+
+transactions = transactions.map(transaction => ({
+    ...transaction,
+    repeat: transaction.repeat ?? false
+}));
 
 let today = new Date();
 let selectedMonthDate = new Date();
@@ -419,6 +425,8 @@ function addTransaction() {
         category: categorySelect.value,
         description: descriptionInput.value,
 
+        repaet: repeatSelect.value,
+
         createdAt: Date.now(),
         updatedAt: Date.now()
     };
@@ -472,6 +480,7 @@ function editStart(targetTransaction) {
         updateCategoryOptions("input", currentTypeSelect, categorySelect);
     categorySelect.value = targetTransaction.category;
     descriptionInput.value = targetTransaction.description;
+    repeatSelect.checked = targetTransaction.repeat;
 
     editCancelBtn.style.display = "block";
     addBtn.textContent = "수정 완료";
@@ -485,7 +494,8 @@ function editEnd() {
                         editTransaction.amount !== Number(amountInput.value) ||
                         editTransaction.type !== typeSelect.value ||
                         editTransaction.category !== categorySelect.value ||
-                        editTransaction.description !== descriptionInput.value;
+                        editTransaction.description !== descriptionInput.value ||
+                        editTransaction.repeat !== repeatSelect.checked;
 
     if(!isChanged) {
         editCancelBtn.click();
@@ -497,6 +507,7 @@ function editEnd() {
     editTransaction.type = typeSelect.value;
     editTransaction.category = categorySelect.value;
     editTransaction.description = descriptionInput.value;
+    editTransaction.repeat = repeatSelect.checked;
     editTransaction.updatedAt = Date.now();
 
     editingId = null;
@@ -590,7 +601,11 @@ function createTransactionCard(transaction) {
         category.textContent = categoryOption.label;
         category.classList.add("budget-card-header-badge");
 
-        cardHeader.append(dateDiv, type, category);
+        const repeat = document.createElement("p");
+        repeat.textContent = transaction.repeat ? "반복중" : "반복안함";
+        repeat.classList.add("budget-card-header-badge");
+
+        cardHeader.append(dateDiv, type, category, repeat);
 
     card.append(cardHeader);
 
@@ -2024,6 +2039,7 @@ function resetInputForm() {
         currentTypeSelect = typeSelect.value;
         updateCategoryOptions("input", currentTypeSelect, categorySelect);
     categorySelect.value = "food";
+    repeatSelect.checked = false;
     descriptionInput.value = "";
 
     addBtn.textContent = "추가";
