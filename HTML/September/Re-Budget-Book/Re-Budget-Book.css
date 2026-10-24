@@ -334,16 +334,40 @@ header {
     display: none;
 }
 
-/*===== category option input area =====*/
-.category-option-area,
-.category-option-setting-area {
+/*===== option input area =====*/
+.input-option {
     margin-left: 10px;
+}
 
+/*===== category option input area =====*/
+.category-option-btn-area,
+.category-option-setting-area {
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
+.category-option-setting-area {
+    margin-left: 25px;
+}
+
+/*===== repeat option input area =====*/
+.repeat-option-area {
+    display: none;
+    align-items: center;
+    gap: 10px;
+}
+
+.repeat-start-date,
+.repeat-frequency-area,
+.repeat-end-area {
+    display: flex;
+    align-items: center;
+
+    margin-left: 25px;
+    margin-bottom: 10px;
+    gap: 10px;
+}
 
 /*===== budget card =====*/
 .grouping-budget-card {
