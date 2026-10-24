@@ -111,6 +111,7 @@
 
                         <select class="category-select">
                             <option value="">카테고리</option>
+                            <!-- JavaScript에서 반복 주기에 맞는 옵션 생성 -->
                         </select>
                     </div>
 
@@ -132,13 +133,50 @@
 
                 <div class="input-option">
                     <div class="category-option-area">
-                        <p>➕ 카테고리 옵션</p>
-                        <button class="category-add-option-btn">추가</button>
-                        <button class="category-edit-option-btn">수정</button>
-                        <button class="category-delete-option-btn">제거</button>
+                        <div class="category-option-btn-area">
+                            <p>➕ 카테고리 옵션</p>
+                            <button class="category-add-option-btn">추가</button>
+                            <button class="category-edit-option-btn">수정</button>
+                            <button class="category-delete-option-btn">제거</button>
+                        </div>
+
+                        <div class="category-option-setting-area">
+                        </div>
                     </div>
 
-                    <div class="category-option-setting-area">
+                    <div class="repeat-option-area">
+                        <p class="repeat-option-title">➕ 반복 옵션</p>
+
+                        <p class="repeat-start-date">반복 시작 날짜: </p>
+
+                        <div class="repeat-frequency-area">
+                            <select class="repeat-frequency-select">
+                                <option value="daily">매일</option>
+                                <option value="weekly">매주</option>
+                                <option value="monthly" selected>매월</option>
+                                <option value="yearly">매년</option>
+                            </select>
+
+                            <select class="repeat-interval-select">
+                                <!--JavaScript에서 반복 주기에 맞는 옵션 생성-->
+                            </select>
+
+                        </div>
+
+                        <div class="repeat-end-area">
+                            <label class="repeat-end-option">
+                                <input type="radio" name="repeatEndType" class="repeat-end-never" value="never" checked>
+                                <span>종료일 없음</span>
+                            </label>
+
+                            <div class="repeat-end-date-area">
+                                <label class="repeat-end-option">
+                                    <input type="radio" name="repeatEndType" class="repeat-end-date-radio" value="date">
+                                    <span>종료일 지정</span>
+                                </label>
+                                <input type="date" class="repeat-end-date-input" disabled>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
