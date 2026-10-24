@@ -46,6 +46,13 @@ const categoryEditOptionBtn = document.querySelector(".category-edit-option-btn"
 const categoryDeleteOptionBtn = document.querySelector(".category-delete-option-btn");
 const categoryOptionSettingArea = document.querySelector(".category-option-setting-area");
 
+const repeatOptionArea = document.querySelector(".repeat-option-area");
+const repeatStartDate = document.querySelector(".repeat-start-date");
+const repeatFrequencySelect = document.querySelector(".repeat-frequency-select");
+const repeatIntervalSelect = document.querySelector(".repeat-interval-select");
+const repeatEndOptions = document.querySelectorAll('input[name="repeatEndType"]');
+const repeatEndDateInput = document.querySelector('.repeat-end-date-input');
+
 const filterResetBtn = document.querySelector(".filter-reset-btn");
 const typeFilter = document.querySelector(".type-filter");
 const categoryFilter = document.querySelector(".category-filter");
@@ -372,6 +379,25 @@ categoryDeleteOptionBtn.addEventListener("click", () => {
 
     currentCategoryDeleteOptionSetting = true;
 });
+
+repeatSelect.addEventListener("change", () => {
+    if(repeatSelect.checked) {
+        repeatOptionArea.style.display = "block";
+        repeatIntervalOptionHTML();
+    }
+    else repeatOptionArea.style.display = "none";
+});
+
+repeatFrequencySelect.addEventListener("change", () => {
+    repeatIntervalOptionHTML();
+});
+
+repeatEndOptions.forEach(option => {
+    option.addEventListener('change', () => {
+        repeatEndDateInput.disabled = option.value !== 'date';
+    });
+});
+
 
 filterResetBtn.addEventListener("click", () => {
     currentTypeFilter = "all";
@@ -1961,6 +1987,50 @@ function categoryOptionHTML(option) {
         currentCategoryAddOptionSetting = false;
     });
     categoryOptionSettingArea.append(categoryCancelBtn);
+}
+
+function repeatIntervalOptionHTML() {
+    repeatIntervalSelect.innerHTML = "";
+
+    let maxInterval;
+    let unit;
+
+    switch(repeatFrequencySelect.value) {
+        case "daily":
+            maxInterval = 31;
+            unit = "일";
+            break;
+
+        case "weekly":
+            maxInterval = 4;
+            unit = "주";
+            break;
+
+        case "monthly":
+            maxInterval = 12;
+            unit = "개월";
+            break;
+
+        case "yearly":
+            maxInterval = 10;
+            unit = "년";
+            break;
+
+        defalut:
+            return;
+    }
+
+    for(let i = 1; i <= maxInterval; i++) {
+        repeatIntervalSelect.append(createIntervalOption(i, unit));
+    }
+}
+
+function createIntervalOption(value, unit) {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = `${value}${unit}`;
+
+    return option;
 }
 
 function updateCategoryOptions(optionType, type, select) {
