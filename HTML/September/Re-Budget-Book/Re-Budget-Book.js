@@ -393,7 +393,7 @@ repeatFrequencySelect.addEventListener("change", () => {
 });
 
 repeatEndOptions.forEach(option => {
-    option.addEventListener('change', () => {
+    option.addEventListener("change", () => {
         repeatEndDateInput.disabled = option.value !== 'date';
     });
 });
@@ -441,6 +441,7 @@ searchFilterInput.addEventListener("input", () => {
 });
 
 
+//거래 생성
 function addTransaction() {
     const transaction = {
         id: Date.now(),
@@ -451,7 +452,12 @@ function addTransaction() {
         category: categorySelect.value,
         description: descriptionInput.value,
 
-        repaet: repeatSelect.value,
+        repeat: repeatSelect.checked,
+
+        repeatType: repeatSelect.checked ? repeatFrequencySelect.value : null,
+        repeatInterval : repeatSelect.checked ? Number(repeatIntervalSelect.value) : null,
+        repeatEndType: repeatSelect.checked ? document.querySelector('input[name="repeatEndType"]:checked').value : null,
+        repeatEndDate: repeatSelect.checked && document.querySelector('input[name="repeatEndType"]:checked').value === "date" ? repeatEndDateInput.value : null,
 
         createdAt: Date.now(),
         updatedAt: Date.now()
@@ -467,6 +473,7 @@ function addTransaction() {
     TOAST.show("성공적으로 생성되었습니다!");
 }
 
+//거래 제거
 function deleteTransaction(targetTransaction) {
     if(targetTransaction === undefined) return;
 
@@ -486,6 +493,7 @@ function deleteTransaction(targetTransaction) {
     }
 }
 
+//거래 복원
 function restoreTransaction(targetTransaction) {
     transactions.push(targetTransaction);
 
@@ -495,6 +503,7 @@ function restoreTransaction(targetTransaction) {
     TOAST.show("성공적으로 복원되었습니다!");
 }
 
+//거래 수정 시작
 function editStart(targetTransaction) {
     editingId = targetTransaction.id;
     isEditing = true;
@@ -508,20 +517,44 @@ function editStart(targetTransaction) {
     descriptionInput.value = targetTransaction.description;
     repeatSelect.checked = targetTransaction.repeat;
 
+    if(targetTransaction.repeat === true) {
+        repeatOptionArea.style.display = "block";
+        repeatFrequencySelect.value = targetTransaction.repeatType;
+        
+        repeatIntervalOptionHTML();
+
+        repeatIntervalSelect.value = String(targetTransaction.repeatInterval);
+
+        const selectedRepeatEnd = document.querySelector(`input[name="repeatEndType"][value="${targetTransaction.repeatEndType}"]`);
+
+        if(selectedRepeatEnd) selectedRepeatEnd.checked = true;
+        repeatEndDateInput.value = targetTransaction.repeatEndDate ?? "";
+        repeatEndDateInput.disabled = targetTransaction.repeatEndType !== "date";
+    } else {
+        repeatOptionArea.style.display = "none";
+        repeatEndDateInput.disabled = true;
+    }
+
     editCancelBtn.style.display = "block";
     addBtn.textContent = "수정 완료";
     amountInput.focus();
 }
 
+//거래 수정 완료
 function editEnd() {
     const editTransaction = transactions.find(transaction => transaction.id === editingId);
+    const selectedRepeatEnd = document.querySelector('input[name="repeatEndType"]:checked');
 
     const isChanged = editTransaction.date !== dateInput.value ||
                         editTransaction.amount !== Number(amountInput.value) ||
                         editTransaction.type !== typeSelect.value ||
                         editTransaction.category !== categorySelect.value ||
                         editTransaction.description !== descriptionInput.value ||
-                        editTransaction.repeat !== repeatSelect.checked;
+                        editTransaction.repeat !== repeatSelect.checked ||
+                        editTransaction.repeatType !== repeatFrequencySelect.value ||
+                        editTransaction.repeatInterval !== Number(repeatIntervalSelect.value) ||
+                        editTransaction.repeatEndType !== selectedRepeatEnd.value ||
+                        editTransaction.repeatEndDate !== repeatEndDateInput.value;
 
     if(!isChanged) {
         editCancelBtn.click();
@@ -536,6 +569,18 @@ function editEnd() {
     editTransaction.repeat = repeatSelect.checked;
     editTransaction.updatedAt = Date.now();
 
+    if(editTransaction.repeat === true) {
+        editTransaction.repeatType = repeatFrequencySelect.value;
+        editTransaction.repeatInterval = Number(repeatIntervalSelect.value);
+        editTransaction.repeatEndType = selectedRepeatEnd?.value ?? "never";
+        editTransaction.repeatEndDate = selectedRepeatEnd.value === "date" ? repeatEndDateInput.value : null;
+    } else {
+        editTransaction.repeatType = null;
+        editTransaction.repeatInterval = null;
+        editTransaction.repeatEndType = null;
+        editTransaction.repeatEndDate = null;       
+    }
+
     editingId = null;
     isEditing = false;
 
@@ -547,6 +592,7 @@ function editEnd() {
     TOAST.show("성공적으로 수정되었습니다!");
 }
 
+//거래 복제
 function copyTransaction(targetTransaction) {
     const now = Date.now();
 
@@ -565,6 +611,7 @@ function copyTransaction(targetTransaction) {
     TOAST.show("성공적으로 복제했습니다!");
 }
 
+//거래 카드 생성
 function createTransactionCard(transaction) {
     const card = document.createElement("div");
     card.classList.add("budget-card");
@@ -2114,6 +2161,7 @@ function resetInputForm() {
 
     addBtn.textContent = "추가";
     editCancelBtn.style.display = "none";
+    repeatOptionArea.style.display = "none";
 }
 
 function updateToday() {
