@@ -675,7 +675,7 @@ function createTransactionCard(transaction) {
         category.classList.add("budget-card-header-badge");
 
         const repeat = document.createElement("p");
-        repeat.textContent = transaction.repeat ? "반복중" : "반복안함";
+        repeat.textContent = transaction.repeat ? `반복중 ${transaction.repeatType} ${transaction.repeatInterval}` : "반복안함";
         repeat.classList.add("budget-card-header-badge");
 
         cardHeader.append(dateDiv, type, category, repeat);
@@ -736,6 +736,7 @@ function createTransactionCard(transaction) {
 }
 
 //render function
+//페이지를 렌더링
 function renderPage() {
     const filteredTransactions = getVisibleTransactions();
     const groupedTransactions = groupTransactionsByDate(filteredTransactions);
@@ -745,8 +746,21 @@ function renderPage() {
     renderSummary();
     renderDailyChangeChart(dailySummary);
 
-    const monthTransactions = getTransactionsByMonth(selectedMonthDate);
+    //전체 거래에서 반복 거래만 찾기 > 특정 달에서 발생하는 반복 내역을 배열로 반환.
+    const recurringTransactions = transactions.filter(transaction => transaction.repeat === true)
+        .flatMap(transaction => getRecurringTransactionsForMonth(transaction, selectedMonthDate));
+
+    //반복하지 않는 거래.
+    const regularMonthTransactions = getTransactionsByMonth(selectedMonthDate)
+        .filter(transaction => transaction.repeat !== true);
+
+    //반복 거래와 반복하지 않는 거래를 합쳐서 날짜순으로 정렬.
+    const monthTransactions = [...regularMonthTransactions, ...recurringTransactions]
+        .sort((a, b) => a.date.localeCompare(b.date));
+    
+    //날짜별로 그룹화.
     const monthGroupedTransactions = groupTransactionsByDate(monthTransactions);
+
     const monthDailySummary = calculateDailySummary(monthGroupedTransactions);
     const startingBalance = getMonthlyStartingBalance(selectedMonthDate);
     monthlyCumulativeChangeStartingBalance.value = startingBalance;
@@ -1171,7 +1185,16 @@ function resetMonthlyStartingBalance() {
 
 //filter function
 function getVisibleTransactions() {
-    let filteredTransactions = getTransactionsByMonth(selectedMonthDate);
+    //전체 거래에서 반복 거래 찾기 > 반복 거래마다 선택한 달의 발생 내역 생성
+    const recurringTransactions = transactions.filter(transaction => transaction.repeat === true)
+        .flatMap(transaction => getRecurringTransactionsForMonth(transaction, selectedMonthDate));
+
+    //반복이 아닌 일반 거래
+    const regularTransactions = getTransactionsByMonth(selectedMonthDate)
+        .filter(transaction => transaction.repeat !== true);
+
+    //두 가지 배열을 하나로 묶는 구문(전개 구문) 사용.
+    let filteredTransactions = [...regularTransactions, ...recurringTransactions];
 
     filteredTransactions = filterByType(filteredTransactions);
     filteredTransactions = filterByCategory(filteredTransactions);
@@ -1238,6 +1261,97 @@ function sortTransactions(filteredTransactions) {
                 return a.amount - b.amount;
         }
     });
+}
+
+//반복 회차 번호(occurenceIndex)를 받아 실제 발생 날짜를 계산하는 함수
+function getRecurringDate(transaction, occurrenceIndex) {
+    const [year, month, day] = transaction.date.split("-").map(Number);
+    const interval = Number(transaction.repeatInterval);
+
+    let targetYear = year;
+    let targetMonth = month - 1;
+    let targetDay = day;
+
+    switch (transaction.repeatType) {
+        case "daily": {
+            const date = new Date(year, month - 1, day);
+            date.setDate(date.getDate() + occurrenceIndex * interval);
+            return date;
+        }
+
+        case "weekly": {
+            const date = new Date(year, month - 1, day);
+            date.setDate(date.getDate() + occurrenceIndex * interval * 7);
+            return date;
+        }
+
+        case "monthly":
+            targetMonth += occurrenceIndex * interval;
+            break;
+
+        case "yearly":
+            targetYear += occurrenceIndex * interval;
+            break;
+
+        default:
+            return null;
+    }
+
+    const lastDate = new Date(targetYear, targetMonth + 1, 0).getDate();
+    targetDay = Math.min(day, lastDate);
+
+    return new Date(targetYear, targetMonth, targetDay);
+}
+
+//선택한 달에 발생하는 반복 거래 개체를 배열로 반환.
+function getRecurringTransactionsForMonth(transaction, selectedMonthDate) {
+    const result = [];
+
+    const targetYear = selectedMonthDate.getFullYear();
+    const targetMonth = selectedMonthDate.getMonth();
+
+    //현재 조회하는 달이 반복 거래를 만들기 이전의 달이라면
+    const startDate = new Date(`${transaction.date}T00:00:00`);
+    if (startDate.getFullYear() > selectedMonthDate.getFullYear() ||
+        (startDate.getFullYear() === selectedMonthDate.getFullYear() &&
+        startDate.getMonth() > selectedMonthDate.getMonth())) {
+        return [];
+    }
+    
+    //종료일이 지정된 경우에 사용
+    const endDate = transaction.repeatEndType === "date" ? new Date(`${transaction.repeatEndDate}T00:00:00`) : null;
+
+    for (let i = 0; ; i++) {
+        //현재 회차에서 실제 거래를 생성할 날짜를 받아오는 것
+        const recurringDate = getRecurringDate(transaction, i);
+
+        if (!recurringDate) break;
+
+        //계산된 날짜가 종료일을 넘은 경우
+        if (endDate && recurringDate > endDate) break;
+
+        //조회 대상 년,월을 넘어간 경우
+        if (recurringDate.getFullYear() > targetYear ||
+            (recurringDate.getFullYear() === targetYear && recurringDate.getMonth() > targetMonth)) {
+            break;
+        }
+
+        //조회 대상 년,월인 경우
+        if (recurringDate.getFullYear() === targetYear && recurringDate.getMonth() === targetMonth) {
+            //원본 거래 복사, 새 아이디 생성, 날짜는 반복 옵션에 따라 재배치.
+            result.push({
+                ...transaction,
+                id: `${transaction.id}-${i}`,
+                date: [
+                    recurringDate.getFullYear(),
+                    String(recurringDate.getMonth() + 1).padStart(2, "0"),
+                    String(recurringDate.getDate()).padStart(2, "0")].join("-"),
+                isRecurringOccurrence: true
+            });
+        }
+    }
+
+    return result;
 }
 
 //summary function
@@ -2612,4 +2726,9 @@ nowMonthBtn.click();
 /* 52일차
  * stopPropagation()    : 현재 이벤트가 캡처링/버블링 단계에서 더이상 전파되지 않도록 방지한다.
  *                        입력창 내부 클릭이 바깥 클릭처럼 처리되지 않도록 하는 것.
+ */
+
+/* 57일차
+ * .flatMap()   : 각 요소에 매핑(map) 함수를 적용한 뒤, 결과를 1단계 평탄화(flatten)하여 새 배열로 반환하는 함수.
+ *                배열의 각 요소를 돌며 콜백 함수를 실행 > 반환된 결과물을 하나의 배열로 합치기 > 깊이 1만큼 평탄화 + 원본 배열 유지
  */
