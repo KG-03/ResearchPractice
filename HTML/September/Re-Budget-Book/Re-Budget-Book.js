@@ -477,20 +477,38 @@ function addTransaction() {
 function deleteTransaction(targetTransaction) {
     if(targetTransaction === undefined) return;
 
-    if(confirm("정말 삭제하시겠습니까?")) {
-        const typeValue = TYPE_OPTIONS[targetTransaction.type];
-        const categoryValue = categoryOptions[targetTransaction.type].find(
-            option => option.value === targetTransaction.category
-        );
+    if(!confirm("정말 삭제하시겠습니까?")) return;
 
+    const typeValue = TYPE_OPTIONS[targetTransaction.type];
+    const categoryValue = categoryOptions[targetTransaction.type].find(
+        option => option.value === targetTransaction.category
+    );
+
+    //반복 거래가 있을 때와 없을 때로 분리
+    if(targetTransaction.isRecurringOccurrence === true) {
+        const originalTransaction = transactions.find(transaction => transaction.id === targetTransaction.originalTransactionId);
+
+        if(!originalTransaction) {
+            console.error("원본 반복 거래를 찾을 수 없습니다.", targetTransaction);
+            TOAST.show("원본 반복 거래를 찾을 수 없습니다!");
+            return;
+        }
+
+        //'제거할 반복 거래를 저장해두는 배열'이 없다면
+        if(!Array.isArray(originalTransaction.excludedDates)) originalTransaction.excludedDates = [];
+
+        //선택한 발생 날짜를 제외 목록에 추가
+        if(!originalTransaction.excludedDates.includes(targetTransaction.date)) originalTransaction.excludedDates.push(targetTransaction.date);
+    } else {
         transactions = transactions.filter(transaction => transaction.id !== targetTransaction.id);
+    }    
 
-        saveTransactions();
-        renderPage();
+    saveTransactions();
+    renderPage();
 
-        TOAST.show(`${typeValue}, ${categoryValue.label} 카테고리의 ${targetTransaction.amount.toLocaleString('ko-KR')} 원 거래를 삭제했습니다!`,
-                    targetTransaction);
-    }
+    TOAST.show(`${typeValue}, ${categoryValue.label} 카테고리의 ${targetTransaction.amount.toLocaleString('ko-KR')} 원 거래를 삭제했습니다!`,
+                targetTransaction);
+
 }
 
 //거래 복원
@@ -543,6 +561,13 @@ function editStart(targetTransaction) {
 //거래 수정 완료
 function editEnd() {
     const editTransaction = transactions.find(transaction => transaction.id === editingId);
+
+    if(!editTransaction) {
+        console.error("수정할 거래를 찾을 수 없습니다.", {editingId, isEditing});
+        TOAST.show("수정할 거래를 찾을 수 없습니다!");
+        return;
+    }
+
     const selectedRepeatEnd = document.querySelector('input[name="repeatEndType"]:checked');
 
     const isChanged = editTransaction.date !== dateInput.value ||
@@ -744,19 +769,9 @@ function renderPage() {
 
     renderTransactions(filteredTransactions, groupedTransactions, dailySummary);
     renderSummary();
-    renderDailyChangeChart(dailySummary);
-
-    //전체 거래에서 반복 거래만 찾기 > 특정 달에서 발생하는 반복 내역을 배열로 반환.
-    const recurringTransactions = transactions.filter(transaction => transaction.repeat === true)
-        .flatMap(transaction => getRecurringTransactionsForMonth(transaction, selectedMonthDate));
-
-    //반복하지 않는 거래.
-    const regularMonthTransactions = getTransactionsByMonth(selectedMonthDate)
-        .filter(transaction => transaction.repeat !== true);
 
     //반복 거래와 반복하지 않는 거래를 합쳐서 날짜순으로 정렬.
-    const monthTransactions = [...regularMonthTransactions, ...recurringTransactions]
-        .sort((a, b) => a.date.localeCompare(b.date));
+    const monthTransactions = getAllTransactionByMonth(selectedMonthDate).sort((a, b) => a.date.localeCompare(b.date));
     
     //날짜별로 그룹화.
     const monthGroupedTransactions = groupTransactionsByDate(monthTransactions);
@@ -766,6 +781,7 @@ function renderPage() {
     monthlyCumulativeChangeStartingBalance.value = startingBalance;
     const balanceSummary = calculateBalanceSummary(monthDailySummary, startingBalance);
 
+    renderDailyChangeChart(monthDailySummary);
     renderSpendingInsights(monthDailySummary);
     renderBalanceChart(balanceSummary);
 }
@@ -854,6 +870,7 @@ function groupTransactionsByDate(targetTransactions) {
 }
 
 //monthly graph function
+//누적 변동 그래프
 function renderBalanceChart(balanceSummary) {
     const width = 800;
     const height = 300;
@@ -924,6 +941,7 @@ function renderBalanceChart(balanceSummary) {
     monthlyCumulativeChangeChartGraph.append(svg, tooltip);
 }
 
+//일일 변동 그래프
 function renderDailyChangeChart(dailySummary) {
     const width = 800;
     const height = 300;
@@ -982,10 +1000,11 @@ function renderDailyChangeChart(dailySummary) {
     monthlyDailyChangeChartGraph.append(svg, tooltip);
 }
 
+//월간 소비 인사이트
 function renderSpendingInsights(monthDailySummary) {
     monthlySpendingInsights.innerHTML = "";
 
-    if(getTransactionsByMonth(selectedMonthDate).length === 0) {
+    if(getAllTransactionByMonth(selectedMonthDate).length === 0) {
         const message = "거래가 존재하지 않습니다!";
         monthlySpendingInsights.append(message);
         return;
@@ -1005,7 +1024,7 @@ function renderSpendingInsights(monthDailySummary) {
     }
 
     const maxExpenseCategory = document.createElement("p");
-    const expenseTransactions = getTransactionsByMonth(selectedMonthDate);
+    const expenseTransactions = getAllTransactionByMonth(selectedMonthDate);
     const expenseCategoryAmounts = summarySumAmount(expenseTransactions, "type", "expense", "category");
     const maxExpenseCategoryAmount = Math.max(...Object.values(expenseCategoryAmounts), 0);
     if(maxExpenseCategoryAmount === 0) {
@@ -1185,16 +1204,8 @@ function resetMonthlyStartingBalance() {
 
 //filter function
 function getVisibleTransactions() {
-    //전체 거래에서 반복 거래 찾기 > 반복 거래마다 선택한 달의 발생 내역 생성
-    const recurringTransactions = transactions.filter(transaction => transaction.repeat === true)
-        .flatMap(transaction => getRecurringTransactionsForMonth(transaction, selectedMonthDate));
-
-    //반복이 아닌 일반 거래
-    const regularTransactions = getTransactionsByMonth(selectedMonthDate)
-        .filter(transaction => transaction.repeat !== true);
-
     //두 가지 배열을 하나로 묶는 구문(전개 구문) 사용.
-    let filteredTransactions = [...regularTransactions, ...recurringTransactions];
+    let filteredTransactions = getAllTransactionByMonth(selectedMonthDate);
 
     filteredTransactions = filterByType(filteredTransactions);
     filteredTransactions = filterByCategory(filteredTransactions);
@@ -1338,10 +1349,19 @@ function getRecurringTransactionsForMonth(transaction, selectedMonthDate) {
 
         //조회 대상 년,월인 경우
         if (recurringDate.getFullYear() === targetYear && recurringDate.getMonth() === targetMonth) {
-            //원본 거래 복사, 새 아이디 생성, 날짜는 반복 옵션에 따라 재배치.
+            //원본 거래 복사, 새 아이디 생성, 날짜는 반복 옵션에 따라 재배치
+            const recurringDateString = [ recurringDate.getFullYear(),
+                String(recurringDate.getMonth() + 1).padStart(2, "0"),
+                String(recurringDate.getDate()).padStart(2, "0")].join("-");
+
+            //excludedDates는 '반복 거래에서 삭제한 날짜를 저장하는 배열'
+            //여기서 해당 날짜가 삭제 날짜라고 명시되어 있다면 값을 push하지 못한다.(반복 거래 제거)
+            if ((transaction.excludedDates ?? []).includes(recurringDateString)) continue;
+
             result.push({
                 ...transaction,
                 id: `${transaction.id}-${i}`,
+                originalTransactionId: transaction.id,
                 date: [
                     recurringDate.getFullYear(),
                     String(recurringDate.getMonth() + 1).padStart(2, "0"),
@@ -1352,6 +1372,18 @@ function getRecurringTransactionsForMonth(transaction, selectedMonthDate) {
     }
 
     return result;
+}
+
+//월별 전체 거래를 가져오는 함수
+function getAllTransactionByMonth(targetMonthDate) {
+    const recurringTransactions = transactions.filter(transaction => transaction.repeat === true)
+                                    .flatMap(transaction => getRecurringTransactionsForMonth(transaction, targetMonthDate));
+
+    const regularTransactions = getTransactionsByMonth(targetMonthDate).filter(transaction => transaction.repeat !== true);
+
+
+    //날짜순으로 반환
+    return [...regularTransactions, ...recurringTransactions].sort((a, b) => a.date.localeCompare(b.date));
 }
 
 //summary function
@@ -1366,103 +1398,61 @@ function renderSummary() {
 function summaryMonth() {
     summaryMonthList.innerHTML = "";
 
-    const targetTransactions = getTransactionsByMonth(selectedMonthDate);
+    const targetTransactions = getAllTransactionByMonth(selectedMonthDate);
     const prevMonthDate = new Date(selectedMonthDate.getFullYear(), selectedMonthDate.getMonth() - 1, 1);
-    const prevTargetTransactions = getTransactionsByMonth(prevMonthDate);
+    const prevTargetTransactions = getAllTransactionByMonth(prevMonthDate);
 
-    const expenseAmount = summaryTransactionAmount(targetTransactions, "type", "expense");
-    const incomeAmount = summaryTransactionAmount(targetTransactions, "type", "income");
-    const savingAmount = summaryTransactionAmount(targetTransactions, "type", "saving");
-    const investmentAmount = summaryTransactionAmount(targetTransactions, "type", "investment");
-    const balanceAmount = incomeAmount - expenseAmount - savingAmount - investmentAmount;
+    const current = {
+        income: summaryTransactionAmount(targetTransactions, "type", "income"),
+        expense: summaryTransactionAmount(targetTransactions, "type", "expense"),
+        saving: summaryTransactionAmount(targetTransactions, "type", "saving"),
+        investment: summaryTransactionAmount(targetTransactions, "type", "investment")
+    };
 
-    const prevExpenseAmount = summaryTransactionAmount(prevTargetTransactions, "type", "expense");
-    const prevIncomeAmount = summaryTransactionAmount(prevTargetTransactions, "type", "income");
-    const prevSavingAmount = summaryTransactionAmount(prevTargetTransactions, "type", "saving");
-    const prevInvestmentAmount = summaryTransactionAmount(prevTargetTransactions, "type", "investment");
-    const prevBalanceAmount = prevIncomeAmount - prevExpenseAmount - prevSavingAmount - prevInvestmentAmount;
+    const previous = {
+        income: summaryTransactionAmount(prevTargetTransactions, "type", "income"),
+        expense: summaryTransactionAmount(prevTargetTransactions, "type", "expense"),
+        saving: summaryTransactionAmount(prevTargetTransactions, "type", "saving"),
+        investment: summaryTransactionAmount(prevTargetTransactions, "type", "investment")
+    };
 
-    const incomeAmountTextArea = document.createElement("div");
-    incomeAmountTextArea.classList.add("summary-month-compare-area");
-    const incomeAmountText = document.createElement("p");
-    incomeAmountText.textContent = `이번 달 수입: ${incomeAmount.toLocaleString('ko-KR')}원`;
-        const incomeAmountTextCompared = document.createElement("p");
-        incomeAmountTextCompared.textContent = `전월 대비: ${(incomeAmount - prevIncomeAmount).toLocaleString('ko-KR')}원`;
-        incomeAmountTextCompared.classList.add("summary-month-compare");
-        incomeAmountTextArea.append(incomeAmountText, incomeAmountTextCompared);
+    current.balance = current.income - current.expense - current.saving - current.investment;
+    previous.balance = previous.income - previous.expense - previous.saving - previous.investment;
 
-        if(incomeAmount - prevIncomeAmount > 0) incomeAmountTextArea.classList.add("summary-month-inc");
-        else if(incomeAmount - prevIncomeAmount < 0) incomeAmountTextArea.classList.add("summary-month-dec");
-        else {
-            incomeAmountTextCompared.textContent = "전월 대비 동일";
-            incomeAmountTextArea.classList.remove("summary-month-inc", "summary-month-dec");
-        }
+    const summaryAreas = [ createSummaryMonthCompareArea("수입", current.income, previous.income),
+        createSummaryMonthCompareArea("지출", current.expense, previous.expense, `${summaryPercentage(current.expense, current.income)}`, false),
+        createSummaryMonthCompareArea("저축", current.saving, previous.saving, `${summaryPercentage(current.saving, current.income)}`),
+        createSummaryMonthCompareArea("투자", current.investment, previous.investment, `${summaryPercentage(current.investment, current.income)}`),
+        createSummaryMonthCompareArea("가용 금액 변동", current.balance, previous.balance)
+    ];
 
-    const expenseAmountTextArea = document.createElement("div");
-    expenseAmountTextArea.classList.add("summary-month-compare-area");
-    const expenseAmountText = document.createElement("p");
-    expenseAmountText.textContent = `이번 달 지출: ${expenseAmount.toLocaleString('ko-KR')}원, ${summaryPercentage(expenseAmount, incomeAmount)}`;
-        const expenseAmountTextCompared = document.createElement("p");
-        expenseAmountTextCompared.textContent = `전월 대비: ${(expenseAmount - prevExpenseAmount).toLocaleString('ko-KR')}원`;
-        expenseAmountTextCompared.classList.add("summary-month-compare");
-        expenseAmountTextArea.append(expenseAmountText, expenseAmountTextCompared);
+    summaryMonthList.append(...summaryAreas);
+}
 
-        if(expenseAmount - prevExpenseAmount < 0) expenseAmountTextArea.classList.add("summary-month-inc");
-        else if(expenseAmount - prevExpenseAmount > 0) expenseAmountTextArea.classList.add("summary-month-dec");
-        else {
-            expenseAmountTextCompared.textContent = "전월 대비 동일";
-            expenseAmountTextArea.classList.remove("summary-month-inc", "summary-month-dec");
-        }
+function createSummaryMonthCompareArea(title, currentAmount, previousAmount, description = "", increaseIsGood = true) {
+    const difference = currentAmount - previousAmount;
 
-    const savingAmountTextArea = document.createElement("div");
-    savingAmountTextArea.classList.add("summary-month-compare-area");
-    const savingAmountText = document.createElement("p");
-    savingAmountText.textContent = `이번 달 저축: ${savingAmount.toLocaleString('ko-KR')}원, ${summaryPercentage(savingAmount, incomeAmount)}`;
-        const savingAmountTextCompared = document.createElement("p");
-        savingAmountTextCompared.textContent = `전월 대비: ${(savingAmount - prevSavingAmount).toLocaleString('ko-KR')}원`;
-        savingAmountTextCompared.classList.add("summary-month-compare");
-        savingAmountTextArea.append(savingAmountText, savingAmountTextCompared);
+    const area = document.createElement("div");
+    area.classList.add("summary-month-compare-area");
 
-        if(savingAmount - prevSavingAmount > 0) savingAmountTextArea.classList.add("summary-month-inc");
-        else if(savingAmount - prevSavingAmount < 0) savingAmountTextArea.classList.add("summary-month-dec");
-        else {
-            savingAmountTextCompared.textContent = "전월 대비 동일";
-            savingAmountTextArea.classList.remove("summary-month-inc", "summary-month-dec");
-        }
+    const amountText = document.createElement("p");
+    amountText.textContent = `이번 달 ${title}: ${currentAmount.toLocaleString('ko-KR')}원 ${description}`;
 
-    const investmentAmountTextArea = document.createElement("div");
-    investmentAmountTextArea.classList.add("summary-month-compare-area");
-    const investmentAmountText = document.createElement("p");
-    investmentAmountText.textContent = `이번 달 투자: ${investmentAmount.toLocaleString('ko-KR')}원, ${summaryPercentage(investmentAmount, incomeAmount)}`;
-        const investmentAmountTextCompared = document.createElement("p");
-        investmentAmountTextCompared.textContent = `전월 대비: ${(investmentAmount - prevInvestmentAmount).toLocaleString('ko-KR')}원`;
-        investmentAmountTextCompared.classList.add("summary-month-compare");
-        investmentAmountTextArea.append(investmentAmountText, investmentAmountTextCompared);
+    const compareText = document.createElement("p");
+    compareText.classList.add("summary-month-compare");
 
-        if(investmentAmount - prevInvestmentAmount > 0) investmentAmountTextArea.classList.add("summary-month-inc");
-        else if(investmentAmount - prevInvestmentAmount < 0) investmentAmountTextArea.classList.add("summary-month-dec");
-        else {
-            investmentAmountTextCompared.textContent = "전월 대비 동일";
-            investmentAmountTextArea.classList.remove("summary-month-inc", "summary-month-dec");
-        }
+    if(difference === 0) compareText.textContent = "전월 대비 동일";
+    else {
+        compareText.textContent = `전월 대비: ${difference.toLocaleString('ko-KR')}원`;
+        const isIncrese = difference > 0;
+        const isGoodChange = isIncrese === increaseIsGood;
 
-    const balanceAmountTextArea = document.createElement("div");
-    balanceAmountTextArea.classList.add("summary-month-compare-area");
-    const balanceAmountText = document.createElement("p");
-    balanceAmountText.textContent = `이번 달 가용 금액 변동: ${balanceAmount.toLocaleString('ko-KR')}원`;
-        const balanceAmountTextCompared = document.createElement("p");
-        balanceAmountTextCompared.textContent = `전월 대비: ${(balanceAmount - prevBalanceAmount).toLocaleString('ko-KR')}원`;
-        balanceAmountTextCompared.classList.add("summary-month-compare");
-        balanceAmountTextArea.append(balanceAmountText, balanceAmountTextCompared);
+        area.classList.add(isGoodChange ? "summary-month-inc" : "summary-month-dec");
+    }
 
-        if(balanceAmount - prevBalanceAmount > 0) balanceAmountTextArea.classList.add("summary-month-inc");
-        else if(balanceAmount - prevBalanceAmount < 0) balanceAmountTextArea.classList.add("summary-month-dec");
-        else {
-            balanceAmountTextCompared.textContent = "전월 대비 동일";
-            balanceAmountTextArea.classList.remove("summary-month-inc", "summary-month-dec");
-        }
+    area.append(amountText, compareText);
 
-    summaryMonthList.append(incomeAmountTextArea, expenseAmountTextArea, savingAmountTextArea, investmentAmountTextArea, balanceAmountTextArea);
+    return area;
 }
 
 function summaryCategory() {
@@ -1472,7 +1462,7 @@ function summaryCategory() {
     const selectedType = summaryCategoryType.value;
     const typeBudgets = summaryCategoryBudgets[monthKey]?.[selectedType] ?? {};
 
-    const targetTransactions = getTransactionsByMonth(selectedMonthDate);
+    const targetTransactions = getAllTransactionByMonth(selectedMonthDate);
     const categoryAmounts = summarySumAmount(targetTransactions, "type", summaryCategoryType.value, "category");
     const amounts = Object.values(categoryAmounts);
     const maxAmount = amounts.length > 0 ? Math.max(...amounts) : 0;
@@ -1480,39 +1470,38 @@ function summaryCategory() {
 
     const categories = categoryOptions[summaryCategoryType.value] ?? [];
 
-    const sortCategoryAmounts = categories
-                                .map(option => {
-                                    const category = option.value;
-                                    const amount = categoryAmounts[category] ?? 0;
+    const sortCategoryAmounts = categories.map(option => {
+        const category = option.value;
+        const amount = categoryAmounts[category] ?? 0;
 
-                                    const saveBudget = typeBudgets[category];
-                                    const budget = Number(saveBudget);
+        const saveBudget = typeBudgets[category];
+        const budget = Number(saveBudget);
 
-                                    const hasBudget = saveBudget !== undefined &&
-                                                        saveBudget !== null &&
-                                                        saveBudget !== "" &&
-                                                        Number.isFinite(budget) &&
-                                                        budget > 0;
+        const hasBudget = saveBudget !== undefined &&
+                            saveBudget !== null &&
+                            saveBudget !== "" &&
+                            Number.isFinite(budget) &&
+                            budget > 0;
 
-                                    const utilizationRate = hasBudget ? amount / budget * 100 : null;
-                                    
-                                    let statusRank;
+        const utilizationRate = hasBudget ? amount / budget * 100 : null;
+        
+        let statusRank;
 
-                                    if(!hasBudget) statusRank = 3;
-                                    else if(utilizationRate >= 100) statusRank = 0;
-                                    else if(utilizationRate >= 80) statusRank = 1;
-                                    else statusRank = 2;
+        if(!hasBudget) statusRank = 3;
+        else if(utilizationRate >= 100) statusRank = 0;
+        else if(utilizationRate >= 80) statusRank = 1;
+        else statusRank = 2;
 
-                                    return { category, amount, hasBudget, utilizationRate, statusRank };
-                                }).sort((a, b) => {
-                                    //예산 상태순
-                                    if(a.statusRank !== b.statusRank) return a.statusRank - b.statusRank;
+        return { category, amount, hasBudget, utilizationRate, statusRank };
+    }).sort((a, b) => {
+        //예산 상태순
+        if(a.statusRank !== b.statusRank) return a.statusRank - b.statusRank;
 
-                                    //같은 상태에서는 예산 사용률 높은 순
-                                    if(a.hasBudget && a.hasBudget) return a.utilizationRate - b.utilizationRate;
+        //같은 상태에서는 예산 사용률 높은 순
+        if(a.hasBudget && b.hasBudget) return a.utilizationRate - b.utilizationRate;
 
-                                    return b.amount - a.amount;
-                                });
+        return b.amount - a.amount;
+    });
 
     sortCategoryAmounts.forEach(({category, amount}) => {
         summaryCategoryList.append(createSummaryCategoryCard(category, amount, maxAmount, totalAmount));
@@ -1751,7 +1740,7 @@ function createSummaryCategoryTotalCard() {
     }, 0);
     const hasBudget = totalBudget !== undefined && totalBudget > 0;
 
-    const monthTransactions = getTransactionsByMonth(selectedMonthDate);
+    const monthTransactions = getAllTransactionByMonth(selectedMonthDate);
     const currentTypeAmount  = summaryTransactionAmount(monthTransactions, "type", selectedType);
     const remainingBudget = totalBudget - currentTypeAmount ;
     const budgetUtilizationRate = totalBudget > 0 ? currentTypeAmount  / totalBudget * 100 : null;
@@ -1810,25 +1799,19 @@ function createSummaryCategoryTotalCard() {
     }
 
 //graph function
+//전달, 앞달 비교 기본 구조
 function summaryGraph() {
     summaryGraphList.style.display = "block";
     summaryGraphList.innerHTML = "";
 
-    const prevTransaction = getTransactionsByMonth(prevMonthDate);
-    const nowTransaction = getTransactionsByMonth(selectedMonthDate);
-    const nextTransaction = getTransactionsByMonth(nextMonthDate);
+    const prevTransaction = getAllTransactionByMonth(prevMonthDate);
+    const nowTransaction = getAllTransactionByMonth(selectedMonthDate);
+    const nextTransaction = getAllTransactionByMonth(nextMonthDate);
 
     Object.keys(TYPE_OPTIONS)
         .filter(type => type !== "all")
         .forEach(type => {
-            summaryGraphList.append(
-                summaryGraphComparison(
-                    prevTransaction,
-                    nowTransaction,
-                    nextTransaction,
-                    type
-                )
-            );
+            summaryGraphList.append(summaryGraphComparison(prevTransaction, nowTransaction, nextTransaction,type));
         });
 
     const hideBtn = document.createElement("button");
@@ -1845,16 +1828,13 @@ function summaryGraph() {
     summaryGraphList.append(hideBtn);
 }
 
+//전달, 앞달 비교 그래프 생성
 function summaryGraphComparison(prev, now, next, type) {
     const prevAmount = summaryTransactionAmount(prev, "type", type);
     const nowAmount = summaryTransactionAmount(now, "type", type);
     const nextAmount = summaryTransactionAmount(next, "type", type);
 
-    const maxAmount = Math.max(
-        prevAmount,
-        nowAmount,
-        nextAmount
-    );
+    const maxAmount = Math.max(prevAmount, nowAmount, nextAmount);
 
     const graph = document.createElement("div");
     graph.classList.add("summary-graph-group");
@@ -1903,11 +1883,12 @@ function createComparisonRow(label, amount, maxAmount) {
 }
 
 //budget comparison function
+//예산 넣고 측정하기
 function budgetComparison() {
     budgetComparisonList.style.display = "block";
     budgetComparisonList.innerHTML = "";
 
-    const targetTransactions = getTransactionsByMonth(selectedMonthDate);
+    const targetTransactions = getAllTransactionByMonth(selectedMonthDate);
 
     const budgetInput = document.createElement("input");
     budgetInput.type = "number";
@@ -2239,13 +2220,6 @@ function isDefaultCategoryOption(type, categoryValue) {
 }
 
 //util function
-function saveData() {
-    saveTransactions();
-    saveCategoryOption();
-    saveMonthlyStartingBalance();
-    saveSummaryCategoryBudget();
-}
-
 function saveTransactions() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
 }
