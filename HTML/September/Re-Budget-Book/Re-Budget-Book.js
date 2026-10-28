@@ -207,6 +207,9 @@ let currentCategoryDeleteOptionSetting = false;
 
 let editingId = null;
 let isEditing = false;
+let editingOccurrenceOnly = false;      //이번 발생 내역만 수정하는지에 대한 여부
+let editingOccurrenceDate = null;       //수정 대상의 원래 발생일
+let editingOccurrenceData = null;       //수정 전 발생 내역의 값. 변경 여부를 비교할 때 이용.
 
 
 exportBtn.addEventListener("click", exportCSV);
@@ -497,8 +500,28 @@ function deleteTransaction(targetTransaction) {
         //'제거할 반복 거래를 저장해두는 배열'이 없다면
         if(!Array.isArray(originalTransaction.excludedDates)) originalTransaction.excludedDates = [];
 
-        //선택한 발생 날짜를 제외 목록에 추가
-        if(!originalTransaction.excludedDates.includes(targetTransaction.date)) originalTransaction.excludedDates.push(targetTransaction.date);
+        if(confirm("반복 거래입니다. 반복 거래 전체를 삭제하시겠습니까?")) {
+            transactions = transactions.filter(transaction => transaction.id !== originalTransaction.id);
+        } else if(confirm("이번 내역 이후의 거래를 모두 삭제하시겠습니까? '취소'를 누르면 이번 거래만 삭제됩니다.")) {
+            //선택한 발생일의 전날을 새로운 종료일로 설정(종료일이 있는 반복 거래로 만드는 것.)
+            const occurrenceDate = new Date(`${targetTransaction.date}T00:00:00`);
+            occurrenceDate.setDate(occurrenceDate.getDate() - 1);
+
+            const newEndDate = [
+                occurrenceDate.getFullYear(),
+                String(occurrenceDate.getMonth() + 1).padStart(2, "0"),
+                String(occurrenceDate.getDate()).padStart(2, "0")
+            ].join("-");
+
+            //기존 종료일이 없거나, 새 종료일이 기존 종료일보다 빠른 경우에만 변경
+            if (originalTransaction.repeatEndType !== "date" || !originalTransaction.repeatEndDate || newEndDate < originalTransaction.repeatEndDate) {
+                originalTransaction.repeatEndType = "date";
+                originalTransaction.repeatEndDate = newEndDate;
+            }
+        } else {
+            //선택한 발생 날짜를 제외 목록에 추가
+            if(!originalTransaction.excludedDates.includes(targetTransaction.date)) originalTransaction.excludedDates.push(targetTransaction.date);
+        }
     } else {
         transactions = transactions.filter(transaction => transaction.id !== targetTransaction.id);
     }    
@@ -523,7 +546,33 @@ function restoreTransaction(targetTransaction) {
 
 //거래 수정 시작
 function editStart(targetTransaction) {
-    editingId = targetTransaction.id;
+    if(targetTransaction === undefined) return;
+
+    editingOccurrenceOnly = false;
+    editingOccurrenceDate = null;
+    editingOccurrenceData = null;    
+
+    //단일 반복 거래만 수행하고자 한다면 옵션들을 활성화. 이후 editEnd()에서 옵션을 판단하고 코드를 진행.
+    if(targetTransaction.isRecurringOccurrence === true) {
+        editingOccurrenceOnly = confirm("이번 반복 거래만 수정하시겠습니까?");
+
+        editingId = targetTransaction.originalTransactionId;
+
+        if(editingOccurrenceOnly) {
+            editingOccurrenceDate = targetTransaction.date;
+
+            editingOccurrenceData = {
+                date: targetTransaction.date,
+                amount: Number(targetTransaction.amount),
+                type: targetTransaction.type,
+                category: targetTransaction.category,
+                description: targetTransaction.description
+            };
+        }
+    } else {
+        editingId = targetTransaction.id;
+    }
+
     isEditing = true;
 
     dateInput.value = targetTransaction.date;
@@ -534,6 +583,9 @@ function editStart(targetTransaction) {
     categorySelect.value = targetTransaction.category;
     descriptionInput.value = targetTransaction.description;
     repeatSelect.checked = targetTransaction.repeat;
+
+    //나중에 수정될 수 있는 비활성화.
+    dateInput.disabled = editingOccurrenceOnly;
 
     if(targetTransaction.repeat === true) {
         repeatOptionArea.style.display = "block";
@@ -565,6 +617,48 @@ function editEnd() {
     if(!editTransaction) {
         console.error("수정할 거래를 찾을 수 없습니다.", {editingId, isEditing});
         TOAST.show("수정할 거래를 찾을 수 없습니다!");
+        return;
+    }
+
+    if(editingOccurrenceOnly) {
+        const isChanged = editingOccurrenceData.amount !== Number(amountInput.value) ||
+                            editingOccurrenceData.type !== typeSelect.value ||
+                            editingOccurrenceData.category !== categorySelect.value ||
+                            editingOccurrenceData.description !== descriptionInput.value;
+
+        if(!isChanged) {
+            editCancelBtn.click();
+            return;
+        }
+
+        //수정할 내역을 저장할 객체가 없다면
+        if(!editTransaction.occurrenceOverrides || Array.isArray(editTransaction.occurrenceOverrides)) editTransaction.occurrenceOverrides = {};
+
+        //원래 거래 발생일을 기준으로 수정 내용 저장
+        editTransaction.occurrenceOverrides[editingOccurrenceDate] = {
+            amount: Number(amountInput.value),
+            type: typeSelect.value,
+            category: categorySelect.value,
+            description: descriptionInput.value
+        };
+
+        editTransaction.updatedAt = Date.now();
+
+        editingId = null;
+        isEditing = false;
+        editingOccurrenceOnly = false;
+        editingOccurrenceDate = null;
+        editingOccurrenceData = null;
+
+        //나중에 수정될 수 있는 활성화.
+        dateInput.disabled = false;
+
+        saveTransactions();
+        renderPage();
+
+        resetInputForm();
+
+        TOAST.show("이번 반복 거래만 수정되었습니다!");
         return;
     }
 
@@ -608,6 +702,9 @@ function editEnd() {
 
     editingId = null;
     isEditing = false;
+    editingOccurrenceOnly = false;
+    editingOccurrenceDate = null;
+    editingOccurrenceData = null;
 
     saveTransactions();
     renderPage();
@@ -1358,14 +1455,15 @@ function getRecurringTransactionsForMonth(transaction, selectedMonthDate) {
             //여기서 해당 날짜가 삭제 날짜라고 명시되어 있다면 값을 push하지 못한다.(반복 거래 제거)
             if ((transaction.excludedDates ?? []).includes(recurringDateString)) continue;
 
+            //수정된 일자가 있다면 그것을 사용하고, 없다면 빈 배열 사용.
+            const override = transaction.occurrenceOverrides?.[recurringDateString] ?? {};
+
             result.push({
                 ...transaction,
+                ...override,
                 id: `${transaction.id}-${i}`,
                 originalTransactionId: transaction.id,
-                date: [
-                    recurringDate.getFullYear(),
-                    String(recurringDate.getMonth() + 1).padStart(2, "0"),
-                    String(recurringDate.getDate()).padStart(2, "0")].join("-"),
+                date: recurringDateString,
                 isRecurringOccurrence: true
             });
         }
