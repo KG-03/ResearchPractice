@@ -544,6 +544,26 @@ function restoreTransaction(targetTransaction) {
     TOAST.show("성공적으로 복원되었습니다!");
 }
 
+function restoreRepeatTransaction(targetTransaction) {
+    if(!targetTransaction.isRecurringOccurrence) return;
+
+    //원본 반복 거래 찾기.
+    const originalTransaction = transactions.find(transaction => transaction.id === targetTransaction.originalTransactionId);
+    if(!originalTransaction) return;
+
+    //원래 반복 날짜 찾기.
+    const originalDate = targetTransaction.originalOccurrenceDate ?? targetTransaction.date;
+    if(!originalTransaction.occurrenceOverrides?.[originalDate]) return;
+
+    //원래 반복 거래에서 수정 기록 삭제.
+    delete originalTransaction.occurrenceOverrides[originalDate];
+
+    saveTransactions();
+    renderPage();
+
+    TOAST.show("반복 거래가 원래 설정으로 복원되었습니다!");
+}
+
 //거래 수정 시작
 function editStart(targetTransaction) {
     if(targetTransaction === undefined) return;
@@ -559,7 +579,8 @@ function editStart(targetTransaction) {
         editingId = targetTransaction.originalTransactionId;
 
         if(editingOccurrenceOnly) {
-            editingOccurrenceDate = targetTransaction.date;
+            //원본 날짜가 있다면 사용, 없다면 그냥 날짜를 사용
+            editingOccurrenceDate = targetTransaction.originalOccurrenceDate ?? targetTransaction.date;
 
             editingOccurrenceData = {
                 date: targetTransaction.date,
@@ -583,9 +604,6 @@ function editStart(targetTransaction) {
     categorySelect.value = targetTransaction.category;
     descriptionInput.value = targetTransaction.description;
     repeatSelect.checked = targetTransaction.repeat;
-
-    //나중에 수정될 수 있는 비활성화.
-    dateInput.disabled = editingOccurrenceOnly;
 
     if(targetTransaction.repeat === true) {
         repeatOptionArea.style.display = "block";
@@ -621,7 +639,8 @@ function editEnd() {
     }
 
     if(editingOccurrenceOnly) {
-        const isChanged = editingOccurrenceData.amount !== Number(amountInput.value) ||
+        const isChanged = editingOccurrenceData.date !== dateInput.value ||
+                            editingOccurrenceData.amount !== Number(amountInput.value) ||
                             editingOccurrenceData.type !== typeSelect.value ||
                             editingOccurrenceData.category !== categorySelect.value ||
                             editingOccurrenceData.description !== descriptionInput.value;
@@ -636,6 +655,7 @@ function editEnd() {
 
         //원래 거래 발생일을 기준으로 수정 내용 저장
         editTransaction.occurrenceOverrides[editingOccurrenceDate] = {
+            date: dateInput.value,
             amount: Number(amountInput.value),
             type: typeSelect.value,
             category: categorySelect.value,
@@ -649,9 +669,6 @@ function editEnd() {
         editingOccurrenceOnly = false;
         editingOccurrenceDate = null;
         editingOccurrenceData = null;
-
-        //나중에 수정될 수 있는 활성화.
-        dateInput.disabled = false;
 
         saveTransactions();
         renderPage();
@@ -743,9 +760,11 @@ function createTransactionCard(transaction) {
 
         const dateDiv = document.createElement("div");
         dateDiv.classList.add("budget-card-new-date-card");
+
             const dateLable = document.createElement("p");
             dateLable.textContent = transaction.date;
             dateLable.classList.add("budget-card-header-date");
+
         dateDiv.addEventListener("click", () => {
             //이미 이 창이 있다면 중복 생성하지 않도록.
             if(dateDiv.querySelector("input[type='date']")) return;
@@ -802,8 +821,6 @@ function createTransactionCard(transaction) {
 
         cardHeader.append(dateDiv, type, category, repeat);
 
-    card.append(cardHeader);
-
     const cardMain = document.createElement("div");
     cardMain.classList.add("budget-card-main");
 
@@ -818,8 +835,6 @@ function createTransactionCard(transaction) {
             description.classList.add("budget-card-description");
             cardMain.append(description);
         }
-    
-    card.append(cardMain);
 
     const cardDate = document.createElement("div");
     cardDate.classList.add("budget-card-date");
@@ -834,25 +849,32 @@ function createTransactionCard(transaction) {
             cardDate.append(updatedDate);
         }
 
-    card.append(cardDate);
-
     const editBtn = document.createElement("button");
     editBtn.textContent = "✏️ 수정";
     editBtn.addEventListener("click", () => { editStart(transaction); });
     editBtn.classList.add("budget-card-button");
-    card.append(editBtn);
 
     const copyBtn = document.createElement("button");
     copyBtn.textContent = "📄 복제";
     copyBtn.addEventListener("click", () => { copyTransaction(transaction); });
     copyBtn.classList.add("budget-card-button");
-    card.append(copyBtn);
 
     const delBtn = document.createElement("button");
     delBtn.textContent = "❌ 삭제";
     delBtn.addEventListener("click", () => { deleteTransaction(transaction) });
     delBtn.classList.add("budget-card-button");
-    card.append(delBtn);
+
+    card.append(cardHeader, cardMain, cardDate, editBtn, copyBtn, delBtn);
+
+    //반복 거래면서 수정된 상태인지 확인.
+    if(transaction.repeat &&
+        transaction.occurrenceOverrides?.[transaction.originalOccurrenceDate ?? transaction.date] !== undefined) {
+        const restoreBtn = document.createElement("button");
+        restoreBtn.textContent = "♻️ 복원";
+        restoreBtn.addEventListener("click", () => { restoreRepeatTransaction(transaction) });
+        restoreBtn.classList.add("budget-card-button");
+        card.append(restoreBtn);
+    }
 
     return card;
 }
@@ -1418,55 +1440,68 @@ function getRecurringTransactionsForMonth(transaction, selectedMonthDate) {
     const targetYear = selectedMonthDate.getFullYear();
     const targetMonth = selectedMonthDate.getMonth();
 
-    //현재 조회하는 달이 반복 거래를 만들기 이전의 달이라면
-    const startDate = new Date(`${transaction.date}T00:00:00`);
-    if (startDate.getFullYear() > selectedMonthDate.getFullYear() ||
-        (startDate.getFullYear() === selectedMonthDate.getFullYear() &&
-        startDate.getMonth() > selectedMonthDate.getMonth())) {
-        return [];
-    }
+    //조회하는 달의 마지막 날짜
+    const targetMonthEnd = new Date( targetYear, targetMonth + 1, 0);
+
+    //수정 기록 중, 원래 반복 날짜가 가장 늦은 날짜 찾기
+    const overrideDates = Object.keys(transaction.occurrenceOverrides ?? {})
+                            .filter(date => /^\d{4}-\d{2}-\d{2}$/.test(date))
+                            .sort();
+    const latestOverrideDate = overrideDates.length > 0
+                            ? new Date(`${overrideDates[overrideDates.length - 1]}T00:00:00`)
+                            : null;
+
+    const loopEndDate = latestOverrideDate && latestOverrideDate > targetMonthEnd ? latestOverrideDate : targetMonthEnd;
     
     //종료일이 지정된 경우에 사용
-    const endDate = transaction.repeatEndType === "date" ? new Date(`${transaction.repeatEndDate}T00:00:00`) : null;
+    const endDate = transaction.repeatEndType === "date"
+                    ? new Date(`${transaction.repeatEndDate}T00:00:00`)
+                    : null;
 
     for (let i = 0; ; i++) {
         //현재 회차에서 실제 거래를 생성할 날짜를 받아오는 것
         const recurringDate = getRecurringDate(transaction, i);
 
-        if (!recurringDate) break;
+        if(!recurringDate) break;
 
         //계산된 날짜가 종료일을 넘은 경우
-        if (endDate && recurringDate > endDate) break;
+        if(endDate && recurringDate > endDate) break;
 
-        //조회 대상 년,월을 넘어간 경우
-        if (recurringDate.getFullYear() > targetYear ||
-            (recurringDate.getFullYear() === targetYear && recurringDate.getMonth() > targetMonth)) {
-            break;
-        }
+        //확인해야 할 날짜 범위를 넘어갈 경우
+        if(recurringDate > loopEndDate) break;
 
-        //조회 대상 년,월인 경우
-        if (recurringDate.getFullYear() === targetYear && recurringDate.getMonth() === targetMonth) {
-            //원본 거래 복사, 새 아이디 생성, 날짜는 반복 옵션에 따라 재배치
-            const recurringDateString = [ recurringDate.getFullYear(),
-                String(recurringDate.getMonth() + 1).padStart(2, "0"),
-                String(recurringDate.getDate()).padStart(2, "0")].join("-");
+        const recurringDateString = [ recurringDate.getFullYear(),
+                                        String(recurringDate.getMonth() + 1).padStart(2, "0"),
+                                        String(recurringDate.getDate()).padStart(2, "0")].join("-");
+        
+        //excludedDates는 '반복 거래에서 삭제한 날짜를 저장하는 배열'
+        //여기서 해당 날짜가 삭제 날짜라고 명시되어 있다면 값을 push하지 못한다.(반복 거래 제거)
+        if((transaction.excludedDates ?? []).includes(recurringDateString)) continue;
 
-            //excludedDates는 '반복 거래에서 삭제한 날짜를 저장하는 배열'
-            //여기서 해당 날짜가 삭제 날짜라고 명시되어 있다면 값을 push하지 못한다.(반복 거래 제거)
-            if ((transaction.excludedDates ?? []).includes(recurringDateString)) continue;
+        //수정된 일자가 있다면 그것을 사용하고, 없다면 빈 배열 사용.
+        const override = transaction.occurrenceOverrides?.[recurringDateString] ?? {};
 
-            //수정된 일자가 있다면 그것을 사용하고, 없다면 빈 배열 사용.
-            const override = transaction.occurrenceOverrides?.[recurringDateString] ?? {};
+        //실제로 표시할 날짜. 수정 날짜가 있다면 수정 날짜를 이용하고, 없다면 원래 날짜 이용.
+        const displayDateString = override.date ?? recurringDateString;
+        const displayDate = new Date(`${displayDateString}T00:00:00`);
+       
+        //표시할 날짜가 조회하는 달에 속하지 않으면 제외.
+        if(displayDate.getFullYear() !== targetYear || displayDate.getMonth() !== targetMonth) continue
 
-            result.push({
-                ...transaction,
-                ...override,
-                id: `${transaction.id}-${i}`,
-                originalTransactionId: transaction.id,
-                date: recurringDateString,
-                isRecurringOccurrence: true
-            });
-        }
+        result.push({
+            ...transaction,
+            date: recurringDateString,
+
+            ...override,
+            id: `${transaction.id}-${i}`,
+
+            //원본 거래 id, 원본 거래 발생일
+            originalTransactionId: transaction.id,
+            originalOccurrenceDate: recurringDateString,
+            
+            //반복 규칙으로부터 생성된 개별 거래인지 확인.
+            isRecurringOccurrence: true
+        });
     }
 
     return result;
@@ -2803,4 +2838,13 @@ nowMonthBtn.click();
 /* 57일차
  * .flatMap()   : 각 요소에 매핑(map) 함수를 적용한 뒤, 결과를 1단계 평탄화(flatten)하여 새 배열로 반환하는 함수.
  *                배열의 각 요소를 돌며 콜백 함수를 실행 > 반환된 결과물을 하나의 배열로 합치기 > 깊이 1만큼 평탄화 + 원본 배열 유지
+ */
+
+/* 60일차
+ * /^\d{4}-\d{2}-\d{2}$/    : YYYY-MM-DD 형식의 날짜 문자열을 검증하기 위한 패턴.
+ *                            /     : 정규표현식의 시작과 끝을 나타내는 구분자.
+ *                            ^     : 문자열의 시작을 의미.
+ *                            \d{4} : 숫자(digit)가 4번 반복된다는 의미. \d{2}면 2번 반복된다.
+ *                            -     : 하이픈 문자 그대로의 의미.
+ *                            $     : 문자열의 끝을 의미. ^와 $가 함께 쓰여 전체 문자열이 정확히 이 형식으로 이루어져야 함을 뜻한다.
  */
