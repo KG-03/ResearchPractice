@@ -3,7 +3,9 @@ const todayDate = document.querySelector(".today-date");
 
 const exportBtn = document.querySelector(".export-btn");
 const importBtn = document.querySelector(".import-btn");
-const importCSVInput = document.querySelector(".import-csv-input");
+const importCSVInput = document.querySelector(".import-input");
+
+const exportImportOption = document.querySelector(".export-import-option");
 
 const summaryMonthList = document.querySelector(".summary-month-list");
 const summaryCategoryType = document.querySelector(".summary-category-type");
@@ -211,8 +213,55 @@ let editingOccurrenceOnly = false;      //이번 발생 내역만 수정하는�
 let editingOccurrenceDate = null;       //수정 대상의 원래 발생일
 let editingOccurrenceData = null;       //수정 전 발생 내역의 값. 변경 여부를 비교할 때 이용.
 
+exportBtn.addEventListener("click", () => {
+    exportImportOption.innerHTML = "";
 
-exportBtn.addEventListener("click", exportCSV);
+    const header = document.createElement("h3");
+    header.classList.add("export-import-option-flex");
+
+        const headerLabel = document.createElement("h3");
+        headerLabel.textContent = "내보내기 형식 선택";
+
+        const cancelBtn = document.createElement("button");
+        cancelBtn.textContent = "취소";
+        cancelBtn.addEventListener("click", () => {
+            exportImportOption.innerHTML = "";
+        });
+
+    header.append(headerLabel, cancelBtn);
+
+    const csvArea = document.createElement("div");
+        const csvHeader = document.createElement('div');
+        csvHeader.classList.add("export-import-option-flex");
+            const csvHeaderLabel = document.createElement("h4");
+            csvHeaderLabel.textContent = "CSV 파일";
+
+            const csvBtn = document.createElement("button");
+            csvBtn.textContent = "csv 내보내기";
+            csvBtn.addEventListener("click", exportCSV);
+        csvHeader.append(csvHeaderLabel, csvBtn);
+
+        const csvDescription = document.createElement("p");
+        csvDescription.textContent = "거래 내역을 엑셀 등에서 확인하거나 분석할 때 사용";
+    csvArea.append(csvHeader, csvDescription);
+
+    const jsonArea = document.createElement("div");
+        const jsonHeader = document.createElement('div');
+        jsonHeader.classList.add("export-import-option-flex");
+            const jsonHeaderLabel = document.createElement("h4");
+            jsonHeaderLabel.textContent = "JSON 파일";
+
+            const jsonBtn = document.createElement("button");
+            jsonBtn.textContent = "json 내보내기";
+            jsonBtn.addEventListener("click", exportJSON);
+        jsonHeader.append(jsonHeaderLabel, jsonBtn);
+
+        const jsonDescription = document.createElement("p");
+        jsonDescription.textContent = "반복 설정과 개별 수정 기록을 포함한 전체 데이터 백업";
+    jsonArea.append(jsonHeader, jsonDescription);
+
+    exportImportOption.append(header, csvArea, jsonArea);
+});
 
 importBtn.addEventListener("click", () => {
     importCSVInput.click();
@@ -400,7 +449,6 @@ repeatEndOptions.forEach(option => {
         repeatEndDateInput.disabled = option.value !== 'date';
     });
 });
-
 
 filterResetBtn.addEventListener("click", () => {
     currentTypeFilter = "all";
@@ -2457,7 +2505,7 @@ function exportCSV() {
     a.click();
 
     URL.revokeObjectURL(url);
-
+    exportImportOption.innerHTML = "";
     TOAST.show("내보내기 성공!");
 }
 
@@ -2634,6 +2682,30 @@ function validateCSV(lines) {
     }
 
     return true;
+}
+
+//JSON function
+function exportJSON() {
+    if(!transactions.length) {
+        alert("내보낼 거래 내역이 없습니다!");
+        return;
+    }
+
+    if(!confirm("데이터를 내보내시겠습니까? JSON 파일로 내보내집니다.")) return;
+
+    //json 문자열로 변환
+    const jsonData = JSON.stringify(transactions, null, 4);
+    const blob = new Blob([jsonData], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `budgetList-${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}.json`;
+    link.click();
+
+    URL.revokeObjectURL(url);
+    exportImportOption.innerHTML = "";
+    TOAST.show("내보내기 성공!");
 }
 
 updateCategoryOptions("input", currentTypeSelect, categorySelect);
@@ -2847,4 +2919,9 @@ nowMonthBtn.click();
  *                            \d{4} : 숫자(digit)가 4번 반복된다는 의미. \d{2}면 2번 반복된다.
  *                            -     : 하이픈 문자 그대로의 의미.
  *                            $     : 문자열의 끝을 의미. ^와 $가 함께 쓰여 전체 문자열이 정확히 이 형식으로 이루어져야 함을 뜻한다.
+ */
+
+/* 62일차
+ * JSON.stringify(transactions, null, 4);   : 두 번째 null과 세 번째 4를 이용하면 들여쓰기 4칸으로 정렬된다.
+ * Blob은 데이터를 파일처럼 다룰 수 있도록 만들어 주는 객체.
  */
