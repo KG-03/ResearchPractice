@@ -3,7 +3,27 @@ header {
     text-align: center;
 }
 
-.import-csv-input {
+.export-import-option {
+    padding: 10px;
+    margin: 10px;
+
+    border-radius: 10px;
+
+    background: #c8dbca;
+}
+
+.export-import-option-flex {
+    display: flex;
+    justify-content: space-between;
+    text-align: center;
+    align-items: center;
+
+    height: 20px;
+
+    gap: 10px;
+}
+
+.import-input {
     display: none;
 }
 
