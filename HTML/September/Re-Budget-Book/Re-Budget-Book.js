@@ -3,7 +3,8 @@ const todayDate = document.querySelector(".today-date");
 
 const exportBtn = document.querySelector(".export-btn");
 const importBtn = document.querySelector(".import-btn");
-const importCSVInput = document.querySelector(".import-input");
+const importCSVInput = document.querySelector(".import-csv-input");
+const importJSONInput = document.querySelector(".import-json-input");
 
 const exportImportOption = document.querySelector(".export-import-option");
 
@@ -214,6 +215,7 @@ let editingOccurrenceDate = null;       //수정 대상의 원래 발생일
 let editingOccurrenceData = null;       //수정 전 발생 내역의 값. 변경 여부를 비교할 때 이용.
 
 exportBtn.addEventListener("click", () => {
+    exportImportOption.style.display = "block";
     exportImportOption.innerHTML = "";
 
     const header = document.createElement("h3");
@@ -226,6 +228,7 @@ exportBtn.addEventListener("click", () => {
         cancelBtn.textContent = "취소";
         cancelBtn.addEventListener("click", () => {
             exportImportOption.innerHTML = "";
+            exportImportOption.style.display = "none";
         });
 
     header.append(headerLabel, cancelBtn);
@@ -237,12 +240,12 @@ exportBtn.addEventListener("click", () => {
             csvHeaderLabel.textContent = "CSV 파일";
 
             const csvBtn = document.createElement("button");
-            csvBtn.textContent = "csv 내보내기";
+            csvBtn.textContent = "CSV 내보내기";
             csvBtn.addEventListener("click", exportCSV);
         csvHeader.append(csvHeaderLabel, csvBtn);
 
         const csvDescription = document.createElement("p");
-        csvDescription.textContent = "거래 내역을 엑셀 등에서 확인하거나 분석할 때 사용";
+        csvDescription.textContent = "거래 내역을 엑셀 등에서 확인하거나 분석할 때 사용.";
     csvArea.append(csvHeader, csvDescription);
 
     const jsonArea = document.createElement("div");
@@ -252,22 +255,72 @@ exportBtn.addEventListener("click", () => {
             jsonHeaderLabel.textContent = "JSON 파일";
 
             const jsonBtn = document.createElement("button");
-            jsonBtn.textContent = "json 내보내기";
+            jsonBtn.textContent = "JSON 내보내기";
             jsonBtn.addEventListener("click", exportJSON);
         jsonHeader.append(jsonHeaderLabel, jsonBtn);
 
         const jsonDescription = document.createElement("p");
-        jsonDescription.textContent = "반복 설정과 개별 수정 기록을 포함한 전체 데이터 백업";
+        jsonDescription.textContent = "반복 설정과 개별 수정 기록을 포함한 전체 데이터 백업.";
     jsonArea.append(jsonHeader, jsonDescription);
 
     exportImportOption.append(header, csvArea, jsonArea);
 });
 
 importBtn.addEventListener("click", () => {
-    importCSVInput.click();
+    exportImportOption.style.display = "block";
+    exportImportOption.innerHTML = "";
+
+    const header = document.createElement("h3");
+    header.classList.add("export-import-option-flex");
+
+        const headerLabel = document.createElement("h3");
+        headerLabel.textContent = "불러오기 형식 선택";
+
+        const cancelBtn = document.createElement("button");
+        cancelBtn.textContent = "취소";
+        cancelBtn.addEventListener("click", () => {
+            exportImportOption.innerHTML = "";
+            exportImportOption.style.display = "none";
+        });
+
+    header.append(headerLabel, cancelBtn);
+
+    const csvArea = document.createElement("div");
+        const csvHeader = document.createElement('div');
+        csvHeader.classList.add("export-import-option-flex");
+            const csvHeaderLabel = document.createElement("h4");
+            csvHeaderLabel.textContent = "CSV 파일";
+
+            const csvBtn = document.createElement("button");
+            csvBtn.textContent = "CSV 불러오기";
+            csvBtn.addEventListener("click", () => { importCSVInput.click(); });
+        csvHeader.append(csvHeaderLabel, csvBtn);
+
+        const csvDescription = document.createElement("p");
+        csvDescription.textContent = "표 형식으로 된 거래 내역을 가져오기. 엑셀 등의 스프레드시트에서 거래 내역을 수정할 때 사용.";
+    csvArea.append(csvHeader, csvDescription);
+
+    const jsonArea = document.createElement("div");
+        const jsonHeader = document.createElement('div');
+        jsonHeader.classList.add("export-import-option-flex");
+            const jsonHeaderLabel = document.createElement("h4");
+            jsonHeaderLabel.textContent = "JSON 파일";
+
+            const jsonBtn = document.createElement("button");
+            jsonBtn.textContent = "JSON 불러오기";
+            jsonBtn.addEventListener("click", () => { importJSONInput.click(); });
+        jsonHeader.append(jsonHeaderLabel, jsonBtn);
+
+        const jsonDescription = document.createElement("p");
+        jsonDescription.textContent = "거래 데이터 전체를 복원. 반복 거래 설정과 개별 수정 내역도 함께 저장하고 불러오기.";
+    jsonArea.append(jsonHeader, jsonDescription);
+
+    exportImportOption.append(header, csvArea, jsonArea);
 });
 
 importCSVInput.addEventListener("change", importCSV);
+
+importJSONInput.addEventListener("change", importJSON);
 
 summaryCategoryType.addEventListener("change", () => {
     renderSummary();
@@ -2506,6 +2559,7 @@ function exportCSV() {
 
     URL.revokeObjectURL(url);
     exportImportOption.innerHTML = "";
+    exportImportOption.style.display = "none";
     TOAST.show("내보내기 성공!");
 }
 
@@ -2552,9 +2606,11 @@ function importCSV(event) {
         transactions = importTransactions;
         saveTransactions();
         renderPage();
-        TOAST.show("불러오기 성공!");
+        TOAST.show("CSV 파일 불러오기 성공!");
     };
 
+    exportImportOption.innerHTML = "";
+    exportImportOption.style.display = "none";
     reader.readAsText(file, "utf-8");
 }
 
@@ -2705,7 +2761,50 @@ function exportJSON() {
 
     URL.revokeObjectURL(url);
     exportImportOption.innerHTML = "";
+    exportImportOption.style.display = "none";
     TOAST.show("내보내기 성공!");
+}
+
+async function importJSON() {
+    const file = importJSONInput.files[0];
+    if(!file) return;
+
+    try {
+        const fileText = await file.text();
+
+        //JSON 형식으로 해석 가능한지 확인.
+        const importedTransactions = JSON.parse(fileText);
+
+        //데이터 구조(이 프로젝트에서 사용하는 거래 데이터인지) 검사
+        if(!Array.isArray(importedTransactions)) throw new Error("올바른 거래 데이터가 아닙니다!");
+
+        const isVaild = importedTransactions.every(transaction =>
+            transaction !== null &&
+            typeof transaction === "object" &&
+            !Array.isArray(transaction) &&
+            transaction.id !== undefined &&
+            typeof transaction.date === "string" &&
+            Number.isFinite(transaction.amount) &&
+            typeof transaction.repeat === "boolean"
+        );
+
+        if(!isVaild) throw new Error("거래 데이터 구조가 올바르지 않습니다!");
+
+        if(!confirm("기존 거래 데이터가 불러온 JSON 파일의 데이터로 교체됩니다.\n계속하시겠습니까?")) return;
+
+        transactions = importedTransactions;
+        saveTransactions();
+        renderPage();
+
+        TOAST.show("JSON 파일 불러오기 성공!");
+    } catch(error) {
+        console.log(error);
+        alert("JSON 파일을 읽는 중, 오류가 발생했습니다.");
+    } finally {
+        importJSONInput.value = "";
+        exportImportOption.innerHTML = "";
+        exportImportOption.style.display = "none";
+    }
 }
 
 updateCategoryOptions("input", currentTypeSelect, categorySelect);
@@ -2924,4 +3023,9 @@ nowMonthBtn.click();
 /* 62일차
  * JSON.stringify(transactions, null, 4);   : 두 번째 null과 세 번째 4를 이용하면 들여쓰기 4칸으로 정렬된다.
  * Blob은 데이터를 파일처럼 다룰 수 있도록 만들어 주는 객체.
+ */
+
+/* 63일차
+ * const fileText = await file.text();      : 파일의 내용을 문자열로 읽어오는데, text()가 비동기 작업이기 때문에 await를 사용.
+ * const importedTransactions = JSON.parse(fileText);   : 읽어온 JSON 문자열을 js 객체/배열로 변환.
  */
