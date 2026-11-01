@@ -4,6 +4,7 @@ header {
 }
 
 .export-import-option {
+    display: none;
     padding: 10px;
     margin: 10px;
 
@@ -23,7 +24,8 @@ header {
     gap: 10px;
 }
 
-.import-input {
+.import-csv-input,
+.import-json-input {
     display: none;
 }
 
