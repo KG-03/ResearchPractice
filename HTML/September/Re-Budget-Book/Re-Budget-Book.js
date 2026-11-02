@@ -2782,21 +2782,44 @@ async function importJSON() {
             transaction !== null &&
             typeof transaction === "object" &&
             !Array.isArray(transaction) &&
+
             transaction.id !== undefined &&
             typeof transaction.date === "string" &&
             Number.isFinite(transaction.amount) &&
+            
+            ["income", "expense", "saving", "investment"].includes(transaction.type) &&
+            typeof transaction.category === "string" &&
+            typeof transaction.description === "string" &&
             typeof transaction.repeat === "boolean"
         );
 
-        if(!isVaild) throw new Error("거래 데이터 구조가 올바르지 않습니다!");
+        const isRecurringDataVaild = importedTransactions.every(transaction => {
+            if(transaction.excludedDates !== undefined &&
+                !Array.isArray(transaction.excludedDates)) return false;
+                
+            if(transaction.occurrenceOverrides !== undefined &&
+                (   transaction.occurrenceOverrides === null ||
+                    typeof transaction.occurrenceOverrides !== "object" ||
+                    Array.isArray(transaction.occurrenceOverrides))) return false;
+            
+            return true;
+        })
+
+        if(!isVaild || !isRecurringDataVaild) throw new Error("거래 데이터 구조가 올바르지 않습니다!");
+        
+        if(importedTransactions.length === 0) {
+            if(!confirm("불러올 거래 데이터가 없습니다. \n기존 거래 데이터가 모두 삭제됩니다. 계속하시겠습니까?")) return;
+        }
 
         if(!confirm("기존 거래 데이터가 불러온 JSON 파일의 데이터로 교체됩니다.\n계속하시겠습니까?")) return;
+
+        if(confirm("현재 거래 데이터를 백업하시겠습니까?")) exportJSON();
 
         transactions = importedTransactions;
         saveTransactions();
         renderPage();
 
-        TOAST.show("JSON 파일 불러오기 성공!");
+        TOAST.show(`JSON 파일 불러오기 성공! ${importedTransactions.length}개의 거래 데이터를 불러왔습니다!`);
     } catch(error) {
         console.log(error);
         alert("JSON 파일을 읽는 중, 오류가 발생했습니다.");
