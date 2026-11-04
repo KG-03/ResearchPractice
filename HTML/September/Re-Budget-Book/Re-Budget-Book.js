@@ -61,6 +61,9 @@ const typeFilter = document.querySelector(".type-filter");
 const categoryFilter = document.querySelector(".category-filter");
 const sortFilter = document.querySelector(".sort-filter");
 const searchFilterInput = document.querySelector(".search-filter-input");
+
+const utiliyAllSelect = document.querySelector(".utiliy-all-select");
+const utiliySelectDeleteBtn = document.querySelector(".utiliy-select-delete-btn");
 const displayFilteredTransactionsNumber = document.querySelector(".display-filtered-transactions-number");
 
 const budgetList = document.querySelector(".budget-list");
@@ -214,6 +217,8 @@ let editingOccurrenceOnly = false;      //이번 발생 내역만 수정하는�
 let editingOccurrenceDate = null;       //수정 대상의 원래 발생일
 let editingOccurrenceData = null;       //수정 전 발생 내역의 값. 변경 여부를 비교할 때 이용.
 
+const selectedTransactions = new Set(); //거래 선택 상태
+
 exportBtn.addEventListener("click", () => {
     exportImportOption.style.display = "block";
     exportImportOption.innerHTML = "";
@@ -335,6 +340,8 @@ prevMonthBtn.addEventListener("click", () => {
     prevMonthDate = new Date(year, month-2, date);
     nextMonthDate = new Date(year, month, date);
 
+    clearSelectedTransactions();
+
     updateToday();
     renderPage();
 });
@@ -347,6 +354,8 @@ nowMonthBtn.addEventListener("click", () => {
     selectedMonthDate = new Date(today);
     prevMonthDate = new Date(year, month-1, date);
     nextMonthDate = new Date(year, month+1, date);    
+
+    clearSelectedTransactions();
 
     updateToday();
     renderPage();
@@ -361,6 +370,8 @@ nextMonthBtn.addEventListener("click", () => {
     prevMonthDate = new Date(year, month, date);
     nextMonthDate = new Date(year, month+2, date);
 
+    clearSelectedTransactions();
+
     updateToday();
     renderPage();
 });
@@ -369,6 +380,8 @@ shiftMonthBtn.addEventListener("click", () => {
     if(dateShift.value) {
         selectedMonthDate = new Date(dateShift.value);
     }
+
+    clearSelectedTransactions();
 
     updateToday();
     renderPage();
@@ -544,6 +557,17 @@ searchFilterInput.addEventListener("input", () => {
     renderPage();
 });
 
+utiliyAllSelect.addEventListener("change", () => {
+    const currentTransactions = getAllTransactionByMonth(selectedMonthDate);
+
+    if(utiliyAllSelect.checked) currentTransactions.forEach(transaction => { selectedTransactions.add(transaction.id) });
+    else currentTransactions.forEach(transaction => {selectedTransactions.delete(transaction.id) });
+
+    renderPage();
+});
+
+utiliySelectDeleteBtn.addEventListener("click", deleteSelectedTransactions);
+
 
 //거래 생성
 function addTransaction() {
@@ -578,10 +602,10 @@ function addTransaction() {
 }
 
 //거래 제거
-function deleteTransaction(targetTransaction) {
+function deleteTransaction(targetTransaction, isSelectDelete = false) {
     if(targetTransaction === undefined) return;
 
-    if(!confirm("정말 삭제하시겠습니까?")) return;
+    if(!isSelectDelete) if(!confirm("정말 삭제하시겠습니까?")) return;
 
     const typeValue = TYPE_OPTIONS[targetTransaction.type];
     const categoryValue = categoryOptions[targetTransaction.type].find(
@@ -627,12 +651,13 @@ function deleteTransaction(targetTransaction) {
         transactions = transactions.filter(transaction => transaction.id !== targetTransaction.id);
     }    
 
-    saveTransactions();
-    renderPage();
+    if(!isSelectDelete) {
+        saveTransactions();
+        renderPage();
 
-    TOAST.show(`${typeValue}, ${categoryValue.label} 카테고리의 ${targetTransaction.amount.toLocaleString('ko-KR')} 원 거래를 삭제했습니다!`,
-                targetTransaction);
-
+        TOAST.show(`${typeValue}, ${categoryValue.label} 카테고리의 ${targetTransaction.amount.toLocaleString('ko-KR')} 원 거래를 삭제했습니다!`,
+                    targetTransaction);
+    }
 }
 
 //거래 복원
@@ -859,6 +884,17 @@ function createTransactionCard(transaction) {
     const cardHeader = document.createElement("div");
     cardHeader.classList.add("budget-card-header");
 
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = selectedTransactions.has(transaction.id);
+        checkbox.addEventListener("change", () => {
+            if(checkbox.checked) selectedTransactions.add(transaction.id);
+            else selectedTransactions.delete(transaction.id);
+
+            updateSelectAllCheckbox();
+            renderPage();
+        });
+
         const dateDiv = document.createElement("div");
         dateDiv.classList.add("budget-card-new-date-card");
 
@@ -920,7 +956,7 @@ function createTransactionCard(transaction) {
         repeat.textContent = transaction.repeat ? `반복중 ${transaction.repeatType} ${transaction.repeatInterval}` : "반복안함";
         repeat.classList.add("budget-card-header-badge");
 
-        cardHeader.append(dateDiv, type, category, repeat);
+        cardHeader.append(checkbox, dateDiv, type, category, repeat);
 
     const cardMain = document.createElement("div");
     cardMain.classList.add("budget-card-main");
@@ -983,6 +1019,7 @@ function createTransactionCard(transaction) {
 //render function
 //페이지를 렌더링
 function renderPage() {
+    console.count("renderPage실행수");
     const filteredTransactions = getVisibleTransactions();
     const groupedTransactions = groupTransactionsByDate(filteredTransactions);
     const dailySummary = calculateDailySummary(groupedTransactions);
@@ -1008,8 +1045,15 @@ function renderPage() {
 
 function renderTransactions(filteredTransactions, groupedTransactions, dailySummary) {
     budgetList.innerHTML = "";
+    displayFilteredTransactionsNumber.innerHTML = "";
 
-    displayFilteredTransactionsNumber.textContent = `현재 표시되는 거래 내역은 ${filteredTransactions.length}건 입니다.`;
+    const nowTransactionNumber = document.createElement("p");
+    nowTransactionNumber.textContent = `현재 표시되는 거래 내역은 ${filteredTransactions.length}건 입니다.`;
+
+    const selectedTransactionNumber = document.createElement("p");
+    selectedTransactionNumber.textContent = `현재 선택된 거래 내역은 ${selectedTransactions.size}건 입니다.`;
+
+    displayFilteredTransactionsNumber.append(nowTransactionNumber, selectedTransactionNumber);
 
     if (!filteredTransactions.length) {
         const message = transactions.length === 0
@@ -2505,6 +2549,32 @@ function getMonthKey(targetDate) {
     const date = new Date(targetDate);
 
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+//select funtion
+function updateSelectAllCheckbox() {
+    const currentTransactions = getAllTransactionByMonth(selectedMonthDate);
+
+    utiliyAllSelect.checked = currentTransactions.length > 0 &&
+                            currentTransactions.every(transaction => selectedTransactions.has(transaction.id));
+}
+
+function deleteSelectedTransactions() {
+    if(selectedTransactions.size <= 0) return;
+
+    if(!confirm(`선택한 ${selectedTransactions.size}개의 거래를 삭제하시겠습니까?`)) return;
+
+    const deleteTargetTransactions = getAllTransactionByMonth(selectedMonthDate).filter(transaction => selectedTransactions.has(transaction.id));
+    deleteTargetTransactions.forEach(transaction => deleteTransaction(transaction, true));
+
+    clearSelectedTransactions();
+    saveTransactions();
+    renderPage();
+}
+
+function clearSelectedTransactions() {
+    selectedTransactions.clear();
+    utiliyAllSelect.checked = false;
 }
 
 //CSV function
