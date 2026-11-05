@@ -622,31 +622,10 @@ function deleteTransaction(targetTransaction, isSelectDelete = false) {
             return;
         }
 
-        //'제거할 반복 거래를 저장해두는 배열'이 없다면
-        if(!Array.isArray(originalTransaction.excludedDates)) originalTransaction.excludedDates = [];
+        let deleteType = confirm("현재 반복 거래를 모두 삭제하시겠습니까?") ? "all" :
+                        confirm("이번 내역 이후의 거래를 모두 삭제하시겠습니까?") ? "after" : "selected";
 
-        if(confirm("반복 거래입니다. 반복 거래 전체를 삭제하시겠습니까?")) {
-            transactions = transactions.filter(transaction => transaction.id !== originalTransaction.id);
-        } else if(confirm("이번 내역 이후의 거래를 모두 삭제하시겠습니까? '취소'를 누르면 이번 거래만 삭제됩니다.")) {
-            //선택한 발생일의 전날을 새로운 종료일로 설정(종료일이 있는 반복 거래로 만드는 것.)
-            const occurrenceDate = new Date(`${targetTransaction.date}T00:00:00`);
-            occurrenceDate.setDate(occurrenceDate.getDate() - 1);
-
-            const newEndDate = [
-                occurrenceDate.getFullYear(),
-                String(occurrenceDate.getMonth() + 1).padStart(2, "0"),
-                String(occurrenceDate.getDate()).padStart(2, "0")
-            ].join("-");
-
-            //기존 종료일이 없거나, 새 종료일이 기존 종료일보다 빠른 경우에만 변경
-            if (originalTransaction.repeatEndType !== "date" || !originalTransaction.repeatEndDate || newEndDate < originalTransaction.repeatEndDate) {
-                originalTransaction.repeatEndType = "date";
-                originalTransaction.repeatEndDate = newEndDate;
-            }
-        } else {
-            //선택한 발생 날짜를 제외 목록에 추가
-            if(!originalTransaction.excludedDates.includes(targetTransaction.date)) originalTransaction.excludedDates.push(targetTransaction.date);
-        }
+        deleteRecurringTransaction(originalTransaction, [targetTransaction], deleteType);
     } else {
         transactions = transactions.filter(transaction => transaction.id !== targetTransaction.id);
     }    
@@ -657,6 +636,40 @@ function deleteTransaction(targetTransaction, isSelectDelete = false) {
 
         TOAST.show(`${typeValue}, ${categoryValue.label} 카테고리의 ${targetTransaction.amount.toLocaleString('ko-KR')} 원 거래를 삭제했습니다!`,
                     targetTransaction);
+    }
+}
+
+function deleteRecurringTransaction(originalTransaction, targetTransactions, deleteType) {
+    if(deleteType === "all") {
+        //반복거래 전체삭제
+        transactions = transactions.filter(transaction => transaction.id !== originalTransaction.id);
+    } else if(deleteType === "after") {
+        //선택된 회차 중 가장 빠른 회차 찾기. 선택한 발생일의 전날을 새로운 종료일로 설정(종료일이 있는 반복 거래로 만드는 것.)
+        const earliestOccurrence = targetTransactions.reduce((earliest, current) =>
+            current.originalOccurrenceDate < earliest.originalOccurrenceDate ? current : earliest);
+        const occurrenceDate = new Date(`${earliestOccurrence.originalOccurrenceDate}T00:00:00`);
+        occurrenceDate.setDate(occurrenceDate.getDate() - 1);
+
+        const newEndDate = [
+            occurrenceDate.getFullYear(),
+            String(occurrenceDate.getMonth() + 1).padStart(2, "0"),
+            String(occurrenceDate.getDate()).padStart(2, "0")
+        ].join("-");
+
+        //기존 종료일이 없거나, 새 종료일이 기존 종료일보다 빠른 경우에만 변경
+        if (originalTransaction.repeatEndType !== "date" || !originalTransaction.repeatEndDate || newEndDate < originalTransaction.repeatEndDate) {
+            originalTransaction.repeatEndType = "date";
+            originalTransaction.repeatEndDate = newEndDate;
+        }
+    } else if(deleteType === "selected") {
+        //'제거할 반복 거래를 저장해두는 배열'이 없다면
+        if (!Array.isArray(originalTransaction.excludedDates)) originalTransaction.excludedDates = [];
+
+        //선택한 발생 날짜를 제외 목록에 추가
+        targetTransactions.forEach(targetTransaction => {
+            const originalDate = targetTransaction.originalOccurrenceDate;
+            if (!originalTransaction.excludedDates.includes(originalDate)) originalTransaction.excludedDates.push(originalDate);
+        });
     }
 }
 
@@ -2565,7 +2578,42 @@ function deleteSelectedTransactions() {
     if(!confirm(`선택한 ${selectedTransactions.size}개의 거래를 삭제하시겠습니까?`)) return;
 
     const deleteTargetTransactions = getAllTransactionByMonth(selectedMonthDate).filter(transaction => selectedTransactions.has(transaction.id));
-    deleteTargetTransactions.forEach(transaction => deleteTransaction(transaction, true));
+
+    //일반 거래 삭제
+    const deleteNormalTransactions = deleteTargetTransactions.filter(transaction => transaction.isRecurringOccurrence !== true);
+    deleteNormalTransactions.forEach(transaction => { transactions = transactions.filter(target => target.id !== transaction.id); });
+
+    //반복 거래 삭제
+    const deleteRecurringTransactions = deleteTargetTransactions.filter(transaction => transaction.isRecurringOccurrence === true);
+    //선택된 반복 거래의 날짜들을 쌓는 공간.
+    const recurringGroups = new Map();
+
+    deleteRecurringTransactions.forEach(transaction => {
+        //원본 반복 거래별로 선택된 회차가 모인다. id 100에서 선택된 11/1, 11/8 같은 것들.
+        const originalId = transaction.originalTransactionId;
+
+        if(!recurringGroups.has(originalId)) recurringGroups.set(originalId, []);
+        recurringGroups.get(originalId).push(transaction);
+    });
+
+    //반복 거래 삭제 방식 선택 (한 번만 실행)
+    let deleteType = "selected";
+    if(recurringGroups.size > 0) {
+        deleteType = confirm("현재 선택한 반복 거래를 모두 삭제하시겠습니까?") ? "all"
+                    : confirm("현재 선택한 반복 거래에서부터 이후의 거래를 모두 삭제하시겠습니까?") ? "after" : "selected";
+    }
+
+    //원본 반복 거래별 삭제 처리
+    recurringGroups.forEach((targetTransactions, originalId) => {
+        const originalTransaction = transactions.find(transaction => transaction.id === originalId);
+
+        if(!originalTransaction) {
+            console.error("원본 반복 거래를 찾을 수 없습니다.", originalId);
+            return;
+        }
+
+        deleteRecurringTransaction(originalTransaction, targetTransactions, deleteType);
+    });
 
     clearSelectedTransactions();
     saveTransactions();
@@ -2883,7 +2931,7 @@ async function importJSON() {
 
         if(!confirm("기존 거래 데이터가 불러온 JSON 파일의 데이터로 교체됩니다.\n계속하시겠습니까?")) return;
 
-        if(confirm("현재 거래 데이터를 백업하시겠습니까?")) exportJSON();
+        if(transactions.length !== 0) if(confirm("현재 거래 데이터를 백업하시겠습니까?")) exportJSON();
 
         transactions = importedTransactions;
         saveTransactions();
