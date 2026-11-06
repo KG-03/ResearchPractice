@@ -612,6 +612,9 @@ function deleteTransaction(targetTransaction, isSelectDelete = false) {
         option => option.value === targetTransaction.category
     );
 
+    //TOAST에 전달되는 복원 대상
+    let restoreTarget = targetTransaction;
+
     //반복 거래가 있을 때와 없을 때로 분리
     if(targetTransaction.isRecurringOccurrence === true) {
         const originalTransaction = transactions.find(transaction => transaction.id === targetTransaction.originalTransactionId);
@@ -625,6 +628,9 @@ function deleteTransaction(targetTransaction, isSelectDelete = false) {
         let deleteType = confirm("현재 반복 거래를 모두 삭제하시겠습니까?") ? "all" :
                         confirm("이번 내역 이후의 거래를 모두 삭제하시겠습니까?") ? "after" : "selected";
 
+        if(deleteType === "all") restoreTarget = originalTransaction;
+        else if(deleteType === "after") restoreTarget = { ...targetTransaction, _restoreInfo: {type: "after", repeatEndType: originalTransaction.repeatEndType, repeatEndDate: originalTransaction.repeatEndDate}};
+
         deleteRecurringTransaction(originalTransaction, [targetTransaction], deleteType);
     } else {
         transactions = transactions.filter(transaction => transaction.id !== targetTransaction.id);
@@ -635,7 +641,7 @@ function deleteTransaction(targetTransaction, isSelectDelete = false) {
         renderPage();
 
         TOAST.show(`${typeValue}, ${categoryValue.label} 카테고리의 ${targetTransaction.amount.toLocaleString('ko-KR')} 원 거래를 삭제했습니다!`,
-                    targetTransaction);
+                    restoreTarget);
     }
 }
 
@@ -673,9 +679,30 @@ function deleteRecurringTransaction(originalTransaction, targetTransactions, del
     }
 }
 
-//거래 복원
+//거래 복원(삭제 복원)
 function restoreTransaction(targetTransaction) {
-    transactions.push(targetTransaction);
+    if(targetTransaction.isRecurringOccurrence === true) {
+        //반복 거래를 복원하려 하는 경우
+        const originalTransaction = transactions.find(transaction => transaction.id === targetTransaction.originalTransactionId);
+        
+        if(!originalTransaction) {
+            console.error("원본 반복 거래를 찾을 수 없습니다.");
+            TOAST.show("원본 반복 거래를 찾을 수 없어 복원할 수 없습니다.");
+            return;
+        }
+
+        if(targetTransaction._restoreInfo?.type === "after"){
+            //삭제 이전의 반복 종료 정보 복구
+            originalTransaction.repeatEndType = targetTransaction._restoreInfo.repeatEndType;
+            originalTransaction.repeatEndDate = targetTransaction._restoreInfo.repeatEndDate;
+        } else {
+            //선택한 회차만 삭제한 경우. 제외 날짜에서 삭제했던 회차 제거
+            originalTransaction.excludedDates = (originalTransaction.excludedDates ?? []).filter(date => date !== targetTransaction.originalOccurrenceDate);
+        }
+    } else {
+        console.log("일반 거래?");
+        transactions.push(targetTransaction);
+    }
 
     saveTransactions();
     renderPage();
@@ -683,6 +710,7 @@ function restoreTransaction(targetTransaction) {
     TOAST.show("성공적으로 복원되었습니다!");
 }
 
+//반복 거래의 복원(수정 복원)
 function restoreRepeatTransaction(targetTransaction) {
     if(!targetTransaction.isRecurringOccurrence) return;
 
