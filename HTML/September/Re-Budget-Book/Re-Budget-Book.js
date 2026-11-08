@@ -2924,34 +2924,9 @@ async function importJSON() {
         //데이터 구조(이 프로젝트에서 사용하는 거래 데이터인지) 검사
         if(!Array.isArray(importedTransactions)) throw new Error("올바른 거래 데이터가 아닙니다!");
 
-        const isVaild = importedTransactions.every(transaction =>
-            transaction !== null &&
-            typeof transaction === "object" &&
-            !Array.isArray(transaction) &&
-
-            transaction.id !== undefined &&
-            typeof transaction.date === "string" &&
-            Number.isFinite(transaction.amount) &&
-            
-            ["income", "expense", "saving", "investment"].includes(transaction.type) &&
-            typeof transaction.category === "string" &&
-            typeof transaction.description === "string" &&
-            typeof transaction.repeat === "boolean"
-        );
-
-        const isRecurringDataVaild = importedTransactions.every(transaction => {
-            if(transaction.excludedDates !== undefined &&
-                !Array.isArray(transaction.excludedDates)) return false;
-                
-            if(transaction.occurrenceOverrides !== undefined &&
-                (   transaction.occurrenceOverrides === null ||
-                    typeof transaction.occurrenceOverrides !== "object" ||
-                    Array.isArray(transaction.occurrenceOverrides))) return false;
-            
-            return true;
-        })
-
-        if(!isVaild || !isRecurringDataVaild) throw new Error("거래 데이터 구조가 올바르지 않습니다!");
+        if(!validateJSON(importedTransactions)) {
+            throw new Error("거래 데이터 구조가 올바르지 않습니다!");
+        }
         
         if(importedTransactions.length === 0) {
             if(!confirm("불러올 거래 데이터가 없습니다. \n기존 거래 데이터가 모두 삭제됩니다. 계속하시겠습니까?")) return;
@@ -2974,6 +2949,127 @@ async function importJSON() {
         exportImportOption.innerHTML = "";
         exportImportOption.style.display = "none";
     }
+}
+
+function validateJSON(data) {
+    //데이터가 배열인지 검사
+    if(!Array.isArray(data)) return false;
+
+    //ID 중복 검사 준비
+    const idSet = new Set();
+
+    for(const transaction of data) {
+        //거래 데이터가 객체인지 검사
+        if(transaction === null ||
+            typeof transaction !== "object" ||
+            Array.isArray(transaction)) return false;
+
+        //필수 속성 및 자료형 검사
+        if(!Number.isFinite(transaction.id) ||
+            !isValidDateString(transaction.date) ||
+            !Number.isFinite(transaction.amount) ||
+            !["income", "expense", "saving", "investment"].includes(transaction.type) ||
+            typeof transaction.category !== "string" ||
+            typeof transaction.description !== "string" ||
+            typeof transaction.repeat !== "boolean" ||
+            !Number.isFinite(transaction.createdAt) ||
+            !Number.isFinite(transaction.updatedAt)) return false;
+
+        //ID 중복 검사
+        if(idSet.has(transaction.id)) return false;
+
+        idSet.add(transaction.id);
+
+        //카테고리 검사
+        const categoryExists = categoryOptions[transaction.type]?.some(
+            option => option.value === transaction.category
+        );
+
+        if(!categoryExists) return false;
+
+        //7. 반복 거래 데이터 검사
+        if(!validateRecurringData(transaction)) return false;
+    }
+
+    return true;
+}
+
+function isValidDateString(dateString) {
+    if(typeof dateString !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return false;
+
+    const date = new Date(`${dateString}T00:00:00`);
+
+    return !isNaN(date.getTime()) &&
+        date.getFullYear() === Number(dateString.slice(0, 4)) &&
+        date.getMonth() + 1 === Number(dateString.slice(5, 7)) &&
+        date.getDate() === Number(dateString.slice(8, 10));
+}
+
+function validateRecurringData(transaction) {
+    //반복 거래가 아닌 경우
+    if(!transaction.repeat) {
+        return transaction.repeatType === null &&
+            transaction.repeatInterval === null &&
+            transaction.repeatEndType === null &&
+            transaction.repeatEndDate === null;
+    }
+
+    //반복 주기 검사
+    if(!["daily", "weekly", "monthly", "yearly"].includes(transaction.repeatType)) return false;
+
+    //반복 간격 검사
+    if(!Number.isInteger(transaction.repeatInterval) || transaction.repeatInterval < 1) return false;
+
+    //반복 종료 방식 검사
+    if(!["never", "date"].includes(transaction.repeatEndType)) return false;
+
+    //반복 종료 날짜 검사
+    if(transaction.repeatEndType === "date") {
+        if(!isValidDateString(transaction.repeatEndDate)) return false;
+    } else if(transaction.repeatEndDate !== null) {
+        return false;
+    }
+
+    //반복 일자의 삭제 처리 검증
+    if(transaction.excludedDates !== undefined) {
+        if(!Array.isArray(transaction.excludedDates) ||
+            !transaction.excludedDates.every(isValidDateString)) return false;
+    }
+
+    //반복 일자의 예외 처리 검증
+    if(transaction.occurrenceOverrides !== undefined) {
+        const overrides = transaction.occurrenceOverrides;
+
+        //예외가 null이거나, 타입이 object가 아니거나, 배열일 때
+        if(overrides === null ||
+            typeof overrides !== "object" ||
+            Array.isArray(overrides)
+        ) return false;
+
+        for(const [originalDate, override] of Object.entries(overrides)) {
+            //원본 발생 날짜 검사
+            if(!isValidDateString(originalDate)) return false;
+
+            //수정 내역 객체 검사
+            if(override === null ||
+                typeof override !== "object" ||
+                Array.isArray(override)) return false;
+
+            //수정 내역의 필수 속성 검사
+            if(!isValidDateString(override.date) ||
+                !Number.isFinite(override.amount) ||
+                !["income", "expense", "saving", "investment"].includes(override.type) ||
+                typeof override.category !== "string" ||
+                typeof override.description !== "string") return false;
+
+            //카테고리 검사
+            const categoryExists = categoryOptions[override.type]?.some(option => option.value === override.category);
+
+            if(!categoryExists) return false;
+        }
+    }
+
+    return true;
 }
 
 updateCategoryOptions("input", currentTypeSelect, categorySelect);
