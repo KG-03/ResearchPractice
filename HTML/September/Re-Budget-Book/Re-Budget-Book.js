@@ -178,7 +178,15 @@ const CSV = {
     DESCRIPTION: 5,
 
     CREATED_AT: 6,
-    UPDATED_AT: 7
+    UPDATED_AT: 7,
+
+    REPEAT: 8,
+    REPEAT_TYPE: 9,
+    REPEAT_INTERVAL: 10,
+    REPEAT_END_TYPE: 11,
+    REPEAT_END_DATE: 12,
+    EXCLUDED_DATES: 13,
+    OCCURRENCE_OVERRIDES: 14
 }
 
 
@@ -2673,7 +2681,15 @@ function exportCSV() {
             "description",
 
             "createdAt",
-            "updatedAt"
+            "updatedAt",
+
+            "repeat",
+            "repeatType",
+            "repeatInterval",
+            "repeatEndType",
+            "repeatEndDate",
+            "excludedDates",
+            "occurrenceOverrides"
         ]
     ];
 
@@ -2688,7 +2704,17 @@ function exportCSV() {
             escapeCSV(transaction.description),
 
             transaction.createdAt,
-            transaction.updatedAt
+            transaction.updatedAt,
+
+            transaction.repeat,
+            transaction.repeatType ?? "",
+            transaction.repeatInterval ?? "",
+            transaction.repeatEndType ?? "",
+            transaction.repeatEndDate ?? "",
+
+            //배열 및 객체를 JSON 문자열로 변환 후 URL 인코딩.
+            escapeCSV(encodeURIComponent(JSON.stringify(transaction.excludedDates ?? []))),
+            escapeCSV(encodeURIComponent(JSON.stringify(transaction.occurrenceOverrides ?? {})))
         ]);
     });
 
@@ -2745,7 +2771,16 @@ function importCSV(event) {
                 description: unescapeCSV(values[CSV.DESCRIPTION]),
 
                 createdAt: Number(values[CSV.CREATED_AT]),
-                updatedAt: Number(values[CSV.UPDATED_AT])
+                updatedAt: Number(values[CSV.UPDATED_AT]),
+
+                repeat: values[CSV.REPEAT] === "true",
+                repeatType: values[CSV.REPEAT_TYPE] || null,
+                repeatInterval: values[CSV.REPEAT_INTERVAL] === "" ? null : Number(values[CSV.REPEAT_INTERVAL]),
+                repeatEndType: values[CSV.REPEAT_END_TYPE] || null,
+                repeatEndDate: values[CSV.REPEAT_END_DATE] || null,
+
+                excludedDates: JSON.parse(decodeURIComponent(unescapeCSV(values[CSV.EXCLUDED_DATES]))),
+                occurrenceOverrides: JSON.parse(decodeURIComponent(unescapeCSV(values[CSV.OCCURRENCE_OVERRIDES])))
             });
         });
 
@@ -2764,7 +2799,7 @@ function escapeCSV(value) {
     return `"${String(value ?? "")
         .replace(/\r\n/g, "\\n")
         .replace(/\n/g, "\\n")
-        .replace(/"/g, '""')}"`
+        .replace(/"/g, '""')}"`;
 }
 
 function unescapeCSV(value) {
@@ -2814,6 +2849,8 @@ function parseCSVLine(line) {
 }
 
 function validateCSV(lines) {
+    const idSet = new Set();
+
     for (const line of lines) {
         if(!line.trim()) continue;
 
@@ -2824,30 +2861,90 @@ function validateCSV(lines) {
             return false;
         }
 
-        if(!values[CSV.ID].trim()) {
-            alert("CSV 데이터 중, ID가 비어 있는 데이터가 있습니다.");
+        if(!values[CSV.ID].trim() ||
+        !values[CSV.DATE].trim() ||
+        !values[CSV.AMOUNT].trim() ||
+        !values[CSV.TYPE].trim() ||
+        !values[CSV.CATEGORY].trim()) {
+            alert("CSV 데이터에 필수 값이 비어 있는 항목이 있습니다.");
             return false;
         }
 
-        if(!values[CSV.DATE].trim()) {
-            alert("CSV 데이터 중, 거래 날짜가 비어 있는 데이터가 있습니다.");
+        if(!Number.isFinite(Number(values[CSV.ID])) ||
+        !Number.isFinite(Number(values[CSV.AMOUNT])) ||
+        !Number.isFinite(Number(values[CSV.CREATED_AT])) ||
+        !Number.isFinite(Number(values[CSV.UPDATED_AT]))) {
+            alert("CSV 데이터에 숫자가 아닌 값이 있습니다.");
             return false;
         }
 
-        if(!values[CSV.AMOUNT].trim()) {
-            alert("CSV 데이터 중, 거래 값이 비어 있는 데이터가 있습니다.");
+        if(!isValidDateString(values[CSV.DATE])) {
+            alert("CSV 데이터 중 유효하지 않은 거래 날짜가 있습니다.");
             return false;
         }
 
-        if(!values[CSV.TYPE].trim()) {
-            alert("CSV 데이터 중, 거래 타입이 비어 있는 데이터가 있습니다.");
+        const id = Number(values[CSV.ID]);
+        if(idSet.has(id)) {
+            alert("CSV 데이터 중 중복된 ID가 있습니다.");
+            return false;
+        }
+        idSet.add(id);
+
+        const type = unescapeCSV(values[CSV.TYPE]);
+        if(!(type in TYPE_OPTIONS) || type === "all") {
+            alert("CSV 데이터 중 거래 타입이 올바르지 않은 항목이 있습니다.");
             return false;
         }
 
-        if(!values[CSV.CATEGORY].trim()) {
-            alert("CSV 데이터 중, 거래 카테고리가 비어 있는 데이터가 있습니다.");
+        const category = unescapeCSV(values[CSV.CATEGORY]);
+        const categoryExists = categoryOptions[type]?.some( option => option.value === category );
+        if(!categoryExists) {
+            alert("CSV 데이터 중 거래 카테고리가 올바르지 않은 항목이 있습니다.");
             return false;
         }
+
+        if(!["true", "false"].includes(values[CSV.REPEAT])) {
+            alert("CSV 데이터 중 반복 여부가 올바르지 않은 항목이 있습니다.");
+            return false;
+        }
+
+        //반복 데이터 복원 및 검사
+        try {
+            //해당 transaction은 반복 거래 내부의 데이터
+            const transaction = {
+                id,
+                date: values[CSV.DATE],
+                amount: Number(values[CSV.AMOUNT]),
+
+                type,
+                category,
+                description: unescapeCSV(values[CSV.DESCRIPTION]),
+
+                createdAt: Number(values[CSV.CREATED_AT]),
+                updatedAt: Number(values[CSV.UPDATED_AT]),
+
+                repeat: values[CSV.REPEAT] === "true",
+                repeatType: values[CSV.REPEAT_TYPE] || null,
+                repeatInterval: values[CSV.REPEAT_INTERVAL] === "" ? null : Number(values[CSV.REPEAT_INTERVAL]),
+                repeatEndType: values[CSV.REPEAT_END_TYPE] || null,
+                repeatEndDate: values[CSV.REPEAT_END_DATE] || null,
+
+                excludedDates: JSON.parse(decodeURIComponent(unescapeCSV(values[CSV.EXCLUDED_DATES]))),
+                occurrenceOverrides: JSON.parse(decodeURIComponent(unescapeCSV(values[CSV.OCCURRENCE_OVERRIDES])))
+            };
+
+            if(!validateRecurringData(transaction)) {
+                alert("CSV 데이터 중 반복 거래 설정이 올바르지 않은 항목이 있습니다.");
+                return false;
+            }
+
+        } catch(error) {
+            console.error(error);
+            alert("CSV 데이터 중 반복 거래의 예외 또는 삭제 정보가 올바르지 않습니다.");
+            return false;
+        }        
+
+
 
         if(isNaN(Number(values[CSV.ID]))) {
             alert("CSV 데이터 중, ID 값이 숫자가 아닌 값이 있습니다.");
@@ -2869,18 +2966,7 @@ function validateCSV(lines) {
             return false;
         }
 
-        const type = unescapeCSV(values[CSV.TYPE]);
-        if(!(type in TYPE_OPTIONS) || type === "all") {
-            alert("CSV 데이터 중, 거래 타입이 다른 데이터가 있습니다.");
-            return false;
-        }
 
-        const category = unescapeCSV(values[CSV.CATEGORY]);
-        const categoryExists = categoryOptions[type]?.some( option => option.value === category );
-        if(!categoryExists) {
-            alert("CSV 데이터 중, 거래 카테고리가 다른 데이터가 있습니다.");
-            return false;
-        }
     }
 
     return true;
@@ -3006,30 +3092,6 @@ function isValidDateString(dateString) {
 }
 
 function validateRecurringData(transaction) {
-    //반복 거래가 아닌 경우
-    if(!transaction.repeat) {
-        return transaction.repeatType === null &&
-            transaction.repeatInterval === null &&
-            transaction.repeatEndType === null &&
-            transaction.repeatEndDate === null;
-    }
-
-    //반복 주기 검사
-    if(!["daily", "weekly", "monthly", "yearly"].includes(transaction.repeatType)) return false;
-
-    //반복 간격 검사
-    if(!Number.isInteger(transaction.repeatInterval) || transaction.repeatInterval < 1) return false;
-
-    //반복 종료 방식 검사
-    if(!["never", "date"].includes(transaction.repeatEndType)) return false;
-
-    //반복 종료 날짜 검사
-    if(transaction.repeatEndType === "date") {
-        if(!isValidDateString(transaction.repeatEndDate)) return false;
-    } else if(transaction.repeatEndDate !== null) {
-        return false;
-    }
-
     //반복 일자의 삭제 처리 검증
     if(transaction.excludedDates !== undefined) {
         if(!Array.isArray(transaction.excludedDates) ||
@@ -3043,8 +3105,7 @@ function validateRecurringData(transaction) {
         //예외가 null이거나, 타입이 object가 아니거나, 배열일 때
         if(overrides === null ||
             typeof overrides !== "object" ||
-            Array.isArray(overrides)
-        ) return false;
+            Array.isArray(overrides)) return false;
 
         for(const [originalDate, override] of Object.entries(overrides)) {
             //원본 발생 날짜 검사
@@ -3067,6 +3128,30 @@ function validateRecurringData(transaction) {
 
             if(!categoryExists) return false;
         }
+    }
+
+    //반복 거래가 아닌 경우
+    if(!transaction.repeat) {
+        return transaction.repeatType === null &&
+            transaction.repeatInterval === null &&
+            transaction.repeatEndType === null &&
+            transaction.repeatEndDate === null;
+    }
+
+    //반복 주기 검사
+    if(!["daily", "weekly", "monthly", "yearly"].includes(transaction.repeatType)) return false;
+
+    //반복 간격 검사
+    if(!Number.isInteger(transaction.repeatInterval) || transaction.repeatInterval < 1) return false;
+
+    //반복 종료 방식 검사
+    if(!["never", "date"].includes(transaction.repeatEndType)) return false;
+
+    //반복 종료 날짜 검사
+    if(transaction.repeatEndType === "date") {
+        if(!isValidDateString(transaction.repeatEndDate)) return false;
+    } else if(transaction.repeatEndDate !== null) {
+        return false;
     }
 
     return true;
@@ -3293,4 +3378,17 @@ nowMonthBtn.click();
 /* 63일차
  * const fileText = await file.text();      : 파일의 내용을 문자열로 읽어오는데, text()가 비동기 작업이기 때문에 await를 사용.
  * const importedTransactions = JSON.parse(fileText);   : 읽어온 JSON 문자열을 js 객체/배열로 변환.
+ */
+
+/* 70일차
+ * encodeURIComponent() : URL의 쿼리 스트링이나 파라미터 값으로 들어갈 문자열을 안전하게 UTF-8로 인코딩하는 내장 함수.
+ *                        ?, =, /, &, :, #과 같이 URL에서 특수한 의미를 가지는 문자를 포함해, 대부분의 기호를 이스케이프(%xx 형식) 처리.
+ * decodeURIComponent() : 인코딩된 URI 컴포넌트(주로 쿼리 스트링의 값 등)를 원래의 문자열로 디코딩하는 전역 함수
+ *                        디코딩할 퍼센트 인코딩 문자열을 매개변수로 받고, 디코딩 된 새 문자열 반환.
+ * 
+ * !Number.isFinite(Number(values[CSV.ID])과 isNaN(Number(values[CSV.ID])) 차이
+ *      Number.isFinite(Number(value))  : 변환한 숫자가 유효한 수인지 검사. "123", ""(0으로 취급) 등을 true로 반환.
+ *      isNaN(Number(value))            : Number(value) 결과가 NaN인지 확인. "123", "", "infinity" 등을 true로 반환.
+ * 
+ *      ID, 금액, 타임스탬프는 유한한 수이기 때문에, Number.isFinite(...)를 사용.
  */
