@@ -2784,14 +2784,9 @@ function importCSV(event) {
             });
         });
 
-        transactions = importTransactions;
-        saveTransactions();
-        renderPage();
-        TOAST.show("CSV 파일 불러오기 성공!");
+        importPreview(importTransactions, "csv", file.name);
     };
 
-    exportImportOption.innerHTML = "";
-    exportImportOption.style.display = "none";
     reader.readAsText(file, "utf-8");
 }
 
@@ -3018,22 +3013,12 @@ async function importJSON() {
             if(!confirm("불러올 거래 데이터가 없습니다. \n기존 거래 데이터가 모두 삭제됩니다. 계속하시겠습니까?")) return;
         }
 
-        if(!confirm("기존 거래 데이터가 불러온 JSON 파일의 데이터로 교체됩니다.\n계속하시겠습니까?")) return;
-
-        if(transactions.length !== 0) if(confirm("현재 거래 데이터를 백업하시겠습니까?")) exportJSON();
-
-        transactions = importedTransactions;
-        saveTransactions();
-        renderPage();
-
-        TOAST.show(`JSON 파일 불러오기 성공! ${importedTransactions.length}개의 거래 데이터를 불러왔습니다!`);
+        importPreview(importedTransactions, "json", file.name);
     } catch(error) {
         console.log(error);
         alert("JSON 파일을 읽는 중, 오류가 발생했습니다.");
     } finally {
-        importJSONInput.value = "";
-        exportImportOption.innerHTML = "";
-        exportImportOption.style.display = "none";
+
     }
 }
 
@@ -3155,6 +3140,72 @@ function validateRecurringData(transaction) {
     }
 
     return true;
+}
+
+//import preview function
+function importPreview(importedTransactions, type, fileName) {
+    const selectFileArea = document.createElement("div");
+    const selectFileAreaName = document.createElement("h4");
+    const selectFileName = document.createElement("p");
+    const selectFileAmount = document.createElement("p");
+        const totalCountLabel = document.createElement("p");
+        const normalCountLabel = document.createElement("p");
+        const recurringCountLabel = document.createElement("p");
+        const exceptionCountLabel = document.createElement("p");
+
+        const normalCount = importedTransactions.filter(transaction => !transaction.repeat).length;
+        const recurringCount = importedTransactions.filter(transaction => transaction.repeat).length;
+        const exceptionCount = importedTransactions.filter(transaction => transaction.excludedDates?.length > 0 ||
+                                                            Object.keys(transaction.occurrenceOverrides ?? {}).length > 0).length;
+    
+    const selectFileBtn = document.createElement("div");
+    const selectFileImportBtn = document.createElement("button");
+    const selectFileCancelBtn = document.createElement("button");
+  
+    selectFileAreaName.textContent = "CSV 파일 미리보기";
+    selectFileName.textContent = `📄파일명: ${fileName}`;
+
+    totalCountLabel.textContent = `전체 거래 수: ${normalCount+recurringCount}개`;
+    normalCountLabel.textContent =  `일반 거래 수: ${normalCount}개`;
+    recurringCountLabel.textContent =  `반복 거래 수: ${recurringCount}개`;
+    exceptionCountLabel.textContent =  `반복 거래 예외 정보 보유: ${exceptionCount}개`;
+    selectFileAmount.append(totalCountLabel, normalCountLabel, recurringCountLabel, exceptionCountLabel);
+
+    selectFileImportBtn.textContent = "가져오기";
+    selectFileCancelBtn.textContent = "취소";
+    selectFileBtn.append(selectFileImportBtn,selectFileCancelBtn);
+
+    selectFileImportBtn.addEventListener("click", () => {
+        if(!confirm("기존 거래 데이터가 불러온 파일의 데이터로 교체됩니다.\n계속하시겠습니까?")) return;
+
+        if(transactions.length !== 0 && confirm("현재 거래 데이터를 백업하시겠습니까?")){
+            if(type === "csv") exportCSV();
+            else if(type === "json") exportJSON();
+        }
+
+        transactions = importedTransactions;
+        saveTransactions();
+        renderPage();
+
+        TOAST.show(`${type} 파일 불러오기 성공! ${importedTransactions.length}개의 거래 데이터를 불러왔습니다!`);
+
+        importCSVInput.value = "";
+        importJSONInput.value = "";
+        exportImportOption.innerHTML = "";
+        exportImportOption.style.display = "none";        
+    });
+    selectFileCancelBtn.addEventListener("click", () => {
+        exportImportOption.innerHTML = "";
+        exportImportOption.style.display = "none";        
+    });
+
+    selectFileArea.classList.add("import-option-preview");
+    selectFileBtn.classList.add("import-option-preview-btn");
+    selectFileImportBtn.classList.add("css-btn");
+    selectFileCancelBtn.classList.add("css-btn");
+
+    selectFileArea.append(selectFileAreaName, selectFileName, selectFileAmount, selectFileBtn);
+    exportImportOption.append(selectFileArea);
 }
 
 updateCategoryOptions("input", currentTypeSelect, categorySelect);
