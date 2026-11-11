@@ -1586,7 +1586,7 @@ function filterByAmount(filteredTransactions) {
 
     return filteredTransactions.filter(transaction => {
         if(minAmount && transaction.amount < Number(minAmount)) return false;
-        if(maxAmount && transaction.amount > Number(minAmount)) return false;
+        if(maxAmount && transaction.amount > Number(maxAmount)) return false;
 
         return true;
     });
@@ -1883,7 +1883,10 @@ function summaryCategory() {
     });
 
     sortCategoryAmounts.forEach(({category, amount}) => {
-        summaryCategoryList.append(createSummaryCategoryCard(category, amount, maxAmount, totalAmount));
+        const categoryTransactions = targetTransactions.filter(transaction => transaction.type === summaryCategoryType.value &&
+                                                                                transaction.category === category);
+                                                                                
+        summaryCategoryList.append(createSummaryCategoryCard(category, amount, maxAmount, totalAmount, categoryTransactions));
     });
 }
 
@@ -1895,7 +1898,7 @@ function summaryPercentage(typeAmount, incomeAmount) {
     return `${result.toFixed(2)}%`;
 }
 
-function createSummaryCategoryCard(category, amount, maxAmount, totalAmount) {
+function createSummaryCategoryCard(category, amount, maxAmount, totalAmount, categoryTransactions) {
     const width = maxAmount === 0 ? 0 : amount / maxAmount * 100;
 
     const options = categoryOptions[summaryCategoryType.value] ?? [];
@@ -1940,10 +1943,19 @@ function createSummaryCategoryCard(category, amount, maxAmount, totalAmount) {
 
             //input이 비어있지 않으면 진행.
             if(inputValue === "") {
-                if(summaryCategoryBudgets[monthKey]) {
-                    delete summaryCategoryBudgets[monthKey][category];
+                if(summaryCategoryBudgets[monthKey]?.[selectedType]) {
+                    //1. 해당 카테고리 예산 삭제
+                    delete summaryCategoryBudgets[monthKey][selectedType][category];
 
-                    if((Object.keys(summaryCategoryBudgets[monthKey]).length === 0)) delete summaryCategoryBudgets[monthKey];
+                    //2. 해당 타입에 남은 카테고리가 없다면 타입 객체 삭제
+                    if(Object.keys(summaryCategoryBudgets[monthKey][selectedType]).length === 0) {
+                        delete summaryCategoryBudgets[monthKey][selectedType];
+                    }
+
+                    //3. 해당 월에 남은 타입이 없다면 월 객체 삭제
+                    if(Object.keys(summaryCategoryBudgets[monthKey]).length === 0) {
+                        delete summaryCategoryBudgets[monthKey];
+                    }
                 }
             } else {
                 const monthBudget = Number(inputValue);
@@ -1986,8 +1998,8 @@ function createSummaryCategoryCard(category, amount, maxAmount, totalAmount) {
 
         const categoryCompareAmount = document.createElement("p");
         const prevMonthDate = new Date(selectedMonthDate.getFullYear(), selectedMonthDate.getMonth() - 1, 1);
-        const prevTargetTransactions = getTransactionsByMonth(prevMonthDate);
-        const prevAmount = summaryTransactionAmount(prevTargetTransactions, "category", category);
+        const prevTargetTransactions = getAllTransactionByMonth(prevMonthDate);
+        const prevAmount = summaryTransactionAmount(prevTargetTransactions.filter(transaction => transaction.type === selectedType), "category", category);
         const difference = amount - prevAmount;
         categoryCompareAmount.textContent = `${difference > 0 ? "+" : ""}${difference.toLocaleString("ko-KR")}원`;
         if(difference !== 0) {
@@ -2028,10 +2040,40 @@ function createSummaryCategoryCard(category, amount, maxAmount, totalAmount) {
             }
         remainingBudgetDiv.append(remainingBudgetLabel, remainingBudgetAmount);
     budgetUtilizationRateRowDiv.append(createRow("예산 사용률", budgetUtilizationRate ?? 0, hasBudget ? budgetAmount : 0, amount, hasBudget, "budgetUtilization"), remainingBudgetDiv);
-    
+
+    //거래 내역 영역 생성
+    const transactionList = document.createElement("div");
+    transactionList.classList.add("category-transaction-list");
+
+    //거래 내역 출력
+    if(categoryTransactions.length === 0) {
+        transactionList.textContent = "거래 내역이 없습니다.";
+    } else {
+        categoryTransactions.forEach((transaction) => {
+            const transactionItem = document.createElement("div");
+            transactionItem.classList.add("category-transaction-item");
+
+            //거래 날짜
+            const transactionDate = document.createElement("p");
+            transactionDate.textContent = transaction.date;
+
+            //거래 내용
+            const transactionDescription = document.createElement("p");
+            transactionDescription.textContent = transaction.description || "내용 없음";
+
+            //거래 금액
+            const transactionAmount = document.createElement("p");
+            transactionAmount.textContent =
+                `${transaction.amount.toLocaleString("ko-KR")}원`;
+
+            transactionItem.append(transactionDate, transactionDescription,transactionAmount);
+            transactionList.append(transactionItem);
+        });
+    }
+
     budgetStatusAssessment(hasBudget, budgetUtilizationRate);
 
-    card.append(categoryHeaderDiv, budgetInputDiv, categorySummaryRank, categorySummaryAmountDiv, categoryCompareDiv, categoryExpenseComparisonRowDiv, budgetUtilizationRateRowDiv);
+    card.append(categoryHeaderDiv, budgetInputDiv, categorySummaryRank, categorySummaryAmountDiv, categoryCompareDiv, categoryExpenseComparisonRowDiv, budgetUtilizationRateRowDiv, transactionList);
     return card;
 
     function budgetStatusAssessment(hasBudget, rate) {
