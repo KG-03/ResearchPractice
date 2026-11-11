@@ -57,6 +57,10 @@ const repeatEndOptions = document.querySelectorAll('input[name="repeatEndType"]'
 const repeatEndDateInput = document.querySelector('.repeat-end-date-input');
 
 const filterResetBtn = document.querySelector(".filter-reset-btn");
+const startDateInputFilter = document.querySelector(".start-date-input-filter");
+const endDateInputFilter = document.querySelector(".end-date-input-filter");
+const minAmountInputFilter = document.querySelector(".min-amount-input-filter");
+const maxAmountInputFilter = document.querySelector(".max-amount-input-filter");
 const typeFilter = document.querySelector(".type-filter");
 const categoryFilter = document.querySelector(".category-filter");
 const sortFilter = document.querySelector(".sort-filter");
@@ -530,12 +534,33 @@ filterResetBtn.addEventListener("click", () => {
     currentSortFilter = "latest";
     currentKeyword = "";
 
+    startDateInputFilter.value = "";
+    endDateInputFilter.value = "";
+    minAmountInputFilter.value = "";
+    maxAmountInputFilter.value = "";
     typeFilter.value = currentTypeFilter;
         updateCategoryOptions("filter", currentTypeFilter, categoryFilter);
     categoryFilter.value = currentCategoryFilter;
     sortFilter.value = currentSortFilter;
     searchFilterInput.value = currentKeyword;
 
+    renderPage();
+});
+
+startDateInputFilter.addEventListener("change", () => {
+    if(!validateDateFilter(startDateInputFilter)) return;
+    renderPage();
+});
+endDateInputFilter.addEventListener("change", () => {
+    if(!validateDateFilter(endDateInputFilter)) return;
+    renderPage();
+});
+minAmountInputFilter.addEventListener("change", () => {
+    if(!validateAmountFilter(minAmountInputFilter)) return;
+    renderPage();
+});
+maxAmountInputFilter.addEventListener("change", () => {
+    if(!validateAmountFilter(maxAmountInputFilter)) return;
     renderPage();
 });
 
@@ -1525,6 +1550,9 @@ function getVisibleTransactions() {
     filteredTransactions = filterByKeyword(filteredTransactions);
     filteredTransactions = sortTransactions(filteredTransactions);
 
+    filteredTransactions = filterByDate(filteredTransactions);
+    filteredTransactions = filterByAmount(filteredTransactions);
+
     return filteredTransactions;
 }
 
@@ -1537,6 +1565,30 @@ function getTransactionsByMonth(_targetDate) {
             dataDate.getFullYear() === targetDate.getFullYear() &&
             dataDate.getMonth() === targetDate.getMonth()
         );
+    });
+}
+
+function filterByDate(filteredTransactions) {
+    const startDate = startDateInputFilter.value;
+    const endDate = endDateInputFilter.value;
+
+    return filteredTransactions.filter(transaction => {
+        if(startDate && transaction.date < startDate) return false;
+        if(endDate && transaction.date > endDate) return false;
+
+        return true;
+    });
+}
+
+function filterByAmount(filteredTransactions) {
+    const minAmount = minAmountInputFilter.value;
+    const maxAmount = maxAmountInputFilter.value;
+
+    return filteredTransactions.filter(transaction => {
+        if(minAmount && transaction.amount < Number(minAmount)) return false;
+        if(maxAmount && transaction.amount > Number(minAmount)) return false;
+
+        return true;
     });
 }
 
@@ -2598,6 +2650,34 @@ function getMonthKey(targetDate) {
     const date = new Date(targetDate);
 
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function validateDateFilter(targetInput) {
+    const startDate = startDateInputFilter.value;
+    const endDate = endDateInputFilter.value;
+
+    if(startDate && endDate && startDate > endDate) {
+        alert("시작 날짜는 종료 날짜보다 늦을 수 없습니다!");
+        targetInput.value = "";
+        return false;
+    }
+
+    return true;
+}
+
+function validateAmountFilter(targetInput) {
+    const minAmount = minAmountInputFilter.value;
+    const maxAmount = maxAmountInputFilter.value;
+
+    if(minAmount !== "" && maxAmount !== "" &&
+        Number(minAmount) > Number(maxAmount)) {
+
+        alert("최소 금액은 최대 금액보다 클 수 없습니다!");
+        targetInput.value = "";
+        return false;
+    }
+
+    return true;
 }
 
 //select funtion
