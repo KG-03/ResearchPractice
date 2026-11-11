@@ -281,6 +281,45 @@ header {
     font-size: 14px;
 }
 
+.category-transaction-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    margin-top: 15px;
+    padding-top: 10px;
+
+    border-top: 1px solid #ddd;
+}
+
+.category-transaction-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+
+    font-size: 13px;
+}
+
+.category-transaction-item p {
+    margin: 0;
+}
+
+.category-transaction-date {
+    color: #888;
+    white-space: nowrap;
+}
+
+.category-transaction-description {
+    flex: 1;
+    min-width: 0;
+}
+
+.category-transaction-amount {
+    font-weight: bold;
+    white-space: nowrap;
+}
+
 .not-set {
     background: #cccccc;
 }
