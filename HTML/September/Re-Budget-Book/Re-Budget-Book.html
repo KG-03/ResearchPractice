@@ -10,6 +10,7 @@
         <header>
             <h1>Re 가계부</h1>
             <p class="today-date">오늘 날짜: 00월 00일</p>
+            <p>금액 입력에 음수 허용중</p>
         </header>
 
         <main>
@@ -184,11 +185,26 @@
                 </div>
             </section>
 
+            <h2>필터</h2>
             <section class="filter-area">
-                <h2>필터</h2>
                 
                 <button class="filter-reset-btn">필터 리셋</button>
 
+                <div class="">
+                    <label>시작일: </label>
+                    <input class="start-date-input-filter" type="date">
+                    <label>종료일: </label>
+                    <input class="end-date-input-filter" type="date">
+                </div>
+
+                <div>
+                    <label>최저값: </label>
+                    <input class="min-amount-input-filter" type="number" placeholder="금액">
+                    <label>최대값: </label>
+                    <input class="max-amount-input-filter" type="number" placeholder="금액">
+                </div>
+
+                <label>종류: </label>
                 <select class="type-filter">
                     <option value="all">전체</option>
                     <option value="expense">지출</option>
@@ -197,10 +213,12 @@
                     <option value="investment">투자/재테크</option>
                 </select>
 
+                <label>카테고리: </label>
                 <select class="category-filter">
                     <option>카테고리</option>
                 </select>
 
+                <label>정렬: </label>
                 <select class="sort-filter">
                     <option value="latest">등록 최신순</option>
                     <option value="oldest">등록 오래된순</option>
@@ -210,6 +228,7 @@
                     <option value="amount_desc">가격 내림차순</option>
                 </select>
 
+                <label>검색어: </label>
                 <input class="search-filter-input" type="text" placeholder="금액이나 메모를 검색하세요!">
             </section>
 
