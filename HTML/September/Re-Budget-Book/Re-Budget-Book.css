@@ -292,13 +292,29 @@ header {
     border-top: 1px solid #ddd;
 }
 
+.category-transaction-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.category-transaction-header p {
+    margin: 0;
+}
+
+.category-transaction-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+}
+
 .category-transaction-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-
-    font-size: 13px;
 }
 
 .category-transaction-item p {
