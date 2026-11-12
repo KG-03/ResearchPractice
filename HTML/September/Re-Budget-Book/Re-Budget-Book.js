@@ -2049,25 +2049,55 @@ function createSummaryCategoryCard(category, amount, maxAmount, totalAmount, cat
     if(categoryTransactions.length === 0) {
         transactionList.textContent = "거래 내역이 없습니다.";
     } else {
-        categoryTransactions.forEach((transaction) => {
-            const transactionItem = document.createElement("div");
-            transactionItem.classList.add("category-transaction-item");
+        const transactionHeader = document.createElement("div");
+        transactionHeader.classList.add("category-transaction-header");
 
-            //거래 날짜
-            const transactionDate = document.createElement("p");
-            transactionDate.textContent = transaction.date;
+        const transactionCountLabel = document.createElement("p");
+        transactionCountLabel.textContent =`거래 내역 (${categoryTransactions.length}건)`;
+        
+        const transactionToggleButton = document.createElement("button");
+        transactionToggleButton.type = "button";
+        transactionToggleButton.textContent = "펼치기";
+        transactionToggleButton.setAttribute("aria-expanded", "false");
 
-            //거래 내용
-            const transactionDescription = document.createElement("p");
-            transactionDescription.textContent = transaction.description || "내용 없음";
+        transactionHeader.append(transactionCountLabel,transactionToggleButton);
 
-            //거래 금액
-            const transactionAmount = document.createElement("p");
-            transactionAmount.textContent =
-                `${transaction.amount.toLocaleString("ko-KR")}원`;
+        //실제 거래 목록을 담을 영역
+        const transactionItemsContainer = document.createElement("div");
+        transactionItemsContainer.classList.add("category-transaction-items");
+        transactionList.append(transactionHeader, transactionItemsContainer);
 
-            transactionItem.append(transactionDate, transactionDescription,transactionAmount);
-            transactionList.append(transactionItem);
+        let isExpanded = false;
+
+        transactionToggleButton.addEventListener("click", () => {
+            isExpanded = !isExpanded;
+            transactionToggleButton.textContent = isExpanded ? "접기" : "펼치기";
+            transactionToggleButton.setAttribute("aria-expanded", String(isExpanded));
+
+            //거래 목록 초기화
+            transactionItemsContainer.innerHTML = "";
+
+            if(isExpanded) {
+                categoryTransactions.forEach((transaction) => {
+                    const transactionItem = document.createElement("div");
+                    transactionItem.classList.add("category-transaction-item");
+
+                    //거래 날짜
+                    const transactionDate = document.createElement("p");
+                    transactionDate.textContent = transaction.date;
+
+                    //거래 내용
+                    const transactionDescription = document.createElement("p");
+                    transactionDescription.textContent = transaction.description || "내용 없음";
+
+                    //거래 금액
+                    const transactionAmount = document.createElement("p");
+                    transactionAmount.textContent = `${transaction.amount.toLocaleString("ko-KR")}원`;
+
+                    transactionItem.append(transactionDate, transactionDescription, transactionAmount);
+                    transactionItemsContainer.append(transactionItem);
+                });
+            }
         });
     }
 
@@ -3565,3 +3595,10 @@ nowMonthBtn.click();
  * 
  *      ID, 금액, 타임스탬프는 유한한 수이기 때문에, Number.isFinite(...)를 사용.
  */
+
+/* 74일차
+ * setAttribute("aria-expanded", "false");  : 웹 접근성(WAI-ARIA) 속성인 aria-expanded 값을 "false"로 설정.
+ *                                            하위 요소가 접혀서 보이지 않는 상태임을 스크린리더 등의 보조 기술에 알려주는 코드.
+ *                                            버튼이나 컨트롤 요소가 확장(열림)되어 있는지, 아니면 축소(닫힘)되어 있는지 상태를 나타낸다.
+ */
+
