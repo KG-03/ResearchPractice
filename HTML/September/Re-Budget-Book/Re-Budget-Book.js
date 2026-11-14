@@ -42,6 +42,7 @@ const descriptionInput = document.querySelector(".description-input");
 const repeatSelect = document.querySelector(".repeat-select");
 const addBtn = document.querySelector(".add-btn");
 const editCancelBtn = document.querySelector(".edit-cancel-btn");
+const deleteAllBtn = document.querySelector(".delete-all-btn");
 
 const categoryAddInput = document.querySelector(".category-add-input");
 const categoryAddOptionBtn = document.querySelector(".category-add-option-btn");
@@ -472,6 +473,21 @@ editCancelBtn.addEventListener("click", () => {
     resetInputForm();
 
     TOAST.show("수정이 취소되었습니다!");
+});
+
+deleteAllBtn.addEventListener("click", () => {
+    if(!confirm("모든 월에 등록된 거래들이 삭제됩니다. 계속하시겠습니까?")) return;
+
+    if(transactions.length === 0) {
+        alert("등록된 거래가 없습니다!");
+        return;
+    }
+
+    transactions = [];
+    saveTransactions();
+    renderPage();
+
+    TOAST.show("모든 거래가 정상적으로 제거되었습니다!");
 });
 
 categoryAddOptionBtn.addEventListener("click", () => {
