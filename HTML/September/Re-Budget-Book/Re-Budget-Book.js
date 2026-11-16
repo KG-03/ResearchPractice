@@ -11,6 +11,7 @@ const exportImportOption = document.querySelector(".export-import-option");
 const summaryMonthList = document.querySelector(".summary-month-list");
 const summaryCategoryType = document.querySelector(".summary-category-type");
 const summaryCategoryTotalBudgetArea = document.querySelector(".summary-category-total-budget-area");
+const summaryCategoryBudgetAllDeleteBtn = document.querySelector(".summary-category-budget-all-delete-btn");
 const summaryCategoryList = document.querySelector(".summary-category-list");
 
 const monthltyGraphBtn = document.querySelector(".monthlty-graph-btn");
@@ -342,6 +343,37 @@ importJSONInput.addEventListener("change", importJSON);
 
 summaryCategoryType.addEventListener("change", () => {
     renderSummary();
+});
+
+summaryCategoryBudgetAllDeleteBtn.addEventListener("click", () => {
+    if(!confirm("각 카테고리에 지정해 둔 예산이 모두 초기화됩니다. 초기화하시겠습니까?")) return;
+    if(Object.keys(summaryCategoryBudgets).length === 0 ) {
+        alert("등록된 예산이 없습니다!");
+        return;
+    }
+
+    let deleteMessage = "";
+
+    if(confirm("전체 예산을 초기화하시겠습니까?")) {
+        summaryCategoryBudgets = {};
+        deleteMessage = "모든";
+    } else {
+        const monthKey = getMonthKey(selectedMonthDate);
+
+        if(!summaryCategoryBudgets[monthKey]) {
+            alert("이번 달에 등록된 예산이 없습니다!");
+            return;
+        }
+
+        delete summaryCategoryBudgets[monthKey];
+        deleteMessage = "이번 달의"
+    }
+
+
+    saveSummaryCategoryBudget();
+    renderPage();
+
+    TOAST.show(`${deleteMessage} 예산이 정상적으로 초기화되었습니다!`);
 });
 
 prevMonthBtn.addEventListener("click", () => {
