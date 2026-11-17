@@ -12,6 +12,7 @@ const summaryMonthList = document.querySelector(".summary-month-list");
 const summaryCategoryType = document.querySelector(".summary-category-type");
 const summaryCategoryTotalBudgetArea = document.querySelector(".summary-category-total-budget-area");
 const summaryCategoryBudgetAllDeleteBtn = document.querySelector(".summary-category-budget-all-delete-btn");
+const summaryCategoryPrevMonthLoadBtn = document.querySelector(".summary-category-prev-month-load-btn");
 const summaryCategoryList = document.querySelector(".summary-category-list");
 
 const monthltyGraphBtn = document.querySelector(".monthlty-graph-btn");
@@ -374,6 +375,52 @@ summaryCategoryBudgetAllDeleteBtn.addEventListener("click", () => {
     renderPage();
 
     TOAST.show(`${deleteMessage} 예산이 정상적으로 초기화되었습니다!`);
+});
+
+summaryCategoryPrevMonthLoadBtn.addEventListener("click", () => {
+    if(!confirm("전월 예산을 불러오시겠습니까? 기존 예산은 유지됩니다.")) return;
+
+    const prevMonth = new Date(selectedMonthDate.getFullYear(), selectedMonthDate.getMonth() - 1, 1);
+    const prevMonthKey = getMonthKey(prevMonth);
+    const monthKey = getMonthKey(selectedMonthDate);
+
+    if(!summaryCategoryBudgets[prevMonthKey]) {
+        alert("이전 달에 등록되어 있는 예산이 없습니다!");
+        return;
+    }
+
+    //현재 월에 예산 객체가 없다면 생성.
+    if(!summaryCategoryBudgets[monthKey]) summaryCategoryBudgets[monthKey] = {};
+
+    const budgetCount = Object.keys(summaryCategoryBudgets).length;
+    let loadedCount = 0;
+
+    //전월 수입, 지출 순회
+    Object.entries(summaryCategoryBudgets[prevMonthKey]).forEach(([type, categories]) => {
+        //현재 월에 해당 타입 객체가 없다면 생성.
+        if(!summaryCategoryBudgets[monthKey][type]) summaryCategoryBudgets[monthKey][type] = {};
+
+        //현재 월에 해당 카테고리 예산이 없는 경우에만 복사.
+        Object.entries(categories).forEach(([category, budget]) => {
+            if(summaryCategoryBudgets[monthKey][type][category] === undefined) {
+                summaryCategoryBudgets[monthKey][type][category] = budget;
+                loadedCount++;
+            }
+        });
+    });
+
+    if(loadedCount === 0) {
+        alert("불러올 수 있는 새 예산이 없습니다!");
+        return;
+    }
+
+    saveSummaryCategoryBudget();
+    renderPage();
+
+    if(budgetCount - loadedCount === 0) message = `${loadedCount}개의 예산을 불러왔습니다!`;
+    else message = `${loadedCount}개의 예산을 불러왔습니다! 기존 예산 ${budgetCount - loadedCount}개는 유지되었습니다.`;
+
+    TOAST.show(message);
 });
 
 prevMonthBtn.addEventListener("click", () => {
@@ -1141,7 +1188,6 @@ function createTransactionCard(transaction) {
 //render function
 //페이지를 렌더링
 function renderPage() {
-    console.count("renderPage실행수");
     const filteredTransactions = getVisibleTransactions();
     const groupedTransactions = groupTransactionsByDate(filteredTransactions);
     const dailySummary = calculateDailySummary(groupedTransactions);
