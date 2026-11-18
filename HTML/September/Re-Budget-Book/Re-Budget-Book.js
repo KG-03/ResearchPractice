@@ -2404,7 +2404,7 @@ function createComparisonRow(label, amount, maxAmount) {
     const rowTextDiv = document.createElement("div");
     rowTextDiv.classList.add("summary-text-area");
         const rowLabel = document.createElement("p");
-        rowLabel.textContent = `${label}`;
+        rowLabel.textContent = label;
 
         const rowAmount = document.createElement("p");
         rowAmount.textContent = `${amount.toLocaleString("ko-KR")}원`;
@@ -2415,11 +2415,15 @@ function createComparisonRow(label, amount, maxAmount) {
 
     const bar = document.createElement("div");
     bar.classList.add("summary-category-bar");
-    bar.style.background = "#8fb89a";
 
-    const width = maxAmount === 0 ? 0 : amount / maxAmount * 100;
+    const width = maxAmount <= 0 ? 0 : amount / maxAmount * 100;
 
-    bar.style.width = `${width}%`;
+    bar.style.width = `${Math.min(width, 100)}%`;
+    if(width > 100) bar.classList.add("budget-comparison-shortage");
+    else {
+        bar.classList.remove("budget-comparison-shortage");
+        bar.style.background = "#8fb89a";
+    }
 
     barTrack.append(bar);
     row.append(rowTextDiv, barTrack);
@@ -2428,102 +2432,116 @@ function createComparisonRow(label, amount, maxAmount) {
 }
 
 //budget comparison function
-//예산 넣고 측정하기
+//예산 넣고 측정하기 > 전체 예산 비교하기
 function budgetComparison() {
     budgetComparisonList.style.display = "block";
     budgetComparisonList.innerHTML = "";
 
     const targetTransactions = getAllTransactionByMonth(selectedMonthDate);
+    const monthKey = getMonthKey(selectedMonthDate);
 
-    const budgetInput = document.createElement("input");
-    budgetInput.type = "number";
-    budgetInput.placeholder = "예산 입력";
-    budgetComparisonList.append(budgetInput);
+    //현재 월의 지출 예산을 불러보고, 없으면 {} 빈 배열 사용.
+    const expenseBudgets = summaryCategoryBudgets[monthKey]?.expense ?? {};
+    const savingBudgets = summaryCategoryBudgets[monthKey]?.saving ?? {};
+    const investmentBudgets = summaryCategoryBudgets[monthKey]?.investment ?? {};
 
-    const budgetCategorySelect = document.createElement("select");
-    updateCategoryOptions("filter", "expense", budgetCategorySelect);
-    budgetComparisonList.append(budgetCategorySelect);
+    //전체 지출 예산
+    const totalBudget = Object.values(expenseBudgets).reduce((result, budget) => result + Number(budget), 0);
 
-    const consumeText = document.createElement("p");
-    let categoryLabel;
-    let consume = 0;
+    //전체 실제 지출
+    const totalConsume = summaryTransactionAmount(targetTransactions, "type", "expense");
 
-    const row = document.createElement("div");
-    row.classList.add("summary-graph-row");
+    const title = document.createElement("h3");
+    title.textContent = "월별 예산 비교";
+    budgetComparisonList.append(title);
 
-        const budgetConsumeComparison = document.createElement("p");
+    if(Object.keys(expenseBudgets).length === 0) {
+        const emptyText = document.createElement("p");
+        emptyText.textContent = "예산이 등록된 지출이 없습니다.";
+        budgetComparisonList.append(emptyText);
+    } else {
+        //전체 예산 비교
+        const summary = document.createElement("div");
 
-        const barTrack = document.createElement("div");
-        barTrack.classList.add("summary-graph-track");
+        const totalBudgetText = document.createElement("p");
+        totalBudgetText.textContent = `전체 예산: ${totalBudget.toLocaleString('ko-KR')}원`;
 
-        const bar = document.createElement("div");
-        bar.classList.add("summary-category-bar");    
-        barTrack.append(bar);
+        const totalConsumeText = document.createElement("p");
+        totalConsumeText.textContent = `전체 지출: ${totalConsume.toLocaleString('ko-KR')}원`;
 
-    row.append(budgetConsumeComparison, barTrack);
-    budgetComparisonList.append(consumeText, row);
-
-    function updateComsumeText() {
-        const selectedCategory = budgetCategorySelect.value;
-
-        if (selectedCategory === "all") {
-            categoryLabel = "전체";
-            consume = summaryTransactionAmount(targetTransactions, "type", "expense");
+        const totalComparisonText = document.createElement("p");
+        const totalComparison = totalBudget - totalConsume;
+        if(totalComparison < 0) {
+            totalComparisonText.textContent = `예산 초과: ${Math.abs(totalComparison).toLocaleString('ko-KR')}원`;
+            totalComparisonText.classList.add("budget-comparison-shortage");
         } else {
-            const category = categoryOptions.expense.find(option => option.value === selectedCategory);
-
-            categoryLabel = category?.label ?? "-";
-            consume = targetTransactions
-                .filter(transaction => transaction.type === "expense" && transaction.category === selectedCategory)
-                .reduce((result, transaction) => result + transaction.amount, 0);
+            totalComparisonText.textContent = `남은 예산: ${totalComparison.toLocaleString('ko-KR')}원`;
         }
 
-        consumeText.textContent = `현재 ${categoryLabel} 지출: ${consume.toLocaleString("ko-KR")}원`;
-        updateBudgetComparison();
+        //예산 사용률. 전체 지출 예산이 0보다 크면 예산 사용률 계산. 0 이하면 0으로 표기.
+        const totalUsageText = document.createElement("p");
+        const totalUsage = totalBudget > 0 ? totalConsume / totalBudget * 100 : 0;
+        totalUsage.textContent = `예산 사용률: ${totalUsage.toFixed(1)}%`;
+
+        const totalComparisonRow = createComparisonRow("전체 지출", totalConsume, totalBudget);
+
+        summary.append(totalBudgetText, totalConsumeText, totalComparisonText, totalUsageText, totalComparisonRow);
+        budgetComparisonList.append(summary);
+
+        // 카테고리별 예산 비교
+        Object.entries(expenseBudgets).forEach(([category, budget]) => {
+            const categoryOption = categoryOptions.expense.find(option => option.value === category);
+            const categoryLabel = categoryOption?.label ?? category;
+
+            const consume = targetTransactions.filter(transaction => transaction.type === "expense" && transaction.category === category)
+                                                .reduce((result, transaction) => result + transaction.amount, 0);
+
+            const comparison = Number(budget) - consume;
+            const usage = Number(budget) > 0 ? consume / Number(budget) * 100 : 0;
+
+            const categoryContainer = document.createElement("div");
+
+                const categoryTitle = document.createElement("p");
+                categoryTitle.textContent = `${categoryLabel}: ${consume.toLocaleString("ko-KR")}원 / ${Number(budget).toLocaleString("ko-KR")}원`;
+
+                const comparisonText = document.createElement("p");
+                if(comparison < 0) {
+                    comparisonText.textContent = `예산 초과: ${Math.abs(comparison).toLocaleString("ko-KR")}원`;
+                    comparisonText.classList.add("budget-comparison-shortage");
+                } else {
+                    comparisonText.textContent = `남은 예산: ${comparison.toLocaleString("ko-KR")}원`;
+                }
+
+                const usageText = document.createElement("p");
+                usageText.textContent = `사용률: ${usage.toFixed(1)}%`;
+
+            const comparisonRow = createComparisonRow(categoryLabel, consume, Number(budget));            
+
+            categoryContainer.append(comparisonRow, comparisonText, usageText);
+
+            budgetComparisonList.append(categoryContainer);
+        });
     }
 
-    function updateBudgetComparison() {
-        const budget = Number(budgetInput.value);
-        if(budget <= 0) {
-            budgetConsumeComparison.textContent = "예산을 입력해주세요!";
-            budgetConsumeComparison.classList.remove("budget-comparison-shortage");
-            bar.style.width = "0%";
-            return;
-        }
-
-        const comparison = Number(budgetInput.value) - consume;
-        if(comparison < 0) {
-            budgetConsumeComparison.classList.add("budget-comparison-shortage");
-            budgetConsumeComparison.textContent = `예산 초과: ${Math.abs(comparison).toLocaleString('ko-KR')}원`;
-        }
-        else {
-            budgetConsumeComparison.classList.remove("budget-comparison-shortage");
-            budgetConsumeComparison.textContent = `남은 예산: ${comparison.toLocaleString('ko-KR')}원`;
-        };
-
-        const width = Math.min(consume / budget * 100, 100);
-        bar.style.width = `${width}%`;
-    }
-
-    updateComsumeText();
-
-    budgetCategorySelect.addEventListener("change", updateComsumeText);
-
-    budgetInput.addEventListener("input", updateBudgetComparison);
-
+    // 숨기기 버튼
     const hideBtn = document.createElement("button");
     hideBtn.textContent = "숨기기";
     hideBtn.classList.add("css-btn");
+
     hideBtn.addEventListener("click", () => {
         budgetComparisonList.style.display = "none";
 
         isComparison = false;
         budgetComparisonBtn.style.display = "inline";
+
         hideBtn.remove();
     });
 
     budgetComparisonList.append(hideBtn);
 }
+
+
+
 
 //category option function
 function addCategoryOption(type, value, label) {
