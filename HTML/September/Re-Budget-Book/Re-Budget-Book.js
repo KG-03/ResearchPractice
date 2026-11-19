@@ -2440,8 +2440,102 @@ function budgetComparison() {
     const targetTransactions = getAllTransactionByMonth(selectedMonthDate);
     const monthKey = getMonthKey(selectedMonthDate);
 
+    const transactionTypes = ["income", "expense", "saving", "investment"];
+
+    transactionTypes.forEach(type => {
+        //현재 월의 지출 예산을 불러보고, 없으면 {} 빈 배열 사용.
+        const budgets = summaryCategoryBudgets[monthKey]?.[type] ?? {};
+
+        //전체 지출 예산
+        const totalBudget = Object.values(budgets).reduce((result, budget) => result + Number(budget), 0);
+
+        //전체 실제 지출
+        const totalAmount = summaryTransactionAmount(targetTransactions, "type", type);
+
+        const title = document.createElement("h3");
+        title.textContent = `${TYPE_OPTIONS[type]} 예산 비교`;
+        budgetComparisonList.append(title);
+
+        if(Object.keys(budgets).length === 0) {
+            const emptyText = document.createElement("p");
+            emptyText.textContent = `등록된 ${TYPE_OPTIONS[type]} 예산이 없습니다.`;
+            budgetComparisonList.append(emptyText);
+        } else {
+            //전체 예산 비교
+            const summary = document.createElement("div");
+
+            const totalBudgetText = document.createElement("p");
+            totalBudgetText.textContent = `전체 예산: ${totalBudget.toLocaleString('ko-KR')}원`;
+
+            const totalConsumeText = document.createElement("p");
+            totalConsumeText.textContent = `전체 지출: ${totalAmount.toLocaleString('ko-KR')}원`;
+
+            const totalComparisonText = document.createElement("p");
+            const totalComparison = type === "expense" ? totalBudget - totalAmount : totalAmount - totalBudget;
+            if(type === "expense") {
+                totalComparisonText.textContent = totalComparison < 0
+                                                ? `예산 초과: ${Math.abs(totalComparison).toLocaleString('ko-KR')}원`
+                                                : `남은 예산: ${totalComparison.toLocaleString('ko-KR')}원`;
+
+                if(totalComparison < 0) totalComparisonText.classList.add("budget-comparison-shortage");
+            } else {
+                totalComparisonText.textContent = totalComparison >= 0
+                                                ? `목표 초과: ${totalComparison.toLocaleString('ko-KR')}원`
+                                                : `목표 미달: ${Math.abs(totalComparison).toLocaleString('ko-KR')}원`;
+            }
+
+            //예산 사용률. 전체 지출 예산이 0보다 크면 예산 사용률 계산. 0 이하면 0으로 표기.
+            const totalUsageText = document.createElement("p");
+            const totalUsage = totalBudget > 0 ? totalAmount / totalBudget * 100 : 0;
+            totalUsage.textContent = `목표 대비 달성률: ${totalUsage.toFixed(1)}%`;
+
+            const totalComparisonRow = createComparisonRow(`전체 ${TYPE_OPTIONS[type]}`, totalAmount, totalBudget);
+
+            summary.append(totalBudgetText, totalConsumeText, totalComparisonText, totalUsageText, totalComparisonRow);
+            budgetComparisonList.append(summary);
+
+            // 카테고리별 예산 비교
+            Object.entries(budgets).forEach(([category, budget]) => {
+                const categoryOption = categoryOptions[type].find(option => option.value === category);
+                const categoryLabel = categoryOption?.label ?? category;
+
+                const amount = targetTransactions.filter(transaction => transaction.type === type && transaction.category === category)
+                                                    .reduce((result, transaction) => result + transaction.amount, 0);
+
+                const comparison = type === "expense" ? Number(budget) - amount : amount - Number(budget);
+                const usage = Number(budget) > 0 ? amount / Number(budget) * 100 : 0;
+
+                const categoryContainer = document.createElement("div");
+
+                    const categoryTitle = document.createElement("p");
+                    categoryTitle.textContent = `${categoryLabel}: ${amount.toLocaleString("ko-KR")}원 / ${Number(budget).toLocaleString("ko-KR")}원`;
+
+                    const comparisonText = document.createElement("p");
+                    if(type === "expense") {
+                        comparisonText.textContent = comparison < 0 
+                                                    ? `예산 초과: ${Math.abs(comparison).toLocaleString("ko-KR")}원`
+                                                    : `남은 예산: ${comparison.toLocaleString("ko-KR")}원`;
+                        if(comparison < 0) comparisonText.classList.add("budget-comparison-shortage");
+                    } else {
+                        comparisonText.textContent = comparison >= 0 
+                                                    ? `목표 초과: ${comparison.toLocaleString("ko-KR")}원`
+                                                    : `목표 미달: ${Math.abs(comparison).toLocaleString("ko-KR")}원`;
+                    }
+
+                    const usageText = document.createElement("p");
+                    usageText.textContent = `달성률: ${usage.toFixed(1)}%`;
+
+                const comparisonRow = createComparisonRow(categoryLabel, amount, Number(budget));            
+
+                categoryContainer.append(comparisonRow, comparisonText, usageText);
+
+                budgetComparisonList.append(categoryContainer);
+            });
+        }        
+    });
+
     //현재 월의 지출 예산을 불러보고, 없으면 {} 빈 배열 사용.
-    const expenseBudgets = summaryCategoryBudgets[monthKey]?.expense ?? {};
+/*   const expenseBudgets = summaryCategoryBudgets[monthKey]?.expense ?? {};
     const savingBudgets = summaryCategoryBudgets[monthKey]?.saving ?? {};
     const investmentBudgets = summaryCategoryBudgets[monthKey]?.investment ?? {};
 
@@ -2450,78 +2544,7 @@ function budgetComparison() {
 
     //전체 실제 지출
     const totalConsume = summaryTransactionAmount(targetTransactions, "type", "expense");
-
-    const title = document.createElement("h3");
-    title.textContent = "월별 예산 비교";
-    budgetComparisonList.append(title);
-
-    if(Object.keys(expenseBudgets).length === 0) {
-        const emptyText = document.createElement("p");
-        emptyText.textContent = "예산이 등록된 지출이 없습니다.";
-        budgetComparisonList.append(emptyText);
-    } else {
-        //전체 예산 비교
-        const summary = document.createElement("div");
-
-        const totalBudgetText = document.createElement("p");
-        totalBudgetText.textContent = `전체 예산: ${totalBudget.toLocaleString('ko-KR')}원`;
-
-        const totalConsumeText = document.createElement("p");
-        totalConsumeText.textContent = `전체 지출: ${totalConsume.toLocaleString('ko-KR')}원`;
-
-        const totalComparisonText = document.createElement("p");
-        const totalComparison = totalBudget - totalConsume;
-        if(totalComparison < 0) {
-            totalComparisonText.textContent = `예산 초과: ${Math.abs(totalComparison).toLocaleString('ko-KR')}원`;
-            totalComparisonText.classList.add("budget-comparison-shortage");
-        } else {
-            totalComparisonText.textContent = `남은 예산: ${totalComparison.toLocaleString('ko-KR')}원`;
-        }
-
-        //예산 사용률. 전체 지출 예산이 0보다 크면 예산 사용률 계산. 0 이하면 0으로 표기.
-        const totalUsageText = document.createElement("p");
-        const totalUsage = totalBudget > 0 ? totalConsume / totalBudget * 100 : 0;
-        totalUsage.textContent = `예산 사용률: ${totalUsage.toFixed(1)}%`;
-
-        const totalComparisonRow = createComparisonRow("전체 지출", totalConsume, totalBudget);
-
-        summary.append(totalBudgetText, totalConsumeText, totalComparisonText, totalUsageText, totalComparisonRow);
-        budgetComparisonList.append(summary);
-
-        // 카테고리별 예산 비교
-        Object.entries(expenseBudgets).forEach(([category, budget]) => {
-            const categoryOption = categoryOptions.expense.find(option => option.value === category);
-            const categoryLabel = categoryOption?.label ?? category;
-
-            const consume = targetTransactions.filter(transaction => transaction.type === "expense" && transaction.category === category)
-                                                .reduce((result, transaction) => result + transaction.amount, 0);
-
-            const comparison = Number(budget) - consume;
-            const usage = Number(budget) > 0 ? consume / Number(budget) * 100 : 0;
-
-            const categoryContainer = document.createElement("div");
-
-                const categoryTitle = document.createElement("p");
-                categoryTitle.textContent = `${categoryLabel}: ${consume.toLocaleString("ko-KR")}원 / ${Number(budget).toLocaleString("ko-KR")}원`;
-
-                const comparisonText = document.createElement("p");
-                if(comparison < 0) {
-                    comparisonText.textContent = `예산 초과: ${Math.abs(comparison).toLocaleString("ko-KR")}원`;
-                    comparisonText.classList.add("budget-comparison-shortage");
-                } else {
-                    comparisonText.textContent = `남은 예산: ${comparison.toLocaleString("ko-KR")}원`;
-                }
-
-                const usageText = document.createElement("p");
-                usageText.textContent = `사용률: ${usage.toFixed(1)}%`;
-
-            const comparisonRow = createComparisonRow(categoryLabel, consume, Number(budget));            
-
-            categoryContainer.append(comparisonRow, comparisonText, usageText);
-
-            budgetComparisonList.append(categoryContainer);
-        });
-    }
+*/
 
     // 숨기기 버튼
     const hideBtn = document.createElement("button");
