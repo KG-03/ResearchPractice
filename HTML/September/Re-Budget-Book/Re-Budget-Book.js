@@ -11,6 +11,7 @@ const exportImportOption = document.querySelector(".export-import-option");
 const summaryMonthList = document.querySelector(".summary-month-list");
 const summaryCategoryType = document.querySelector(".summary-category-type");
 const summaryCategoryTotalBudgetArea = document.querySelector(".summary-category-total-budget-area");
+const summaryCategoryMaxAmountArea = document.querySelector(".summary-category-max-amount-area");
 const summaryCategoryBudgetAllDeleteBtn = document.querySelector(".summary-category-budget-all-delete-btn");
 const summaryCategoryPrevMonthLoadBtn = document.querySelector(".summary-category-prev-month-load-btn");
 const summaryCategoryList = document.querySelector(".summary-category-list");
@@ -1864,6 +1865,7 @@ function renderSummary() {
     summaryMonth();
     summaryCategory();
     createSummaryCategoryTotalCard();
+    createSummaryCategoryMaxCard();
     if(isSummaryGraph === true) summaryGraph();
     if(isComparison === true) budgetComparison();
 }
@@ -2325,6 +2327,37 @@ function createSummaryCategoryTotalCard() {
     summaryCategoryTotalBudgetArea.append(header, summaryDiv, rowDiv);
 }
 
+function createSummaryCategoryMaxCard() {
+    summaryCategoryMaxAmountArea.innerHTML = "";
+
+    const targetTransactions = getAllTransactionByMonth(selectedMonthDate);
+    const expenseTransactions = targetTransactions.filter(transaction => transaction.type === "expense");
+    if(expenseTransactions.length === 0) {
+        summaryCategoryMaxAmountArea.textContent = "이번 달 지출이 없습니다.";
+        return;
+    }
+
+    const maxExpenseTransaction = expenseTransactions.reduce((max, current) => {
+        if(current.amount > max.amount) return current;
+        return max;
+    });
+
+    const title = document.createElement("h4");
+    title.textContent = "이번 달 최고 지출";
+
+    const amount = document.createElement("p");
+    amount.textContent = `${maxExpenseTransaction.amount.toLocaleString("ko-KR")}원`;
+
+    const category = document.createElement("p");
+    const categoryOption = categoryOptions[maxExpenseTransaction.type].find(option => option.value === maxExpenseTransaction.category);
+    category.textContent = `${categoryOption?.label ?? maxExpenseTransaction.category}, ${TYPE_OPTIONS[maxExpenseTransaction.type]}`;
+
+    const date = document.createElement("p");
+    date.textContent = `${maxExpenseTransaction.date}`;
+
+    summaryCategoryMaxAmountArea.append(title, amount, category, date);
+}
+
     //배열로 전달
     function summarySumAmount(targetTransaction, filterTarget, filterValue, reduceTarget) {
         return targetTransaction
@@ -2562,8 +2595,6 @@ function budgetComparison() {
 
     budgetComparisonList.append(hideBtn);
 }
-
-
 
 
 //category option function
