@@ -81,6 +81,13 @@ header {
     padding-bottom: 10px;
 }
 
+.summary-category-max-amount-area {
+    display: flex;
+    justify-content: center;
+
+    gap: 10px;
+}
+
 .summary-category-list {
     max-height: 350px;
 
