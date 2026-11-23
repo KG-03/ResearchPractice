@@ -3,6 +3,7 @@ header {
     text-align: center;
 }
 
+/*export-import*/
 .export-import-option {
     display: none;
     padding: 10px;
@@ -42,10 +43,12 @@ header {
     gap: 5px;
 }
 
+/*'area'*/
 .summary-area,
 .input-area,
 .filter-area,
 .utiliy-area,
+.recent-budget-area
 .budget-list {
     padding: 10px;
     margin-bottom: 10px;
@@ -55,6 +58,7 @@ header {
     display: flex;
 }
 
+/*summary*/
 .summary-area {
     justify-content: center;
     text-align: center;
@@ -86,6 +90,15 @@ header {
     justify-content: center;
 
     gap: 10px;
+}
+
+.summary-category-max-amount-card {
+    padding: 5px;
+    margin: 5px;
+    border-radius: 5px;
+
+    background: #c8dbca;
+
 }
 
 .summary-category-list {
@@ -464,6 +477,29 @@ header {
 
     margin-left: 25px;
     margin-bottom: 10px;
+    gap: 10px;
+}
+
+.recent-budget {
+    padding: 10px;
+    margin: 10px;
+    border-radius: 10px;
+    background: #c8dbca;
+}
+.recent-budget p {
+    margin-top: 0;
+}
+
+.recent-budget-card-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin: 0;
+}
+
+.recent-budget-card-date-type-category {
+    display: flex;
     gap: 10px;
 }
 
