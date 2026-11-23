@@ -74,6 +74,8 @@ const utiliyAllSelect = document.querySelector(".utiliy-all-select");
 const utiliySelectDeleteBtn = document.querySelector(".utiliy-select-delete-btn");
 const displayFilteredTransactionsNumber = document.querySelector(".display-filtered-transactions-number");
 
+const recentBudget = document.querySelector(".recent-budget");
+
 const budgetList = document.querySelector(".budget-list");
 
 
@@ -1195,6 +1197,8 @@ function renderPage() {
 
     renderTransactions(filteredTransactions, groupedTransactions, dailySummary);
     renderSummary();
+
+    createRecentBudget();
 
     //반복 거래와 반복하지 않는 거래를 합쳐서 날짜순으로 정렬.
     const monthTransactions = getAllTransactionByMonth(selectedMonthDate).sort((a, b) => a.date.localeCompare(b.date));
@@ -2349,6 +2353,7 @@ function createSummaryCategoryTypeMaxCard(typeTransaction, type) {
     });
 
     const card = document.createElement("div");
+    card.classList.add("summary-category-max-amount-card");
 
     const title = document.createElement("h4");
     title.textContent = `이번 달 최고 ${TYPE_OPTIONS[type]}`;
@@ -2576,18 +2581,6 @@ function budgetComparison() {
         }        
     });
 
-    //현재 월의 지출 예산을 불러보고, 없으면 {} 빈 배열 사용.
-/*   const expenseBudgets = summaryCategoryBudgets[monthKey]?.expense ?? {};
-    const savingBudgets = summaryCategoryBudgets[monthKey]?.saving ?? {};
-    const investmentBudgets = summaryCategoryBudgets[monthKey]?.investment ?? {};
-
-    //전체 지출 예산
-    const totalBudget = Object.values(expenseBudgets).reduce((result, budget) => result + Number(budget), 0);
-
-    //전체 실제 지출
-    const totalConsume = summaryTransactionAmount(targetTransactions, "type", "expense");
-*/
-
     // 숨기기 버튼
     const hideBtn = document.createElement("button");
     hideBtn.textContent = "숨기기";
@@ -2603,6 +2596,45 @@ function budgetComparison() {
     });
 
     budgetComparisonList.append(hideBtn);
+}
+
+//recent budget function
+function createRecentBudget() {
+    recentBudget.innerHTML = "";
+
+    const recentTransactions = [...transactions].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+    recentTransactions.forEach(transaction => {
+        const card = document.createElement("div");
+
+        const line = document.createElement("div");
+        line.classList.add("recent-budget-card-line");
+
+        const left = document.createElement("div");
+            const title = document.createElement("h4");
+            title.textContent = transaction.description ? transaction.description : "제목 없음";
+
+            const dateTypeCategory = document.createElement("div");
+            dateTypeCategory.classList.add("recent-budget-card-date-type-category");
+                const date = document.createElement("p");
+                date.textContent = transaction.date;        
+
+                const type = document.createElement("p");
+                type.textContent = TYPE_OPTIONS[transaction.type];
+
+                const category = document.createElement("p");
+                const categoryOption = categoryOptions[transaction.type].find(option => option.value === transaction.category);
+                category.textContent = categoryOption?.label ?? transaction.category;
+            dateTypeCategory.append(date, type, category);
+        left.append(title, dateTypeCategory);
+
+        const amount = document.createElement("p");
+        amount.textContent = `${transaction.amount.toLocaleString("ko-KR")}원`;
+
+        line.append(left, amount);
+
+        card.append(line);
+        recentBudget.append(card);
+    });
 }
 
 
