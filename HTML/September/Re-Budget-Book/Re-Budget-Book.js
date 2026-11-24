@@ -70,8 +70,9 @@ const categoryFilter = document.querySelector(".category-filter");
 const sortFilter = document.querySelector(".sort-filter");
 const searchFilterInput = document.querySelector(".search-filter-input");
 
-const utiliyAllSelect = document.querySelector(".utiliy-all-select");
-const utiliySelectDeleteBtn = document.querySelector(".utiliy-select-delete-btn");
+const utilityAllSelect = document.querySelector(".utility-all-select");
+const utilitySelectDeleteBtn = document.querySelector(".utility-select-delete-btn");
+const utilitySelectCopyBtn = document.querySelector(".utility-select-copy-btn");
 const displayFilteredTransactionsNumber = document.querySelector(".display-filtered-transactions-number");
 
 const recentBudget = document.querySelector(".recent-budget");
@@ -688,16 +689,80 @@ searchFilterInput.addEventListener("input", () => {
     renderPage();
 });
 
-utiliyAllSelect.addEventListener("change", () => {
+utilityAllSelect.addEventListener("change", () => {
     const currentTransactions = getAllTransactionByMonth(selectedMonthDate);
 
-    if(utiliyAllSelect.checked) currentTransactions.forEach(transaction => { selectedTransactions.add(transaction.id) });
+    if(utilityAllSelect.checked) currentTransactions.forEach(transaction => { selectedTransactions.add(transaction.id) });
     else currentTransactions.forEach(transaction => {selectedTransactions.delete(transaction.id) });
 
     renderPage();
 });
 
-utiliySelectDeleteBtn.addEventListener("click", deleteSelectedTransactions);
+utilitySelectDeleteBtn.addEventListener("click", deleteSelectedTransactions);
+
+utilitySelectCopyBtn.addEventListener("click", () => {
+    if(selectedTransactions.size <= 0) return;
+
+    const copyTargetTransactions = getAllTransactionByMonth(selectedMonthDate)
+                                    .filter(transaction => selectedTransactions.has(transaction.id) && transaction.repeat !== true);
+
+    if(copyTargetTransactions.length <= 0) return;
+
+    //이미 이 창이 있다면 중복 생성하지 않도록.
+    if(utilitySelectCopyBtn.querySelector("input[type='date']")) return;
+
+    const dateSelectDiv = document.createElement("div");
+
+    const newDateSelect = document.createElement("input");
+    newDateSelect.type = "date";
+
+    const doneBtn = document.createElement("button");
+    doneBtn.textContent = "완료";
+    doneBtn.addEventListener("click", () => {
+        if(!newDateSelect.value) {
+            alert("복제할 날짜를 선택해 주세요.");
+            return;
+        }
+
+        if(!confirm(`선택한 ${copyTargetTransactions.length}개의 거래를 복제하시겠습니까? 반복 거래는 복제되지 않습니다.`)) return;
+
+        const newTransactions = copyTargetTransactions.map(transaction => {
+            return {
+                ...transaction,
+                id: crypto.randomUUID(),
+                date: newDateSelect.value,
+                createdAt: Date.now(),
+                updatedAt: Date.now()
+            }
+        });
+
+        transactions.push(...newTransactions);
+
+        dateSelectDiv.remove();
+
+        clearSelectedTransactions();
+        saveTransactions();
+        renderPage();
+
+        TOAST.show("성공적으로 복제되었습니다!");
+    })
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.textContent = "취소";
+    cancelBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        dateSelectDiv.remove();
+
+        TOAST.show("복제가 취소되었습니다!");
+    });
+
+    dateSelectDiv.addEventListener("click", (event) => {
+        event.stopPropagation();
+    });
+    
+    dateSelectDiv.append(newDateSelect, doneBtn, cancelBtn);
+    utilitySelectCopyBtn.append(dateSelectDiv);
+});
 
 
 //거래 생성
@@ -2963,7 +3028,7 @@ function validateAmountFilter(targetInput) {
 function updateSelectAllCheckbox() {
     const currentTransactions = getAllTransactionByMonth(selectedMonthDate);
 
-    utiliyAllSelect.checked = currentTransactions.length > 0 &&
+    utilityAllSelect.checked = currentTransactions.length > 0 &&
                             currentTransactions.every(transaction => selectedTransactions.has(transaction.id));
 }
 
@@ -3017,7 +3082,7 @@ function deleteSelectedTransactions() {
 
 function clearSelectedTransactions() {
     selectedTransactions.clear();
-    utiliyAllSelect.checked = false;
+    utilityAllSelect.checked = false;
 }
 
 //CSV function
@@ -3809,3 +3874,6 @@ nowMonthBtn.click();
  *                                            버튼이나 컨트롤 요소가 확장(열림)되어 있는지, 아니면 축소(닫힘)되어 있는지 상태를 나타낸다.
  */
 
+/* 87일차
+ * crypto.randomUUID()  : 암호학적으로 안전한 난수 생성기를 이용하여 36자 길이의 UUID v4 문자열을 생성하는 JS 내장 메서드.
+ */
