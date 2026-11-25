@@ -73,6 +73,7 @@ const searchFilterInput = document.querySelector(".search-filter-input");
 const utilityAllSelect = document.querySelector(".utility-all-select");
 const utilitySelectDeleteBtn = document.querySelector(".utility-select-delete-btn");
 const utilitySelectCopyBtn = document.querySelector(".utility-select-copy-btn");
+const utilitySelectDateChangeBtn = document.querySelector(".utility-select-date-change-btn");
 const displayFilteredTransactionsNumber = document.querySelector(".display-filtered-transactions-number");
 
 const recentBudget = document.querySelector(".recent-budget");
@@ -762,6 +763,66 @@ utilitySelectCopyBtn.addEventListener("click", () => {
     
     dateSelectDiv.append(newDateSelect, doneBtn, cancelBtn);
     utilitySelectCopyBtn.append(dateSelectDiv);
+});
+
+utilitySelectDateChangeBtn.addEventListener("click", () => {
+    if(selectedTransactions.size <= 0) return;
+
+    const dateChangeTargetTransactions = getAllTransactionByMonth(selectedMonthDate)
+                                    .filter(transaction => selectedTransactions.has(transaction.id) && transaction.repeat !== true);
+
+    if(dateChangeTargetTransactions.length <= 0) return;
+
+    //이미 이 창이 있다면 중복 생성하지 않도록.
+    if(utilitySelectDateChangeBtn.querySelector("input[type='date']")) return;
+
+    const dateSelectDiv = document.createElement("div");
+
+    const newDateSelect = document.createElement("input");
+    newDateSelect.type = "date";
+
+    const doneBtn = document.createElement("button");
+    doneBtn.textContent = "완료";
+    doneBtn.addEventListener("click", () => {
+        if(!newDateSelect.value) {
+            alert("변경할 날짜를 선택해 주세요.");
+            return;
+        }
+
+        if(!confirm(`선택한 ${dateChangeTargetTransactions.length}개의 날짜를 ${newDateSelect.value}로 변경하시겠습니까? 반복 거래는 해당하지 않습니다.`)) return;
+
+        dateChangeTargetTransactions.forEach(transaction => {
+            const target = transactions.find(item => item.id === transaction.id);
+            if(target) {
+                target.date = newDateSelect.value,
+                target.updatedAt = Date.now();
+            }
+        });
+
+        dateSelectDiv.remove();
+
+        clearSelectedTransactions();
+        saveTransactions();
+        renderPage();
+
+        TOAST.show("성공적으로 거래 날짜가 변경되었습니다!");
+    })
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.textContent = "취소";
+    cancelBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        dateSelectDiv.remove();
+
+        TOAST.show("날짜 수정이 취소되었습니다!");
+    });
+
+    dateSelectDiv.addEventListener("click", (event) => {
+        event.stopPropagation();
+    });
+    
+    dateSelectDiv.append(newDateSelect, doneBtn, cancelBtn);
+    utilitySelectDateChangeBtn.append(dateSelectDiv);
 });
 
 
