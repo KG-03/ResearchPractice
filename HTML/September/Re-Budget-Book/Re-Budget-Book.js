@@ -74,6 +74,7 @@ const utilityAllSelect = document.querySelector(".utility-all-select");
 const utilitySelectDeleteBtn = document.querySelector(".utility-select-delete-btn");
 const utilitySelectCopyBtn = document.querySelector(".utility-select-copy-btn");
 const utilitySelectDateChangeBtn = document.querySelector(".utility-select-date-change-btn");
+const utilitySelectCategoryEditBtn = document.querySelector(".utility-select-category-edit-btn");
 const displayFilteredTransactionsNumber = document.querySelector(".display-filtered-transactions-number");
 
 const recentBudget = document.querySelector(".recent-budget");
@@ -823,6 +824,76 @@ utilitySelectDateChangeBtn.addEventListener("click", () => {
     
     dateSelectDiv.append(newDateSelect, doneBtn, cancelBtn);
     utilitySelectDateChangeBtn.append(dateSelectDiv);
+});
+
+utilitySelectCategoryEditBtn.addEventListener("click", () => {
+    if(selectedTransactions.size <= 0) return;
+
+    const categoryEditTargetTransactions = getAllTransactionByMonth(selectedMonthDate)
+                                    .filter(transaction => selectedTransactions.has(transaction.id) && transaction.repeat !== true);
+
+    if(categoryEditTargetTransactions.length <= 0) return;
+
+
+    const type = categoryEditTargetTransactions[0].type;
+    const isSameType = categoryEditTargetTransactions.every(transaction => transaction.type === type);
+    if(!isSameType) {
+        alert("같은 유형의 거래만 선택해야 합니다!");
+        return;
+    }    
+
+    //이미 이 창이 있다면 중복 생성하지 않도록.
+    if(utilitySelectCategoryEditBtn.querySelector("select")) return;
+
+    const categorySelectDiv = document.createElement("div");
+
+    const newCategorySelect = document.createElement("select");
+    updateCategoryOptions("input", type, newCategorySelect);
+
+    const doneBtn = document.createElement("button");
+    doneBtn.textContent = "완료";
+    doneBtn.addEventListener("click", () => {
+        if(!newCategorySelect.value) {
+            alert("변경할 카테고리를 선택해 주세요.");
+            return;
+        }
+
+        //type이 같은 것만 되어있는지 확인
+        const categoryLabel = categoryOptions[type].find(option => option.value === newCategorySelect.value)?.label ?? newCategorySelect.value;
+        if(!confirm(`선택한 거래 ${categoryEditTargetTransactions.length}개의 카테고리를 ${categoryLabel}(으)로 변경하시겠습니까? 반복 거래는 해당하지 않습니다.`)) return;
+
+        categoryEditTargetTransactions.forEach(transaction => {
+            const target = transactions.find(item => item.id === transaction.id);
+            if(target) {
+                target.category = newCategorySelect.value;
+                target.updatedAt = Date.now();
+            }
+        });
+
+        categorySelectDiv.remove();
+
+        clearSelectedTransactions();
+        saveTransactions();
+        renderPage();
+
+        TOAST.show("성공적으로 카테고리가 변경되었습니다!");
+    })
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.textContent = "취소";
+    cancelBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        categorySelectDiv.remove();
+
+        TOAST.show("카테고리 수정이 취소되었습니다!");
+    });
+
+    categorySelectDiv.addEventListener("click", (event) => {
+        event.stopPropagation();
+    });
+    
+    categorySelectDiv.append(newCategorySelect, doneBtn, cancelBtn);
+    utilitySelectCategoryEditBtn.append(categorySelectDiv);
 });
 
 
@@ -3937,4 +4008,9 @@ nowMonthBtn.click();
 
 /* 87일차
  * crypto.randomUUID()  : 암호학적으로 안전한 난수 생성기를 이용하여 36자 길이의 UUID v4 문자열을 생성하는 JS 내장 메서드.
+ */
+
+/* 88일차
+ * .every()     : 모든 요소가 주어진 판별 함수(조건)를 만족하는지 검사하고 true, false 반환.
+ *                하나라도 조건을 만족하지 않으면 false 반환.
  */
