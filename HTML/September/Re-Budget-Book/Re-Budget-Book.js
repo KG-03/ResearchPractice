@@ -3145,6 +3145,22 @@ function validateAmountFilter(targetInput) {
     const minAmount = minAmountInputFilter.value;
     const maxAmount = maxAmountInputFilter.value;
 
+    //숫자 유효성 검사
+    if((minAmount !== "" && !Number.isFinite(Number(minAmount))) ||
+    (maxAmount !== "" && !Number.isFinite(Number(maxAmount)))) {
+        alert("올바른 금액을 입력해 주세요!");
+        targetInput.value = "";
+        return false;
+    }
+
+    //음수 검사
+    if(minAmount < 0 || maxAmount < 0) {
+        alert("음수를 입력할 수 없습니다!");
+        targetInput.value = "";
+        return false;
+    }    
+
+    //최저값 최대값 비교
     if(minAmount !== "" && maxAmount !== "" &&
         Number(minAmount) > Number(maxAmount)) {
 
